@@ -533,7 +533,7 @@
   // ================= pessoas (estilo arredondado das referências) =================
   const CAMISAS = [0x2d6cdf, 0xd9524a, 0x6cd26c, 0xffffff, 0x8b5bd6, 0xe2a23a, 0x3fb6c9, 0xd06aa0, 0xffffff, 0x1f2a44];
   const PELES = [0xf3cfa6, 0xe0b088, 0xb9805a, 0x8a5a3a, 0x5e3b24];
-  const CABELOS = [0x2a1d14, 0x111111, 0x6b4423, 0xe8d9a8, 0x8c2f1b, 0xb05a2a];
+  const CABELOS = [0x1a120c, 0x6b4423, 0xf2d27a, 0x0d0d0d, 0xb5481e, 0x8a8a8a, 0x3b2416, 0xd9b26a];
   const gente = []; let nId = 0;
   function novaPessoa(papel) {
     const id = nId++, g = new THREE.Group();
@@ -548,8 +548,18 @@
     const cab = new THREE.Group(); cab.position.set(0, 1.72, 0); g.add(cab);
     cil(0.08, 0.08, 0.12, pele, 0, -0.18, 0, cab);
     esfera(0.25, pele, 0, 0.04, 0, cab);
-    const cabelo = new THREE.Mesh(new THREE.SphereGeometry(0.265, 18, 12, 0, Math.PI * 2, 0, Math.PI * (id % 5 === 1 ? 0.62 : 0.5)), mat(CABELOS[(id * 5) % CABELOS.length])); cabelo.position.y = 0.05; cabelo.rotation.x = -0.25; cabelo.castShadow = true; cab.add(cabelo);
-    if (id % 6 === 2) { const bone = new THREE.Mesh(new THREE.SphereGeometry(0.27, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2), mat(CAMISAS[(id * 7) % CAMISAS.length])); bone.position.y = 0.07; cab.add(bone); bloco(0.3, 0.03, 0.22, mat(CAMISAS[(id * 7) % CAMISAS.length]), 0, 0.08, 0.28, cab); }
+    // cabelo: vários estilos (curto, comprido, black power, coque, espetado, franja, careca de vez em quando)
+    const corC = mat(CABELOS[(id * 5) % CABELOS.length]), estilo = id % 7;
+    const calota = (theta, raio = 0.272) => { const m = new THREE.Mesh(new THREE.SphereGeometry(raio, 18, 12, 0, Math.PI * 2, 0, Math.PI * theta), corC); m.position.y = 0.04; m.rotation.x = -0.35; m.castShadow = true; cab.add(m); return m; };
+    if (estilo === 0) calota(0.42);                                                                               // curto
+    if (estilo === 1) { calota(0.5); bloco(0.5, 0.42, 0.14, corC, 0, -0.08, -0.17, cab); bloco(0.12, 0.36, 0.3, corC, -0.23, -0.04, -0.05, cab); bloco(0.12, 0.36, 0.3, corC, 0.23, -0.04, -0.05, cab); }   // comprido
+    if (estilo === 2) { const a = esfera(0.34, corC, 0, 0.12, -0.05, cab); a.scale.set(1, 0.9, 1); }              // black power
+    if (estilo === 3) { calota(0.45); esfera(0.12, corC, 0, 0.22, -0.2, cab); }                                    // coque
+    if (estilo === 4) { calota(0.4); for (let k = 0; k < 7; k++) { const c = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.2, 5), corC); const a2 = k / 7 * Math.PI * 2; c.position.set(Math.cos(a2) * 0.12, 0.26, Math.sin(a2) * 0.12 - 0.03); c.rotation.set(Math.sin(a2) * 0.5, 0, -Math.cos(a2) * 0.5); cab.add(c); } }   // espetado
+    if (estilo === 5) { calota(0.45); const f = bloco(0.42, 0.1, 0.12, corC, 0.05, 0.2, 0.17, cab); f.rotation.z = -0.25; }   // franja de lado
+    if (estilo === 6 && id % 2) calota(0.2, 0.258);                                                              // quase careca (alguns)
+    else if (estilo === 6) { calota(0.45); bloco(0.46, 0.12, 0.3, corC, 0, -0.12, -0.12, cab); }                 // social penteado
+    // (sem boné)
     // olhos discretos
     // rosto: olhos com pupila, sobrancelhas, nariz, boca sorrindo (e barba/óculos em alguns)
     const corCab = CABELOS[(id * 5) % CABELOS.length], olhos = [];
