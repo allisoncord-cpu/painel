@@ -56,7 +56,7 @@
   .ticker div { position: absolute; white-space: nowrap; top: 5px; font: 600 12px "IBM Plex Mono", monospace; color: #9fb4a6; animation: corre 60s linear infinite; }
   .ticker b.pos { color: #4fd18f; } .ticker b.neg { color: #ff6f61; } .ticker b.ouro { color: var(--gold); }
   @keyframes corre { from { transform: translateX(100vw); } to { transform: translateX(-100%); } }
-  body.estreito .rot.fechou small { display: none; }
+  
   body.estreito .rot { font-size: 10px; padding: 1px 5px 2px; border-width: 1.5px; } body.estreito .rot small { font-size: 7px; }
   body.estreito .balao { width: 34px; height: 34px; font-size: 10px; } body.estreito .balao span { font-size: 11px; top: -22px; } body.estreito .fala { font-size: 9px; }
   @media (max-width: 640px) { .total .v { font-size: 28px; } .acoes { width: 100%; justify-content: flex-start; } }
@@ -602,7 +602,7 @@
       const aberta = !!p.op, a = p.op || p.resultado, v = aberta ? a.lucro : a.usd, ok = (v || 0) >= 0, nome = a.par.replace("XAUUSD", "OURO");
       const tipo = a.tipo || (a.par.startsWith("XAU") ? "robo" : "swing");
       el.className = "rot" + (ok ? "" : " neg") + (tipo === "swing" ? " swing" : "") + (aberta ? "" : " fechou");
-      const html = `${v == null ? "—" : usd(v)}<small><i></i>${aberta ? "" : "FECHOU · "}${estreito ? nome.replace("USD", "") : nome} ${a.lado === "buy" ? "C" : "V"}${aberta ? " " + String(a.lote).replace(".", ",") : ""}</small>`;
+      const html = `${v == null ? "—" : usd(v)}<small>${aberta ? `<i></i>${estreito ? nome.replace("USD", "") : nome} ${a.lado === "buy" ? "C" : "V"} ${String(a.lote).replace(".", ",")}` : (ok ? "🏆 META BATIDA" : "FECHOU")}</small>`;
       if (el.__h !== html) { el.innerHTML = html; el.__h = html; }
       const [sx, sy] = tela(p.x, p.op ? 3.0 : 2.75, p.z - 0.2); el.style.left = sx + "px"; el.style.top = sy + "px";
     });
