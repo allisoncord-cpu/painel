@@ -95,6 +95,16 @@
   const rnd = (a, b) => a + Math.random() * (b - a);
   const escolhe = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
+  // ================= horário do mercado =================
+  let mercado = function (d = new Date()) {
+    const dia = d.getUTCDay(), h = d.getUTCHours();
+    if (dia === 6 || (dia === 5 && h >= 21) || (dia === 0 && h < 22)) return { aberto: false, motivo: "fim de semana", volta: "domingo às 19h (Brasília)" };
+    if (h === 21) return { aberto: false, motivo: "pausa diária", volta: "às 19h (Brasília)" };
+    return { aberto: true };
+  };
+  if (/[?&]fechado=1/.test(location.search)) mercado = () => ({ aberto: false, motivo: "fim de semana", volta: "domingo às 19h (Brasília)" });   // para testar
+  let MERC = mercado();
+
   // ================= cena =================
   const R = new THREE.WebGLRenderer({ antialias: true });
   R.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
@@ -104,7 +114,7 @@
   const S = new THREE.Scene(); S.background = new THREE.Color(0x07090d);
   const cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 400);
   const ALVO = new THREE.Vector3(0, 0, 1.5);
-  S.add(new THREE.HemisphereLight(0xdfe8ff, 0x3a2a18, 0.62));
+  const ceuL = new THREE.HemisphereLight(0xdfe8ff, 0x3a2a18, 0.62); S.add(ceuL);
   const sol = new THREE.DirectionalLight(0xfff3e0, 0.75); sol.position.set(-16, 30, 18); sol.castShadow = true;
   sol.shadow.mapSize.set(2048, 2048); sol.shadow.bias = -0.0005; Object.assign(sol.shadow.camera, { left: -26, right: 26, top: 22, bottom: -22, near: 1, far: 90 }); S.add(sol);
 
@@ -180,6 +190,11 @@
     tx.textAlign = "right"; tx.font = "700 64px 'IBM Plex Mono'"; const p = dia && dia.pct != null ? dia.pct : 0;
     tx.fillStyle = p >= 0 ? "#8affbe" : "#ff8a7e"; tx.fillText(dia ? pct(p) : "", 2010, 200); tx.font = "500 30px Jost"; tx.fillStyle = "#cfe9d8"; tx.fillText("HOJE", 2010, 240);
     if (M.flutuante != null) { tx.font = "700 40px 'IBM Plex Mono'"; tx.fillStyle = M.flutuante >= 0 ? "#8affbe" : "#ff8a7e"; tx.fillText(usd(M.flutuante), 2010, 330); tx.font = "500 30px Jost"; tx.fillStyle = "#cfe9d8"; tx.fillText("EM ABERTO", 2010, 368); }
+    if (!MERC.aberto) {
+      tx.fillStyle = "rgba(2,8,5,.78)"; tx.fillRect(0, 80, 2048, 432);
+      tx.textAlign = "center"; tx.font = "700 120px 'IBM Plex Mono'"; tx.fillStyle = "#ffd27a"; tx.fillText("MERCADO FECHADO", 1024, 290);
+      tx.font = "500 46px Jost"; tx.fillStyle = "#cfe9d8"; tx.fillText(`${MERC.motivo} · reabre ${MERC.volta}`, 1024, 370);
+    }
     tx.textAlign = "left"; telaoTex.needsUpdate = true;
   }
 
@@ -394,9 +409,14 @@
     ocupados.add(q); p.ponto = q; p.tx = q.x; p.tz = q.z; p.alvoRot = q.rot; segura(p, null);
   }
   const coloca = (p, x, z, r) => { p.x = p.tx = x; p.z = p.tz = z; p.alvoRot = p.rot = r; };
-  const jogBilhar = [novaPessoa("bilhar"), novaPessoa("bilhar")]; coloca(jogBilhar[0], BX - 2.9, BZ, Math.PI / 2); coloca(jogBilhar[1], BX + 1.2, BZ - 1.9, 0.3); jogBilhar.forEach((j) => segura(j, "taco"));
-  const jogPing = [novaPessoa("ping"), novaPessoa("ping")]; coloca(jogPing[0], PX - 2.5, PZ, Math.PI / 2); coloca(jogPing[1], PX + 2.5, PZ, -Math.PI / 2); jogPing.forEach((j) => segura(j, "raquete"));
-  const apres = novaPessoa("apresenta"); coloca(apres, RX - 3.6, RZ, Math.PI / 2);   // instrutor
+  let jogBilhar = [], jogPing = [], apres = null;
+  function criaFixos(pelaPorta) {
+    const vem = (p, x, z, r) => { coloca(p, x, z, r); if (pelaPorta) { p.x = PORTA.x; p.z = PORTA.z; } };
+    jogBilhar = [novaPessoa("bilhar"), novaPessoa("bilhar")]; vem(jogBilhar[0], BX - 2.9, BZ, Math.PI / 2); vem(jogBilhar[1], BX + 1.2, BZ - 1.9, 0.3); jogBilhar.forEach((j) => segura(j, "taco"));
+    jogPing = [novaPessoa("ping"), novaPessoa("ping")]; vem(jogPing[0], PX - 2.5, PZ, Math.PI / 2); vem(jogPing[1], PX + 2.5, PZ, -Math.PI / 2); jogPing.forEach((j) => segura(j, "raquete"));
+    apres = novaPessoa("apresenta"); vem(apres, RX - 3.6, RZ, Math.PI / 2);   // instrutor
+  }
+  if (MERC.aberto) criaFixos(false);
   const TREINO_S = 75;   // segundos de treino até sair pela porta
   let vezB = 0, tacada = 0;
 
@@ -445,8 +465,24 @@
     const com = gente.filter((p) => p.papel === "livre" && p.resultado).sort((a, b) => a.desde - b.desde);
     for (let i = 0; i < com.length - LIMITE; i++) sai(com[i]);
   }
+  let estavaFechado = !MERC.aberto;
   function aplica(novo) {
     D = novo;
+    if (!MERC.aberto) {
+      const Mf = D.mt4 || {}, ab = (Mf.abertas || []).map((o) => ({ ...o, k: chave(o) }));
+      gente.slice().forEach((p) => { if (p.papel === "saindo") return; p.op = null; p.mesa = null; p.resultado = null; p.cadeira = null; if (p.ponto) ocupados.delete(p.ponto); p.ponto = null; p.papel = "saindo"; p.tx = PORTA.x; p.tz = PORTA.z; p.alvoRot = null; p.espera = rnd(0, 4); });
+      mesas.forEach((m) => { m.analisa = false; m.livre = true; pintaMesa(m, null); });
+      ab.slice(0, mesas.length).forEach((a, i) => { mesas[i].livre = false; pintaMesa(mesas[i], a); });
+      primeira = false; estavaFechado = true;
+      $("t-dia").textContent = "Fechado"; $("t-dia").style.color = "var(--gold)";
+      $("t-sub").innerHTML = `Mercado fechado (${MERC.motivo}) · reabre ${MERC.volta}` + (ab.length ? ` · ${ab.length} operações seguem abertas` : "");
+      $("ticker").innerHTML = `<b class="ouro">LEGATUS GOLD</b> · MERCADO FECHADO · REABRE ${MERC.volta.toUpperCase()} · RESULTADO PASSADO NÃO GARANTE RESULTADO FUTURO`;
+      desenhaTelao(); return;
+    }
+    if (estavaFechado) {   // reabriu: limpa as mesas e a equipe entra pela porta
+      estavaFechado = false; mesas.forEach((m) => { m.livre = true; m.analisa = false; pintaMesa(m, null); }); primeira = true;
+      if (!jogBilhar.length || jogBilhar.some((j) => !gente.includes(j))) criaFixos(true);
+    }
     const M = D.mt4 || {};
     const abertas = (M.abertas || []).map((o) => ({ ...o, k: chave(o) }));
     const fechadas = [...((M.por_tipo && M.por_tipo.robo && M.por_tipo.robo.ultimas) || []), ...((M.por_tipo && M.por_tipo.swing && M.por_tipo.swing.ultimas) || [])];
@@ -492,7 +528,7 @@
     [...jogBilhar, ...jogPing].forEach((j, i) => { if (pos[i]) j.resultado = pos[i]; });
     limita();
     gente.filter((p) => p.papel === "livre" && !p.resultado).slice(3).forEach(sai);   // sem resultado, só alguns figurantes
-    while (gente.filter((p) => p.papel === "livre").length < 3) { const p = novaPessoa("livre"); proximoPonto(p); p.x = p.tx; p.z = p.tz; }
+    while (MERC.aberto && gente.filter((p) => p.papel === "livre").length < 3) { const p = novaPessoa("livre"); proximoPonto(p); p.x = p.tx; p.z = p.tz; }
     primeira = false;
     const cal = M.calendario || [], hoje = (M.agora_srv || "").slice(0, 10), dia = cal.find((x) => x.dia === hoje);
     $("t-dia").textContent = dia && dia.pct != null ? pct(dia.pct) : "—"; $("t-dia").style.color = dia && dia.pct < 0 ? "var(--verm)" : "var(--verde)";
@@ -567,8 +603,10 @@
     }
     if (p.papel === "saindo" && Math.hypot(p.tx - p.x, p.tz - p.z) < 0.3) { S.remove(p.g); if (p.el) p.el.remove(); p.removido = true; }
   }
+  setInterval(() => { const m = mercado(); if (m.aberto !== MERC.aberto) { MERC = m; if (D) aplica(D); } else MERC = m; }, 30000);
   function quadro(agora) {
     const dt = Math.min(0.05, (agora - tAnt) / 1000); tAnt = agora; T += dt;
+    const luz = MERC.aberto ? 1 : 0.35; ceuL.intensity += (0.62 * luz - ceuL.intensity) * dt; sol.intensity += (0.75 * luz - sol.intensity) * dt;
     if (!arrasta && performance.now() - ultimoToque > 8000) giro += (Math.PI / 4 + Math.sin(T * 0.07) * 0.14 - giro) * dt * 0.4;
     cam.position.set(ALVO.x + Math.sin(giro) * 40, 32, ALVO.z + Math.cos(giro) * 40); cam.lookAt(ALVO);
     // bilhar
@@ -579,7 +617,8 @@
     // pingue-pongue: a bolinha vai e volta em arco
     const fp = (Math.sin(T * 3.2) + 1) / 2; bolinha.position.set(PX - 1.8 + fp * 3.6, 1.1 + Math.abs(Math.sin(T * 6.4)) * 0.5, PZ + Math.sin(T * 1.7) * 0.5);
     // cachorro passeia pela área de descanso e volta para a caminha
-    if (T > dg.ate) { const casa = Math.random() < 0.35; dg.tx = casa ? 13.2 : rnd(5, 13.5); dg.tz = casa ? 6.2 : rnd(0, 9); dg.ate = T + rnd(6, 12); }
+    if (!MERC.aberto) { dg.tx = 13.2; dg.tz = 6.2; dg.ate = T + 5; }
+    else if (T > dg.ate) { const casa = Math.random() < 0.35; dg.tx = casa ? 13.2 : rnd(5, 13.5); dg.tz = casa ? 6.2 : rnd(0, 9); dg.ate = T + rnd(6, 12); }
     const ddx = dg.tx - dg.x, ddz = dg.tz - dg.z, dd = Math.hypot(ddx, ddz), dAnda = dd > 0.05;
     if (dAnda) { const k = Math.min(1, 1.8 * dt / dd); dg.x += ddx * k; dg.z += ddz * k; dog.rotation.y = Math.atan2(-ddz, ddx); }
     dog.position.set(dg.x, dAnda ? Math.abs(Math.sin(T * 14)) * 0.04 : 0, dg.z);
@@ -613,6 +652,17 @@
       if (el.__h !== html) { el.innerHTML = html; el.__h = html; }
       const [sx, sy] = tela(p.x, p.op ? 3.0 : 2.75, p.z - 0.2); el.style.left = sx + "px"; el.style.top = sy + "px";
     });
+    if (!MERC.aberto) mesas.forEach((m) => {
+      if (!m.op) { if (m.el) { m.el.remove(); m.el = null; } return; }
+      let el = m.el; if (!el) { el = m.el = document.createElement("div"); camada.appendChild(el); }
+      usados.add(el);
+      const a = m.op, ok = (a.lucro || 0) >= 0, nome = a.par.replace("XAUUSD", "OURO");
+      el.className = "rot" + (ok ? "" : " neg") + (a.tipo === "swing" ? " swing" : "");
+      const h4 = `${a.lucro == null ? "—" : usd(a.lucro)}<small><i></i>${nome} ${a.lado === "buy" ? "C" : "V"} · em aberto</small>`;
+      if (el.__h !== h4) { el.innerHTML = h4; el.__h = h4; }
+      const [sx, sy] = tela(m.x, 2.9, m.z + 0.8); el.style.left = sx + "px"; el.style.top = sy + "px";
+    });
+    else mesas.forEach((m) => { if (m.el) { m.el.remove(); m.el = null; } });
     [...camada.querySelectorAll(".rot")].forEach((el) => { if (!usados.has(el)) { el.remove(); gente.forEach((p) => { if (p.el === el) p.el = null; }); } });
     for (let i = baloes.length - 1; i >= 0; i--) {
       const b = baloes[i]; b.t += dt;
@@ -632,7 +682,7 @@
   }, 1000);
 
   addEventListener("resize", ajusta); ajusta();
-  for (let i = 0; i < 6; i++) { const p = novaPessoa("livre"); proximoPonto(p); p.x = p.tx; p.z = p.tz; }
+  if (MERC.aberto) for (let i = 0; i < 6; i++) { const p = novaPessoa("livre"); proximoPonto(p); p.x = p.tx; p.z = p.tz; }
   desenhaTelao(); document.fonts.ready.then(desenhaTelao);
   requestAnimationFrame(quadro);
   busca(); setInterval(busca, 60000);
