@@ -975,7 +975,8 @@
   if (VIDEO) {
     const q = new URLSearchParams(location.search).get("dia"), cal = ((D && D.mt4 && D.mt4.calendario) || []);
     VDIA = cal.find((c) => c.dia === q) || cal[cal.length - 1] || null;
-    mesaVideo = mesas.find((m) => m.op && m.op.tipo !== "swing") || mesas.find((m) => m.op) || mesas[0];
+    if (!mesas.some((m) => m.op)) for (let i = 0; i < 9; i++) { const p = novaPessoa("livre"); vaiAnalisar(p); p.x = p.tx; p.z = p.tz; p.rot = Math.PI; }   // dia passado: equipe analisando
+    mesaVideo = mesas.find((m) => m.op && m.op.tipo !== "swing") || mesas.find((m) => m.op) || mesas.find((m) => m.analisa) || mesas[0];
     for (let i = 0; i < 240; i++) passo(1 / 30);   // 8 s de simulação antes de gravar (todos nos lugares)
     const v = VDIA ? VDIA.pct : null;
     $("vfim-n").textContent = v != null ? pct(v) : "—"; $("vfim-n").style.color = v != null && v < 0 ? "var(--verm)" : "var(--verde)";
