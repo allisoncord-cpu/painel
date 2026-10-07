@@ -289,7 +289,7 @@
     // recordes
     let { c, x } = qRec; const W = c.width, H = c.height;
     x.fillStyle = "#0e1118"; x.fillRect(0, 0, W, H); x.fillStyle = "#e2b85c"; x.fillRect(0, 0, W, 10);
-    x.font = "700 40px Jost"; x.fillStyle = "#e2b85c"; x.textAlign = "center"; x.fillText("🏆 RECORDES", W / 2, 66);
+    x.font = "700 48px Jost"; x.fillStyle = "#e2b85c"; x.textAlign = "center"; x.fillText("🏆 RECORDES", W / 2, 66);
     if (cal.length) {
       const melhor = cal.reduce((a, b) => (b.pct > a.pct ? b : a)), maisOps = cal.reduce((a, b) => (b.ops > a.ops ? b : a));
       let seq = 0, maior = 0; cal.forEach((d) => { seq = d.pct > 0 ? seq + 1 : 0; maior = Math.max(maior, seq); });
@@ -298,7 +298,7 @@
       const dd = (s) => s.slice(8, 10) + "/" + s.slice(5, 7);
       x.textAlign = "left"; x.font = "500 28px Jost"; x.fillStyle = "#8ea1bd";
       [["Melhor dia", pct(melhor.pct), dd(melhor.dia)], ["Dias seguidos no verde", String(maior), ""], ["Mais operações num dia", String(maisOps.ops), dd(maisOps.dia)]].forEach(([r, v, d], i) => {
-        const y = 128 + i * 88; x.fillStyle = "#8ea1bd"; x.font = "500 26px Jost"; x.fillText(r, 30, y); x.fillStyle = "#6dffa8"; x.font = "700 40px 'IBM Plex Mono'"; x.fillText(v, 30, y + 44); x.fillStyle = "#5a6b85"; x.font = "500 24px Jost"; x.textAlign = "right"; x.fillText(d, W - 30, y + 40); x.textAlign = "left";
+        const y = 112 + i * 120; x.fillStyle = "#a9b8cf"; x.font = "600 30px Jost"; x.fillText(r, 30, y); x.fillStyle = "#6dffa8"; x.font = "700 76px 'IBM Plex Mono'"; x.fillText(v, 30, y + 72); x.fillStyle = "#cfd8e6"; x.font = "600 34px 'IBM Plex Mono'"; x.textAlign = "right"; x.fillText(d, W - 30, y + 66); x.textAlign = "left";
       });
       if (recordeHoje) { x.fillStyle = "#ff9f43"; x.fillRect(0, H - 50, W, 50); x.fillStyle = "#1a0e02"; x.font = "700 28px Jost"; x.textAlign = "center"; x.fillText("🔥 NOVO RECORDE HOJE", W / 2, H - 15); }
     }
@@ -306,11 +306,11 @@
     // operação do dia
     ({ c, x } = qOp); const W2 = c.width, H2 = c.height, b = M.melhor_dia;
     x.fillStyle = "#0e1118"; x.fillRect(0, 0, W2, H2); x.fillStyle = "#e2b85c"; x.fillRect(0, 0, W2, 10); x.textAlign = "center";
-    x.font = "700 34px Jost"; x.fillStyle = "#e2b85c"; x.fillText("👑 OPERAÇÃO DO DIA", W2 / 2, 62);
+    x.font = "700 42px Jost"; x.fillStyle = "#e2b85c"; x.fillText("👑 OPERAÇÃO DO DIA", W2 / 2, 64);
     if (b) {
-      x.font = "600 30px Jost"; x.fillStyle = "#cfd8e6"; x.fillText(`${b.par.replace("XAUUSD", "OURO")} · ${b.lado === "buy" ? "COMPRA" : "VENDA"}`, W2 / 2, 130);
-      x.font = "700 78px 'IBM Plex Mono'"; x.fillStyle = "#6dffa8"; x.fillText(usd(b.usd), W2 / 2, 230);
-      x.font = "500 26px Jost"; x.fillStyle = "#8ea1bd"; x.fillText(`${b.pts != null ? (b.pts > 0 ? "+" : "") + b.pts + " pts" : ""}${b.min != null ? " em " + b.min + " min" : ""} · ${b.t.slice(11, 16)}`, W2 / 2, 290);
+      x.font = "600 40px Jost"; x.fillStyle = "#cfd8e6"; x.fillText(`${b.par.replace("XAUUSD", "OURO")} · ${b.lado === "buy" ? "COMPRA" : "VENDA"}`, W2 / 2, 140);
+      x.font = "700 118px 'IBM Plex Mono'"; x.fillStyle = "#6dffa8"; x.fillText(usd(b.usd), W2 / 2, 290);
+      x.font = "600 34px Jost"; x.fillStyle = "#cfd8e6"; x.fillText(`${b.pts != null ? (b.pts > 0 ? "+" : "") + b.pts + " pts" : ""}${b.min != null ? " em " + b.min + " min" : ""} · ${b.t.slice(11, 16)}`, W2 / 2, 380);
     } else { x.font = "500 28px Jost"; x.fillStyle = "#8ea1bd"; x.fillText("ainda sem operação", W2 / 2, 180); x.fillText("fechada no lucro hoje", W2 / 2, 216); }
     qOp.t.needsUpdate = true;
   }
