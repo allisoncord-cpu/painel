@@ -7,74 +7,216 @@
 <meta name="description" content="O escritório dos robôs da Legatus Group, ao vivo: cada operação aberta é um operador trabalhando.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Jost:wght@500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
 <style>
-  :root { --bg: #07101f; --fg: #e9eef6; --muted: #8ea1bd; --gold: #d6ad55; --line: #1f3456; color-scheme: dark; }
+  :root { --bg: #05080f; --fg: #e9eef6; --muted: #8ea1bd; --gold: #e2b85c; --verde: #4fd18f; --verm: #ff6f61; color-scheme: dark; }
   * { box-sizing: border-box; }
-  html, body { margin: 0; background: var(--bg); color: var(--fg); font-family: "Jost", system-ui, sans-serif; min-height: 100%; }
-  .topo { max-width: 1200px; margin: 0 auto; padding: 14px 16px 10px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg); font-family: "Jost", system-ui, sans-serif; overflow: hidden; }
+  #cena { position: fixed; inset: 0; }
+  #cena canvas { display: block; width: 100%; height: 100%; }
+  #rotulos { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
+  .rot { position: absolute; transform: translate(-50%, -100%); padding: 3px 7px 4px; border-radius: 5px; background: rgba(8, 12, 20, .88);
+         border: 1px solid var(--gold); font: 600 10px/1.25 "IBM Plex Mono", monospace; white-space: nowrap; box-shadow: 0 0 10px rgba(226,184,92,.25); }
+  .rot b { display: block; font-size: 9px; color: #cfd8e6; font-weight: 600; letter-spacing: .04em; }
+  .rot b i { display: inline-block; width: 6px; height: 6px; border-radius: 1px; margin-right: 4px; background: var(--gold); vertical-align: 1px; }
+  .rot.swing { border-color: #5aa0e6; box-shadow: 0 0 10px rgba(90,160,230,.25); } .rot.swing b i { background: #5aa0e6; }
+  .rot .pos { color: var(--verde); } .rot .neg { color: var(--verm); }
+  .balao { position: absolute; transform: translate(-50%, -100%); padding: 6px 10px; border-radius: 8px; font: 700 13px "IBM Plex Mono", monospace; color: #0b2a18; background: #dfffe9;
+           box-shadow: 0 0 22px rgba(79,209,143,.7); white-space: nowrap; }
+  .balao.neg { color: #3a0d09; background: #ffe2de; box-shadow: 0 0 22px rgba(255,111,97,.6); }
+  .hud { position: fixed; left: 16px; top: 14px; right: 16px; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; pointer-events: none; flex-wrap: wrap; }
+  .hud > * { pointer-events: auto; }
   .marca { display: flex; align-items: center; gap: 10px; }
-  .marca svg { width: 30px; height: 36px; }
-  .marca h1 { margin: 0; font-weight: 500; font-size: 17px; letter-spacing: .3em; }
+  .marca svg { width: 28px; height: 34px; }
+  .marca h1 { margin: 0; font-weight: 500; font-size: 15px; letter-spacing: .3em; }
   .marca h1 span { color: var(--gold); }
-  .marca p { margin: 2px 0 0; font-size: 12px; color: var(--muted); }
-  .acoes { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-  .pill { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px; font-size: 12px; color: var(--muted); }
-  .dot { width: 8px; height: 8px; border-radius: 50%; background: #4fc38a; }
-  .dot.velho { background: #f0a43a; }
-  a.btn { padding: 7px 14px; border-radius: 8px; border: 1px solid var(--line); color: var(--fg); text-decoration: none; font-size: 13px; font-weight: 600; }
-  a.btn.ouro { background: var(--gold); color: var(--bg); border-color: var(--gold); }
-  .palco { max-width: 1200px; margin: 0 auto; padding: 0 16px 16px; }
-  canvas { display: block; width: 100%; height: auto; image-rendering: pixelated; image-rendering: crisp-edges; border-radius: 10px; border: 1px solid var(--line); background: #0b1526; }
-  .nota { max-width: 1200px; margin: 0 auto; padding: 0 16px 24px; font-size: 12px; color: var(--muted); }
+  .marca p { margin: 2px 0 0; font-size: 11px; color: var(--muted); }
+  .total { margin-top: 12px; }
+  .total .r { font-size: 11px; letter-spacing: .14em; color: var(--muted); text-transform: uppercase; }
+  .total .v { font: 600 38px/1.05 "IBM Plex Mono", monospace; }
+  .total .s { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .total .s b { font-family: "IBM Plex Mono", monospace; }
+  .acoes { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+  .pill { display: inline-flex; align-items: center; gap: 7px; padding: 6px 11px; border: 1px solid #22314a; border-radius: 999px; font-size: 12px; color: var(--muted); background: rgba(8,12,20,.7); }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--verde); box-shadow: 0 0 8px var(--verde); }
+  .dot.velho { background: #f0a43a; box-shadow: none; }
+  a.btn { padding: 7px 13px; border-radius: 8px; border: 1px solid #22314a; color: var(--fg); text-decoration: none; font-size: 13px; font-weight: 600; background: rgba(8,12,20,.7); }
+  a.btn.ouro { background: var(--gold); color: #120d03; border-color: var(--gold); }
+  .rodape { position: fixed; left: 16px; right: 16px; bottom: 10px; font-size: 11px; color: var(--muted); pointer-events: none; text-align: center; }
+  @media (max-width: 640px) { .total .v { font-size: 28px; } .acoes { width: 100%; justify-content: flex-start; } }
 </style>
 </head>
 <body>
-<div class="topo">
-  <div class="marca">
-    <svg viewBox="440 295 390 475" aria-hidden="true"><path fill="#d6ad55" d="M447 548 L502 505 L502 763 L447 763 Z"/><path fill="#d6ad55" d="M532 437 L584 394 L584 711 L612 711 L612 348 L665 303 L665 711 L773 711 L773 624 L712 585 L712 531 L823 599 L823 763 L532 763 Z"/></svg>
-    <div><h1>LEGATUS <span>GROUP</span></h1><p>Escritório dos robôs · ao vivo</p></div>
+<div id="cena"></div>
+<div id="rotulos"></div>
+<div class="hud">
+  <div>
+    <div class="marca">
+      <svg viewBox="440 295 390 475" aria-hidden="true"><path fill="#e2b85c" d="M447 548 L502 505 L502 763 L447 763 Z"/><path fill="#e2b85c" d="M532 437 L584 394 L584 711 L612 711 L612 348 L665 303 L665 711 L773 711 L773 624 L712 585 L712 531 L823 599 L823 763 L532 763 Z"/></svg>
+      <div><h1>LEGATUS <span>GROUP</span></h1><p>Escritório dos robôs · ao vivo</p></div>
+    </div>
+    <div class="total">
+      <div class="r">Resultado do dia</div>
+      <div class="v" id="t-dia">—</div>
+      <div class="s" id="t-sub"></div>
+    </div>
   </div>
   <div class="acoes">
     <span class="pill"><span class="dot" id="dot"></span><span id="idade">carregando…</span></span>
     <a class="btn" href="./">← Painel</a>
-    <a class="btn ouro" id="copiar" target="_blank" rel="noopener" href="https://roboforex.com/copy-trading/rating/aaao/46163199/">Copiar a estratégia ↗</a>
+    <a class="btn ouro" target="_blank" rel="noopener" href="https://roboforex.com/copy-trading/rating/aaao/46163199/">Copiar a estratégia ↗</a>
   </div>
 </div>
-<div class="palco"><canvas id="tela" aria-label="Escritório dos robôs: cada operação aberta é um robô trabalhando"></canvas></div>
-<p class="nota">Cada robô sentado é uma operação aberta agora na conta 46163199 (dourado = robô do ouro, azul = swing trade), com o resultado em aberto em cima. Quando uma operação fecha, aparece o balão com o resultado e o robô vai descansar. Dados reais do MetaTrader, atualizados a cada minuto. Resultados passados não garantem resultados futuros.</p>
+<div class="rodape">Cada operador sentado é uma operação aberta agora (dourado = robô do ouro · azul = swing trade). Dados reais do MetaTrader, a cada minuto. Resultado passado não garante resultado futuro.</div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (() => {
-  const cv = document.getElementById("tela"), ctx = cv.getContext("2d");
-  const FONTE = '"Press Start 2P", monospace';
   const nf = (v, c = 2) => Math.abs(v).toLocaleString("pt-BR", { minimumFractionDigits: c, maximumFractionDigits: c });
-  const usd = (v) => (v >= 0 ? "+" : "-") + "US$ " + nf(v);   // a fonte de pixel não tem o sinal "−"
-  const pct = (v) => (v >= 0 ? "+" : "-") + nf(v) + "%";
+  const usd = (v) => (v >= 0 ? "+" : "−") + "US$ " + nf(v);
+  const pct = (v) => (v >= 0 ? "+" : "−") + nf(v) + "%";
+  const $ = (id) => document.getElementById(id);
 
-  // ---------- mundo: dois layouts (largo no computador, alto no celular) ----------
-  let W, H, L, deitado;
-  function layout() {
-    deitado = cv.clientWidth >= 700 || window.innerWidth >= 700;
-    if (deitado) {
-      W = 480; H = 270;
-      L = { telao: { x: 120, y: 8, w: 170, h: 54 }, sala: { x: 8, y: 70, w: 312, h: 192 }, cafe: { x: 328, y: 8, w: 144, h: 122 }, bilhar: { x: 328, y: 138, w: 144, h: 124 }, cols: 4, mesaW: 72, mesaH: 46 };
-    } else {
-      W = 270; H = 470;
-      L = { telao: { x: 50, y: 8, w: 170, h: 54 }, sala: { x: 8, y: 70, w: 254, h: 250 }, cafe: { x: 8, y: 328, w: 125, h: 134 }, bilhar: { x: 137, y: 328, w: 125, h: 134 }, cols: 3, mesaW: 78, mesaH: 46 };
-    }
-    const esc = Math.max(1, Math.floor(Math.min(cv.clientWidth, 1168) * (window.devicePixelRatio || 1) / W));
-    cv.width = W * esc; cv.height = H * esc; ctx.setTransform(esc, 0, 0, esc, 0, 0); ctx.imageSmoothingEnabled = false;
-    cv.style.aspectRatio = W + " / " + H;
-    mesas = [];
-    const s = L.sala, linhas = Math.floor((s.h - 30) / L.mesaH);
-    for (let r = 0; r < linhas; r++) for (let c = 0; c < L.cols; c++) mesas.push({ x: s.x + 6 + c * ((s.w - 12) / L.cols), y: s.y + 28 + r * L.mesaH });
-    robos.forEach((r) => { if (r.mesa != null && r.mesa >= mesas.length) r.mesa = null; posAlvo(r, true); });
+  // ---------- cena ----------
+  const caixa = $("cena");
+  const R = new THREE.WebGLRenderer({ antialias: true });
+  R.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+  R.shadowMap.enabled = true; R.shadowMap.type = THREE.PCFSoftShadowMap;
+  R.outputEncoding = THREE.sRGBEncoding;
+  caixa.appendChild(R.domElement);
+  const S = new THREE.Scene();
+  S.background = new THREE.Color(0x05080f);
+  S.fog = new THREE.Fog(0x05080f, 60, 120);
+  const cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 400);
+  const ALVO = new THREE.Vector3(-1, 0, 4);
+
+  S.add(new THREE.HemisphereLight(0x9fb4d8, 0x1a1408, 0.4));
+  const sol = new THREE.DirectionalLight(0xfff2dc, 0.6); sol.position.set(-14, 28, 18); sol.castShadow = true;
+  sol.shadow.mapSize.set(2048, 2048); Object.assign(sol.shadow.camera, { left: -26, right: 26, top: 22, bottom: -22, near: 1, far: 80 }); S.add(sol);
+
+  const mat = (c, o = {}) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.75, metalness: 0.08, ...o });
+  const brilho = (c, i = 1.4) => new THREE.MeshStandardMaterial({ color: c, emissive: c, emissiveIntensity: i, roughness: 0.4 });
+  function bloco(w, h, d, m, x, y, z, pai = S) {
+    const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); b.position.set(x, y, z); b.castShadow = true; b.receiveShadow = true; pai.add(b); return b;
   }
-  let mesas = [];
+  const OURO = 0xe2b85c, AZUL = 0x5aa0e6;
+
+  // piso, paredes e moldura dourada (escritório 30 x 20)
+  const LX = 15, LZ = 10;
+  bloco(LX * 2 + 1, 0.6, LZ * 2 + 1, mat(0x24272d), 0, -0.3, 0);
+  bloco(LX * 2 + 1.6, 0.25, LZ * 2 + 1.6, brilho(OURO, 0.9), 0, -0.55, 0);
+  bloco(LX * 2 - 1, 0.02, LZ * 2 - 1, mat(0x2e3138), 0, 0.01, 0);
+  const parede = mat(0x16181d);
+  bloco(LX * 2 + 1, 5, 0.5, parede, 0, 2.5, -LZ - 0.25);
+  bloco(0.5, 5, LZ * 2 + 1, parede, -LX - 0.25, 2.5, 0);
+  bloco(LX * 2 + 1, 0.15, 0.6, brilho(OURO, 1.1), 0, 5.05, -LZ - 0.25);
+  bloco(0.6, 0.15, LZ * 2 + 1, brilho(OURO, 1.1), -LX - 0.25, 5.05, 0);
+  bloco(0.08, 0.12, LZ * 2, brilho(OURO, 0.9), LX + 0.4, 0.45, 0);          // grade baixa na frente
+  bloco(LX * 2, 0.12, 0.08, brilho(OURO, 0.9), 0, 0.45, LZ + 0.4);
+  for (let x = -LX; x <= LX; x += 3) bloco(0.08, 0.5, 0.08, mat(0x777777), x, 0.25, LZ + 0.4);
+  // racks de servidor na parede do fundo
+  for (let i = 0; i < 4; i++) {
+    bloco(1.2, 3.6, 1, mat(0x1c1f25), -LX + 1.2 + i * 1.4, 1.8, -LZ + 0.7);
+    for (let k = 0; k < 6; k++) bloco(0.8, 0.06, 0.02, brilho(k % 2 ? 0x4fd18f : 0x5aa0e6, 1.6), -LX + 1.2 + i * 1.4, 0.8 + k * 0.45, -LZ + 1.21);
+  }
+  // logo dourado na parede
+  const logo = new THREE.Shape(); const P1 = [[447,548],[502,505],[502,763],[447,763]], P2 = [[532,437],[584,394],[584,711],[612,711],[612,348],[665,303],[665,711],[773,711],[773,624],[712,585],[712,531],[823,599],[823,763],[532,763]];
+  const forma = (pts) => { const s = new THREE.Shape(); pts.forEach(([x, y], i) => (i ? s.lineTo : s.moveTo).call(s, (x - 635) / 120, -(y - 530) / 120)); return s; };
+  const logoM = new THREE.Mesh(new THREE.ExtrudeGeometry([forma(P1), forma(P2)], { depth: 0.15, bevelEnabled: false }), brilho(OURO, 0.7));
+  logoM.position.set(-4, 2.6, -LZ + 0.05); S.add(logoM);
+
+  // telão na parede (textura desenhada em canvas)
+  const tc = document.createElement("canvas"); tc.width = 1024; tc.height = 384; const tx = tc.getContext("2d");
+  const telaoTex = new THREE.CanvasTexture(tc); telaoTex.encoding = THREE.sRGBEncoding;
+  bloco(10.4, 4.2, 0.2, mat(0x101317), 6, 2.7, -LZ + 0.1);
+  const telao = new THREE.Mesh(new THREE.PlaneGeometry(10, 3.75), new THREE.MeshBasicMaterial({ map: telaoTex, toneMapped: false }));
+  telao.position.set(6, 2.7, -LZ + 0.22); S.add(telao);
+  function desenhaTelao() {
+    const M = (D && D.mt4) || {}, cal = M.calendario || [], hoje = (M.agora_srv || "").slice(0, 10), dia = cal.find((x) => x.dia === hoje);
+    tx.fillStyle = "#060a12"; tx.fillRect(0, 0, 1024, 384);
+    tx.fillStyle = "rgba(226,184,92,.9)"; tx.fillRect(0, 0, 1024, 6);
+    tx.font = "600 34px Jost, sans-serif"; tx.fillStyle = "#8ea1bd"; tx.fillText("RESULTADO DO DIA", 40, 70);
+    const p = dia && dia.pct != null ? dia.pct : 0;
+    tx.font = "600 120px 'IBM Plex Mono', monospace"; tx.fillStyle = p >= 0 ? "#4fd18f" : "#ff6f61"; tx.fillText(dia ? pct(p) : "—", 34, 200);
+    tx.font = "500 34px Jost, sans-serif"; tx.fillStyle = "#e9eef6";
+    tx.fillText(dia ? `${dia.ops} operações · ${dia.venc} no verde` : "", 40, 262);
+    if (M.flutuante != null) { tx.fillStyle = M.flutuante >= 0 ? "#4fd18f" : "#ff6f61"; tx.fillText("Em aberto agora: " + usd(M.flutuante), 40, 318); }
+    tx.fillStyle = "#ff6f61"; tx.beginPath(); tx.arc(900, 60, 12, 0, 7); tx.fill(); tx.fillStyle = "#e9eef6"; tx.font = "600 30px Jost"; tx.fillText("LIVE", 922, 71);
+    telaoTex.needsUpdate = true;
+  }
+
+  // ---------- mesas (até 12 operações ao mesmo tempo) ----------
+  const mesas = [];
+  const corMonitor = new THREE.Color();
+  for (let r = 0; r < 3; r++) for (let c = 0; c < 4; c++) {
+    const x = -12 + c * 5, z = -4.2 + r * 4.6, g = new THREE.Group(); g.position.set(x, 0, z); S.add(g);
+    bloco(3.2, 0.12, 1.5, mat(0x5c6168), 0, 1.0, 0, g);
+    bloco(0.1, 1, 1.3, mat(0x55595f), -1.5, 0.5, 0, g); bloco(0.1, 1, 1.3, mat(0x55595f), 1.5, 0.5, 0, g);
+    const tela = bloco(1.5, 0.9, 0.08, brilho(0x1a2a44, 0.6), 0, 1.65, -0.45, g);
+    bloco(0.1, 0.5, 0.1, mat(0x333333), 0, 1.25, -0.45, g);
+    bloco(1.1, 0.04, 0.4, mat(0x222222), 0, 1.08, 0.1, g);       // teclado
+    const faixa = bloco(3.4, 0.04, 1.7, brilho(0x222830, 0.2), 0, 0.03, 0, g);   // luz no chão da mesa (cor do tipo)
+    bloco(0.8, 0.1, 0.8, mat(0x1d2027), 0, 0.6, 1.1, g);          // cadeira
+    bloco(0.8, 0.8, 0.1, mat(0x1d2027), 0, 1.0, 1.5, g);
+    mesas.push({ g, tela, faixa, x, z, livre: true });
+  }
+  function pintaMesa(m, op) {
+    if (!op) { m.tela.material.color.set(0x1a2a44); m.tela.material.emissive.set(0x1a2a44); m.tela.material.emissiveIntensity = 0.4; m.faixa.material.emissive.set(0x222830); m.faixa.material.emissiveIntensity = 0.2; return; }
+    const ok = (op.lucro || 0) >= 0; corMonitor.set(ok ? 0x2fbf73 : 0xe0544a);
+    m.tela.material.color.copy(corMonitor); m.tela.material.emissive.copy(corMonitor); m.tela.material.emissiveIntensity = 1.1;
+    m.faixa.material.emissive.set(op.tipo === "swing" ? AZUL : OURO); m.faixa.material.emissiveIntensity = 0.9;
+  }
+
+  // ---------- área de descanso: café e bilhar ----------
+  bloco(6, 1.1, 1.2, mat(0x5a3d26), 11, 0.55, -8.5); bloco(0.9, 1.3, 0.8, mat(0x2d3038), 9, 1.75, -8.6); bloco(0.5, 0.2, 0.1, brilho(0x5fe8ff, 2), 9, 1.9, -8.18);
+  bloco(4, 0.7, 1.4, mat(0x6b2a44), 11.5, 0.35, -2.2); bloco(4, 0.9, 0.4, mat(0x7d3352), 11.5, 0.9, -2.8);   // sofá
+  bloco(4.4, 0.9, 2.6, mat(0x4a2e1c), 10.5, 0.45, 5); bloco(4, 0.08, 2.2, mat(0x1f7a4a), 10.5, 0.93, 5);     // bilhar
+  const bolas = [0xffffff, OURO, 0xe0544a, 0x5aa0e6, 0x2b2b2b].map((c, i) => { const b = new THREE.Mesh(new THREE.SphereGeometry(0.12, 12, 8), mat(c, { roughness: 0.2 })); b.position.set(9.6 + i * 0.4, 1.06, 4.6 + (i % 2) * 0.5); S.add(b); return b; });
+  [[-13.8, 8.8], [13.8, 8.8], [13.8, -1], [-13.8, -8.5]].forEach(([x, z]) => {           // plantas
+    bloco(0.7, 0.6, 0.7, mat(0x3a3d44), x, 0.3, z);
+    const f = new THREE.Mesh(new THREE.ConeGeometry(0.6, 1.6, 6), mat(0x55d6c2, { emissive: 0x1a6b5f, emissiveIntensity: 0.4 })); f.position.set(x, 1.4, z); f.castShadow = true; S.add(f);
+  });
+  const LAZER = [[9.6, -7.3], [11.4, -7.3], [13, -7.3], [10.5, -1.2], [12.5, -1.2], [8.2, 5], [12.8, 5.4], [10.5, 7.2], [9, 3], [12.2, 2.6]];
+
+  // ---------- operadores ----------
+  const CAMISAS = [0x2d6cdf, 0xd9524a, 0x2fa36b, 0x8b5bd6, 0xe2a23a, 0x3fb6c9, 0xd06aa0, 0x6f7a8a];
+  const PELE = [0xf1c9a0, 0xd9a77c, 0xa8724a, 0x7a4e2e];
+  const ops = [];   // operadores
+  let nId = 0;
+  function novoOperador() {
+    const g = new THREE.Group(), id = nId++;
+    const camisa = mat(CAMISAS[id % CAMISAS.length]), calca = mat(0x23262d), pele = mat(PELE[id % PELE.length]);
+    const pernaE = new THREE.Group(), pernaD = new THREE.Group();
+    bloco(0.22, 0.7, 0.24, calca, 0, -0.35, 0, pernaE); bloco(0.22, 0.7, 0.24, calca, 0, -0.35, 0, pernaD);
+    pernaE.position.set(-0.14, 0.75, 0); pernaD.position.set(0.14, 0.75, 0); g.add(pernaE, pernaD);
+    const tronco = bloco(0.6, 0.75, 0.34, camisa, 0, 1.12, 0, g);
+    const bE = new THREE.Group(), bD = new THREE.Group();
+    bloco(0.16, 0.6, 0.18, camisa, 0, -0.28, 0, bE); bloco(0.16, 0.6, 0.18, camisa, 0, -0.28, 0, bD);
+    bE.position.set(-0.4, 1.45, 0); bD.position.set(0.4, 1.45, 0); g.add(bE, bD);
+    const cab = new THREE.Mesh(new THREE.SphereGeometry(0.25, 14, 10), pele); cab.position.set(0, 1.78, 0); cab.castShadow = true; g.add(cab);
+    const cabelo = new THREE.Mesh(new THREE.SphereGeometry(0.26, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2.2), mat(id % 3 ? 0x2a1d14 : 0x111111)); cabelo.position.set(0, 1.82, 0); g.add(cabelo);
+    const fone = bloco(0.56, 0.06, 0.08, brilho(0xe2b85c, 0.6), 0, 2.02, 0, g);   // headset dourado
+    g.scale.setScalar(0.95);
+    S.add(g);
+    const lazer = LAZER[id % LAZER.length];
+    const o = { id, g, pernaE, pernaD, bE, bD, tronco, op: null, mesa: null, x: lazer[0], z: lazer[1], tx: lazer[0], tz: lazer[1], anda: false, fase: Math.random() * 6, espera: 0, lazerIdx: id % LAZER.length };
+    g.position.set(o.x, 0, o.z);
+    ops.push(o); return o;
+  }
+  function vaiLazer(o) { const l = LAZER[o.lazerIdx]; o.tx = l[0] + (Math.random() - 0.5) * 0.6; o.tz = l[1] + (Math.random() - 0.5) * 0.6; }
+  function vaiMesa(o, m) { o.tx = m.x; o.tz = m.z + 1.15; }
+
+  // ---------- rótulos HTML sobre a cena ----------
+  const camada = $("rotulos"), v3 = new THREE.Vector3();
+  function tela(x, y, z) { v3.set(x, y, z).project(cam); return [(v3.x + 1) / 2 * innerWidth, (1 - v3.y) / 2 * innerHeight]; }
+  const baloes = [];
+  function balao(o, v) {
+    const d = document.createElement("div"); d.className = "balao" + (v < 0 ? " neg" : ""); d.textContent = (v >= 0 ? "✓ " : "") + usd(v || 0);
+    camada.appendChild(d); baloes.push({ d, x: o.g.position.x, z: o.g.position.z, t: 0 });
+  }
 
   // ---------- dados ----------
-  let D = null, abertasAnt = null, fechadasVistas = new Set();
+  let D = null, primeira = true;
   const chave = (o) => [o.par, o.lado, o.lote, o.abre].join("|");
   async function busca() {
     let txt = null;
@@ -84,168 +226,92 @@
     if (!txt) { try { txt = await (await fetch("data.js?" + Date.now(), { cache: "no-store" })).text(); } catch (e) { return; } }
     try { aplica(JSON.parse(txt.slice(txt.indexOf("{"), txt.lastIndexOf("}") + 1))); } catch (e) {}
   }
-
   function aplica(novo) {
     D = novo;
     const M = D.mt4 || {};
     const abertas = (M.abertas || []).map((o) => ({ ...o, k: chave(o) }));
     const fechadas = [...((M.por_tipo && M.por_tipo.robo && M.por_tipo.robo.ultimas) || []), ...((M.por_tipo && M.por_tipo.swing && M.por_tipo.swing.ultimas) || [])];
-    const primeira = abertasAnt == null;
-    // operações que fecharam desde a última leitura: balão com o resultado e o robô vai descansar
-    const agoraK = new Set(abertas.map((o) => o.k));
-    robos.forEach((r) => {
-      if (r.op && !agoraK.has(r.op.k)) {
-        const f = fechadas.find((x) => chave(x) === r.op.k);
-        if (!primeira) balao(r, f ? f.usd : r.op.lucro);
-        r.op = null; r.mesa = null; r.espera = 2.2; posAlvo(r);
+    const ks = new Set(abertas.map((o) => o.k));
+    ops.forEach((o) => {
+      if (o.op && !ks.has(o.op.k)) {
+        const f = fechadas.find((x) => chave(x) === o.op.k);
+        if (!primeira) balao(o, f ? f.usd : o.op.lucro);
+        pintaMesa(mesas[o.mesa], null); mesas[o.mesa].livre = true;
+        o.op = null; o.mesa = null; o.espera = 2.5; vaiLazer(o);
       }
     });
-    // operações novas: um robô livre levanta e vai para uma mesa
-    abertas.forEach((o) => {
-      const r = robos.find((x) => x.op && x.op.k === o.k);
-      if (r) { r.op = o; return; }
-      const livres = mesas.map((_, i) => i).filter((i) => !robos.some((x) => x.mesa === i));
-      if (!livres.length) return;
-      const rb = robos.find((x) => !x.op && x.espera <= 0) || novoRobo();
-      rb.op = o; rb.mesa = livres[0]; posAlvo(rb, primeira);
+    abertas.forEach((a) => {
+      const o = ops.find((x) => x.op && x.op.k === a.k);
+      if (o) { o.op = a; pintaMesa(mesas[o.mesa], a); return; }
+      const mi = mesas.findIndex((m) => m.livre); if (mi < 0) return;
+      const livre = ops.find((x) => !x.op && x.espera <= 0) || novoOperador();
+      livre.op = a; livre.mesa = mi; mesas[mi].livre = false; vaiMesa(livre, mesas[mi]); pintaMesa(mesas[mi], a);
+      if (primeira) { livre.x = livre.tx; livre.z = livre.tz; }
     });
-    // equipe mínima para sempre ter alguém no café e no bilhar
-    while (robos.filter((r) => !r.op).length < 4) novoRobo(true);
-    fechadas.forEach((f) => fechadasVistas.add(chave(f) + f.t));
-    abertasAnt = abertas;
+    while (ops.filter((o) => !o.op).length < 5) novoOperador();
     extra = Math.max(0, abertas.length - mesas.length);
+    primeira = false;
+    // HUD
+    const cal = M.calendario || [], hoje = (M.agora_srv || "").slice(0, 10), dia = cal.find((x) => x.dia === hoje);
+    $("t-dia").textContent = dia && dia.pct != null ? pct(dia.pct) : "—";
+    $("t-dia").style.color = dia && dia.pct < 0 ? "var(--verm)" : "var(--verde)";
+    const trab = abertas.length, desc = ops.filter((o) => !o.op).length;
+    $("t-sub").innerHTML = `${trab} em operação · ${desc} em descanso` + (M.flutuante != null ? ` · em aberto <b style="color:${M.flutuante >= 0 ? "var(--verde)" : "var(--verm)"}">${usd(M.flutuante)}</b>` : "");
+    desenhaTelao();
   }
   let extra = 0;
 
-  // ---------- robôs ----------
-  const robos = []; let nId = 0;
-  function novoRobo(direto) {
-    const r = { id: nId++, x: 0, y: 0, tx: 0, ty: 0, op: null, mesa: null, espera: 0, fase: Math.random() * 6, lazer: nId % 2 ? "cafe" : "bilhar", vaga: nId };
-    robos.push(r); posAlvo(r, true); return r;
-  }
-  function posAlvo(r, teleporta) {
-    if (r.mesa != null && mesas[r.mesa]) { const m = mesas[r.mesa]; r.tx = m.x + 18; r.ty = m.y + 14; }
-    else {
-      const sala = L[r.lazer], livres = robos.filter((x) => !x.op && x.lazer === r.lazer), i = Math.max(0, livres.indexOf(r));
-      if (r.lazer === "cafe") { r.tx = sala.x + 22 + (i % 4) * 28; r.ty = sala.y + 62 + Math.floor(i / 4) * 26; }
-      else { const ang = i * 1.7; r.tx = sala.x + sala.w / 2 + Math.cos(ang) * 44; r.ty = sala.y + 70 + Math.sin(ang) * 30; }
-    }
-    if (teleporta) { r.x = r.tx; r.y = r.ty; }
-  }
-  const baloes = [];
-  function balao(r, v) { baloes.push({ x: r.x, y: r.y - 16, v, t: 0 }); }
-
-  // ---------- desenho ----------
-  const C = { piso: "#13233d", piso2: "#162a48", parede: "#0b1730", madeira: "#6b4a2b", madeira2: "#835c36", mesa: "#3b2a1c", ouro: "#d6ad55", azul: "#5aa0e6", verde: "#4fc38a", verm: "#ef6f5f", tela: "#071022", branco: "#e9eef6", cinza: "#8ea1bd" };
-  const rect = (x, y, w, h, c) => { ctx.fillStyle = c; ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); };
-  function texto(t, x, y, c, tam = 6, al = "left") { ctx.font = `${tam}px ${FONTE}`; ctx.fillStyle = c; ctx.textAlign = al; ctx.textBaseline = "top"; ctx.fillText(t, Math.round(x), Math.round(y)); }
-
-  function sala(s, nome, cor) {
-    rect(s.x, s.y, s.w, s.h, C.parede);
-    for (let y = s.y + 14; y < s.y + s.h; y += 8) for (let x = s.x; x < s.x + s.w; x += 8) rect(x, y, 8, 8, ((x + y) / 8) % 2 ? C.piso : C.piso2);
-    rect(s.x, s.y, s.w, 2, cor); texto(nome, s.x + 4, s.y + 4, cor, 5);
+  // ---------- câmera isométrica ----------
+  function ajusta() {
+    const w = innerWidth, h = innerHeight; R.setSize(w, h);
+    const asp = w / h, alvoLarg = asp < 0.8 ? 40 : 46;   // largura do mundo visível
+    const meiaL = alvoLarg / 2, meiaA = meiaL / asp;
+    Object.assign(cam, { left: -meiaL, right: meiaL, top: meiaA, bottom: -meiaA }); cam.updateProjectionMatrix();
   }
 
-  function robo(x, y, tipo, sentado, t, ocioso) {
-    const corpo = tipo === "swing" ? C.azul : C.ouro, escuro = tipo === "swing" ? "#3b6fa8" : "#a8823a";
-    const bob = sentado ? 0 : Math.round(Math.sin(t * 6) * 0.6);
-    // pernas
-    if (!sentado) { const p = Math.sin(t * 10) > 0 && !ocioso; rect(x - 3, y + 6, 2, p ? 4 : 3, "#2a3550"); rect(x + 1, y + 6, 2, p ? 3 : 4, "#2a3550"); }
-    rect(x - 4, y - 2 + bob, 8, 8, corpo); rect(x - 4, y + 4 + bob, 8, 2, escuro);           // corpo
-    rect(x - 4, y - 10 + bob, 8, 7, "#c9d3e3"); rect(x - 3, y - 8 + bob, 6, 3, "#122038");  // cabeça e visor
-    const pisca = (Math.floor(t * 0.7 + x) % 5) === 0 && (t * 10 % 7) < 1;
-    if (!pisca) { rect(x - 2, y - 7 + bob, 1, 1, "#5fe8ff"); rect(x + 1, y - 7 + bob, 1, 1, "#5fe8ff"); }
-    rect(x, y - 13 + bob, 1, 3, "#c9d3e3"); rect(x - 1, y - 14 + bob, 3, 2, Math.sin(t * 4 + x) > 0 ? C.verm : "#7a2c26"); // antena
-  }
-
-  function mesa(m, r, t) {
-    rect(m.x + 4, m.y + 18, 46, 6, C.mesa); rect(m.x + 6, m.y + 24, 2, 8, C.mesa); rect(m.x + 46, m.y + 24, 2, 8, C.mesa);
-    rect(m.x + 26, m.y + 4, 22, 14, "#2a3550"); rect(m.x + 27, m.y + 5, 20, 11, C.tela); rect(m.x + 35, m.y + 18, 4, 2, "#2a3550");
-    if (r && r.op) {
-      const ok = (r.op.lucro || 0) >= 0, cor = ok ? C.verde : C.verm;
-      // mini gráfico no monitor
-      let py = m.y + 11;
-      for (let i = 0; i < 18; i += 2) { const ny = m.y + 7 + ((Math.sin((i + t * 3 + m.x) * 0.9) + 1) * 3.5) | 0; rect(m.x + 28 + i, Math.min(py, ny), 2, Math.abs(ny - py) + 1, cor); py = ny; }
-    }
-  }
-
-  function etiqueta(r) {
-    const o = r.op, ok = (o.lucro || 0) >= 0;
-    const t1 = `${o.par.replace("USD", "").replace("XAU", "OURO") || o.par} ${o.lado === "buy" ? "C" : "V"}`;
-    const t2 = o.lucro == null ? "" : usd(o.lucro);
-    ctx.font = `5px ${FONTE}`; const w = Math.max(ctx.measureText(t1).width, ctx.measureText(t2).width) + 6;
-    const x = r.x - w / 2 + 12, y = r.y - 30;
-    rect(x, y, w, 15, "rgba(4,10,22,.85)"); rect(x, y + 15, w, 1, ok ? C.verde : C.verm);
-    texto(t1, x + 3, y + 2, C.branco, 5); texto(t2, x + 3, y + 9, ok ? C.verde : C.verm, 5);
-  }
-
-  function telao(t) {
-    const s = L.telao, M = (D && D.mt4) || {}, cal = M.calendario || [];
-    const hoje = (M.agora_srv || "").slice(0, 10), dia = cal.find((x) => x.dia === hoje);
-    rect(s.x - 3, s.y - 3, s.w + 6, s.h + 6, "#2a3550"); rect(s.x, s.y, s.w, s.h, C.tela);
-    for (let y = s.y; y < s.y + s.h; y += 2) rect(s.x, y, s.w, 1, "rgba(255,255,255,.025)");
-    texto("RESULTADO DO DIA", s.x + 6, s.y + 5, C.cinza, 5);
-    const p = dia && dia.pct != null ? dia.pct : 0;
-    texto(dia ? pct(p) : "—", s.x + 6, s.y + 14, p >= 0 ? C.verde : C.verm, 12);
-    texto(dia ? `${dia.ops} OPS · ${dia.venc} NO VERDE` : "", s.x + 6, s.y + 30, C.branco, 5);
-    const fl = M.flutuante;
-    texto(fl != null ? "EM ABERTO " + usd(fl) : "", s.x + 6, s.y + 40, fl >= 0 ? C.verde : C.verm, 5);
-    const piscar = Math.sin(t * 3) > 0;
-    rect(s.x + s.w - 30, s.y + 5, 3, 3, piscar ? C.verm : "#4a1c18"); texto("LIVE", s.x + s.w - 25, s.y + 5, C.branco, 5);
-  }
-
-  function cafe(s, t) {
-    rect(s.x + 8, s.y + 18, 40, 12, C.madeira); rect(s.x + 8, s.y + 30, 40, 2, C.madeira2);         // balcão
-    rect(s.x + 12, s.y + 8, 10, 10, "#39404f"); rect(s.x + 14, s.y + 11, 6, 3, "#5fe8ff");             // máquina de café
-    for (let i = 0; i < 3; i++) rect(s.x + 16 + Math.sin(t * 2 + i) * 1.5, s.y + 5 - i * 2 - (t * 4 % 2), 1, 1, "rgba(255,255,255,.5)");
-    rect(s.x + s.w - 26, s.y + 18, 18, 10, "#2f6b3a"); rect(s.x + s.w - 22, s.y + 14, 10, 5, "#3e8c4c"); // planta e sofá
-    rect(s.x + s.w - 54, s.y + s.h - 22, 40, 10, "#7a2c4a"); rect(s.x + s.w - 54, s.y + s.h - 28, 40, 6, "#8f3a5a");
-  }
-  function bilhar(s, t) {
-    const cx = s.x + s.w / 2, cy = s.y + 70;
-    rect(cx - 34, cy - 18, 68, 36, "#5a3a22"); rect(cx - 30, cy - 14, 60, 28, "#1f7a4a");
-    [[-29, -13], [0, -14], [28, -13], [-29, 12], [0, 13], [28, 12]].forEach(([a, b]) => rect(cx + a, cy + b, 2, 2, "#0b1a10"));
-    const bx = cx + Math.sin(t * 0.8) * 18, by = cy + Math.cos(t * 1.1) * 8;
-    rect(bx, by, 2, 2, "#fff"); rect(cx + 10, cy - 4, 2, 2, C.ouro); rect(cx + 13, cy + 1, 2, 2, C.verm); rect(cx + 8, cy + 4, 2, 2, C.azul);
-    rect(s.x + 6, s.y + 18, 3, 30, C.madeira2);   // taco na parede
-  }
-
-  // ---------- laço de animação ----------
+  // ---------- laço ----------
   let tAnt = performance.now(), T = 0;
   function quadro(agora) {
-    const dt = Math.min(0.1, (agora - tAnt) / 1000); tAnt = agora; T += dt;
-    ctx.clearRect(0, 0, W, H); rect(0, 0, W, H, "#0b1526");
-    sala(L.sala, "SALA DE OPERACOES", C.ouro); sala(L.cafe, "CAFE", "#c9a27a"); sala(L.bilhar, "BILHAR", "#4fc38a");
-    cafe(L.cafe, T); bilhar(L.bilhar, T); telao(T);
-    // movimento
-    robos.forEach((r) => {
-      r.espera = Math.max(0, r.espera - dt);
-      if (r.espera > 0) return;
-      if (!r.op && Math.random() < dt * 0.05) posAlvo(r);   // de vez em quando muda de lugar no lazer
-      const dx = r.tx - r.x, dy = r.ty - r.y, d = Math.hypot(dx, dy), v = 40 * dt;
-      if (d > v) { r.x += dx / d * v; r.y += dy / d * v; r.anda = true; } else { r.x = r.tx; r.y = r.ty; r.anda = false; }
+    const dt = Math.min(0.05, (agora - tAnt) / 1000); tAnt = agora; T += dt;
+    const ang = Math.PI / 4 + Math.sin(T * 0.08) * 0.12;   // câmera balança devagar
+    cam.position.set(ALVO.x + Math.sin(ang) * 40, 32, ALVO.z + Math.cos(ang) * 40); cam.lookAt(ALVO);
+    bolas[0].position.x = 10.5 + Math.sin(T * 0.9) * 1.5; bolas[0].position.z = 5 + Math.cos(T * 1.3) * 0.8;
+
+    ops.forEach((o) => {
+      o.espera = Math.max(0, o.espera - dt);
+      if (o.espera <= 0 && !o.op && Math.random() < dt * 0.03) vaiLazer(o);
+      const dx = o.tx - o.x, dz = o.tz - o.z, d = Math.hypot(dx, dz), v = 3.2 * dt;
+      o.anda = o.espera <= 0 && d > 0.05;
+      if (o.anda) { const k = Math.min(1, v / d); o.x += dx * k; o.z += dz * k; o.g.rotation.y = Math.atan2(dx, dz); }
+      o.g.position.set(o.x, 0, o.z);
+      const sentado = o.op && !o.anda && d < 0.1;
+      const passo = o.anda ? Math.sin(T * 10 + o.fase) * 0.6 : 0;
+      o.pernaE.rotation.x = sentado ? -1.4 : passo; o.pernaD.rotation.x = sentado ? -1.4 : -passo;
+      o.bE.rotation.x = sentado ? -0.9 + Math.sin(T * 14 + o.fase) * 0.08 : -passo * 0.8; o.bD.rotation.x = sentado ? -0.9 + Math.cos(T * 13 + o.fase) * 0.08 : passo * 0.8;
+      o.g.position.y = sentado ? -0.18 : (o.anda ? Math.abs(Math.sin(T * 10 + o.fase)) * 0.06 : 0);
+      if (sentado) o.g.rotation.y = Math.PI;
     });
-    // mesas (atrás), robôs, etiquetas (na frente)
-    mesas.forEach((m, i) => mesa(m, robos.find((r) => r.mesa === i && r.op && !r.anda), T));
-    robos.slice().sort((a, b) => a.y - b.y).forEach((r) => {
-      const sentado = r.op && !r.anda;
-      robo(r.x, r.y, r.op ? r.op.tipo : (r.id % 3 === 0 ? "swing" : "robo"), sentado, T + r.fase, !r.anda);
-      if (!r.op && !r.anda && r.lazer === "cafe") rect(r.x + 4, r.y - 1, 3, 3, "#f3f3f3");   // xícara
-      if (!r.op && !r.anda && r.lazer === "bilhar") rect(r.x + 4, r.y - 12, 1, 16, C.madeira2);   // taco
+
+    // rótulos das operações
+    const usados = new Set();
+    ops.forEach((o) => {
+      if (!o.op) return;
+      let el = o.el;
+      if (!el) { el = o.el = document.createElement("div"); camada.appendChild(el); }
+      usados.add(el);
+      const a = o.op, ok = (a.lucro || 0) >= 0, nome = a.par.replace("XAUUSD", "OURO");
+      el.className = "rot" + (a.tipo === "swing" ? " swing" : "");
+      const html = `<b><i></i>${nome} · ${a.lado === "buy" ? "COMPRA" : "VENDA"} ${String(a.lote).replace(".", ",")}</b><span class="${ok ? "pos" : "neg"}">${a.lucro == null ? "" : usd(a.lucro)}</span>`;
+      if (el.__h !== html) { el.innerHTML = html; el.__h = html; }
+      const [sx, sy] = tela(o.x, 3.1, o.z - 0.6); el.style.left = sx + "px"; el.style.top = sy + "px";
     });
-    robos.forEach((r) => { if (r.op && !r.anda) etiqueta(r); });
-    if (extra) texto(`+${extra} OPERACOES`, L.sala.x + L.sala.w - 4, L.sala.y + 4, C.cinza, 5, "right");
-    if (D && !(D.mt4 && D.mt4.abertas && D.mt4.abertas.length)) texto("NENHUMA OPERACAO ABERTA", L.sala.x + L.sala.w / 2, L.sala.y + L.sala.h / 2, C.cinza, 6, "center");
-    // balões de operação fechada
+    [...camada.querySelectorAll(".rot")].forEach((el) => { if (!usados.has(el)) { el.remove(); ops.forEach((o) => { if (o.el === el) o.el = null; }); } });
     for (let i = baloes.length - 1; i >= 0; i--) {
-      const b = baloes[i]; b.t += dt; if (b.t > 5) { baloes.splice(i, 1); continue; }
-      const y = b.y - b.t * 6, ok = b.v >= 0, s = usd(b.v || 0);
-      ctx.globalAlpha = Math.min(1, (5 - b.t) / 1.2);
-      ctx.font = `6px ${FONTE}`; const w = ctx.measureText(s).width + 8;
-      rect(b.x - w / 2, y - 12, w, 11, "#fff"); rect(b.x - 2, y - 1, 4, 3, "#fff");
-      texto(s, b.x, y - 9, ok ? "#1e8a52" : "#c0392b", 6, "center");
-      ctx.globalAlpha = 1;
+      const b = baloes[i]; b.t += dt;
+      if (b.t > 5) { b.d.remove(); baloes.splice(i, 1); continue; }
+      const [sx, sy] = tela(b.x, 3.6 + b.t * 0.6, b.z); b.d.style.left = sx + "px"; b.d.style.top = sy + "px"; b.d.style.opacity = Math.min(1, (5 - b.t) / 1.2);
     }
+    R.render(S, cam);
     requestAnimationFrame(quadro);
   }
 
@@ -253,16 +319,17 @@
   setInterval(() => {
     if (!D) return;
     const s = Math.max(0, Math.round((Date.now() - new Date(D.atualizado).getTime()) / 1000));
-    document.getElementById("idade").textContent = s > 600 ? `Sem atualização há ${Math.round(s / 60)} min` : `Atualizado há ${s < 60 ? s + " s" : Math.round(s / 60) + " min"}`;
-    document.getElementById("dot").className = "dot" + (s > 600 ? " velho" : "");
+    $("idade").textContent = s > 600 ? `Sem atualização há ${Math.round(s / 60)} min` : `Atualizado há ${s < 60 ? s + " s" : Math.round(s / 60) + " min"}`;
+    $("dot").className = "dot" + (s > 600 ? " velho" : "");
   }, 1000);
 
-  window.addEventListener("resize", layout);
-  layout();
-  for (let i = 0; i < 4; i++) novoRobo(true);
-  document.fonts.ready.then(() => requestAnimationFrame(quadro));
+  addEventListener("resize", ajusta); ajusta();
+  for (let i = 0; i < 5; i++) novoOperador();
+  desenhaTelao();
+  document.fonts.ready.then(() => { desenhaTelao(); });
+  requestAnimationFrame(quadro);
   busca(); setInterval(busca, 60000);
-  window.__escritorio = { aplica, robos };   // para testes
+  window.__escritorio = { aplica, ops };   // para testes
 })();
 </script>
 </body>
