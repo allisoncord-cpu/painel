@@ -1242,7 +1242,7 @@
       const [sx, sy] = tela(m.x, 2.9, m.z + 0.8); el.style.left = sx + "px"; el.style.top = sy + "px";
     });
     else mesas.forEach((m) => { if (m.el) { m.el.remove(); m.el = null; } });
-    [...camada.querySelectorAll(".rot")].forEach((el) => { if (!usados.has(el)) { el.remove(); gente.forEach((p) => { if (p.el === el) p.el = null; }); } });
+    [...camada.querySelectorAll(".rot")].forEach((el) => { if (!usados.has(el) && el !== rotAnalista) { el.remove(); gente.forEach((p) => { if (p.el === el) p.el = null; }); } });
     for (let i = baloes.length - 1; i >= 0; i--) {
       const b = baloes[i]; b.t += dt;
       if (b.t > b.dur) { b.d.remove(); baloes.splice(i, 1); continue; }
