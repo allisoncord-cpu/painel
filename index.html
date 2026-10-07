@@ -1,0 +1,1456 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="description" content="Resultados ao vivo do copy trading em ouro da Legatus Group."><style>body{margin:0}</style></head><body><title>Legatus Group</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: painel de leitura rápida — marca + idioma, placar, robô ao vivo, gráficos, calendário, operações, comparativo,
+   simulador com o resultado real, como copiar, FAQ. Identidade única escura (azul-marinho), ouro só nos dados do XAUUSD. */
+:root {
+  --bg: #07101f; --bg-2: #0b1830; --panel: #0e1c34; --panel-2: #13253f; --line: #1f3456;
+  --fg: #e9eef6; --muted: #8ea1bd; --gold: #d6ad55; --gold-soft: rgba(214, 173, 85, .16);
+  --equity: #6fa9e0; --up: #4fc38a; --up-soft: rgba(79, 195, 138, .16); --down: #ef6f5f; --down-soft: rgba(239, 111, 95, .12);
+  --font-display: "Jost", "Futura", "Century Gothic", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --font-data: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  color-scheme: dark;
+}
+body { background: radial-gradient(1200px 500px at 15% -10%, var(--bg-2), transparent 70%), var(--bg); background-color: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.5; min-height: 100%; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-inline: 20px; padding-block: 24px 40px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }   /* minmax(0) = a tabela larga não alarga a página no celular */
+a { color: inherit; }
+
+/* faixa de comando */
+.cmd { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; padding-bottom: 18px; border-bottom: 1px solid var(--line); }
+.brand { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.logo { width: 46px; height: 56px; flex: none; }
+.brand h1 { margin: 0; font-family: var(--font-display); font-weight: 500; font-size: 22px; letter-spacing: .32em; line-height: 1.2; text-transform: uppercase; }
+.brand h1 span { color: var(--gold); }
+.brand p { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
+.brand p b { font-family: var(--font-data); font-weight: 500; color: var(--fg); }
+.status { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.pill { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px; font-size: 12px; color: var(--muted); background: var(--panel); }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--up); animation: pulso 2.4s infinite; flex: none; }
+.dot.off { background: var(--muted); animation: none; }
+@keyframes pulso { 0% { box-shadow: 0 0 0 0 rgba(79,195,138,.55) } 70% { box-shadow: 0 0 0 8px rgba(79,195,138,0) } 100% { box-shadow: 0 0 0 0 rgba(79,195,138,0) } }
+@media (prefers-reduced-motion: reduce) { .dot { animation: none } }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 9px 16px; border-radius: 8px; font-weight: 600; font-size: 14px; text-decoration: none; border: 1px solid transparent; cursor: pointer; font-family: inherit; }
+.btn.ouro { background: var(--gold); color: var(--bg); }
+.btn.zap { background: #25d366; color: #052e16; }
+.btn.robo { background: #3a5373; color: #fff; border-color: #4d6a90; }   /* azul da RoboForex */
+.btn.linha { border-color: var(--line); color: var(--fg); background: var(--panel); }
+.btn:hover { filter: brightness(1.08); }
+.btn:focus-visible, .seg button:focus-visible, .idioma button:focus-visible, summary:focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; }
+.recarregar { padding: 6px 12px; font-size: 13px; }
+body.modo-live { overflow: hidden; }
+body.modo-live .wrap { display: none; }
+.live { position: fixed; inset: 0; z-index: 50; background: radial-gradient(1200px 600px at 20% -10%, var(--bg-2), transparent 70%), var(--bg); padding: clamp(16px, 3vw, 40px); padding-top: calc(clamp(16px, 3vw, 40px) + env(safe-area-inset-top, 0px)); display: flex; flex-direction: column; gap: clamp(12px, 2vw, 24px); overflow-y: auto; }
+.live > * { flex-shrink: 0; }   /* cada bloco abaixo do outro; a tela rola se não couber */
+[hidden] { display: none !important; }
+.live[hidden] { display: none; }
+.live-topo { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; }
+.live-acoes { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.live-grade { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-auto-rows: minmax(min-content, auto); gap: clamp(10px, 1.6vw, 18px); min-height: 0; }
+.live-card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: clamp(12px, 1.8vw, 22px); display: grid; gap: 6px; align-content: start; min-width: 0; container-type: inline-size; }
+.live-card.grande { grid-column: span 2; }
+.live-card.largo { grid-column: span 4; }
+.lv-v { font-family: var(--font-data); font-weight: 500; font-size: clamp(30px, 18cqi, 96px); line-height: 1; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.lv-v.ouro { color: var(--gold); }
+.lv-m { font-family: var(--font-data); font-size: clamp(18px, 14cqi, 42px); line-height: 1.1; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.lv-sinal { font-size: clamp(16px, 2.2vw, 28px); font-weight: 600; }
+.grafico-card .grafico { height: clamp(160px, 26vh, 320px); }
+.live-rodape { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 20px; color: var(--muted); font-size: 13px; }
+@media (max-width: 760px) { .live-grade { grid-template-columns: repeat(2, minmax(0, 1fr)); } .live-card.grande, .live-card.largo { grid-column: span 2; } }
+.compart { position: relative; }
+.menu-compart { position: absolute; right: 0; top: calc(100% + 6px); z-index: 5; display: grid; gap: 8px; padding: 10px; width: 240px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 10px 28px rgba(0,0,0,.4); }
+.menu-compart[hidden] { display: none; }
+.menu-compart input { box-sizing: border-box; width: 100%; font: inherit; font-family: var(--font-data); font-size: 12px; color: var(--muted); background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; }
+@media (max-width: 560px) { .menu-compart { left: 0; right: auto; } }
+.recarregar[aria-busy="true"] span:first-child { display: inline-block; animation: gira .8s linear infinite; }
+@keyframes gira { to { transform: rotate(360deg); } }
+.idioma { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.idioma button { font: inherit; font-size: 13px; padding: 5px 9px; border: 0; background: transparent; color: var(--muted); cursor: pointer; display: inline-flex; gap: 5px; align-items: center; }
+.idioma button[aria-pressed="true"] { background: var(--gold-soft); color: var(--fg); }
+
+/* placar */
+.placar { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: 12px; background: var(--panel); overflow: hidden; }
+.kpi { padding: 16px clamp(10px, 1.6vw, 18px); display: grid; gap: 4px; align-content: start; border-right: 1px solid var(--line); min-width: 0; container-type: inline-size; }
+.kpi:last-child { border-right: 0; }
+.rot { font-size: 11px; text-transform: uppercase; letter-spacing: .09em; color: var(--muted); }
+.kpi .val { font-family: var(--font-data); font-size: clamp(14px, 12cqi, 26px); font-weight: 500; font-variant-numeric: tabular-nums; line-height: 1.15; white-space: nowrap; }
+.kpi .sub { font-size: 12px; color: var(--muted); }
+.kpi.destaque .val { color: var(--gold); font-size: clamp(16px, 17cqi, 30px); }
+.pos { color: var(--up); } .neg { color: var(--down); }
+
+/* painéis */
+.grade { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; }
+.grade.um { grid-template-columns: minmax(0, 1fr); }
+.intro { margin: -4px 0 0; font-size: 16px; line-height: 1.5; max-width: 80ch; }
+.intro b { color: var(--gold); font-weight: 600; }
+.rola { position: relative; min-width: 0; }
+.rola.atalhos-wrap { position: sticky; top: 0; z-index: 20; margin: -8px 0; }
+.rola-seta { position: absolute; top: 50%; width: 32px; height: 32px; margin-top: -16px; padding: 0; border-radius: 50%; border: 1px solid var(--gold); background: rgba(7, 16, 31, .92); color: var(--gold); font: 700 20px/1 var(--font-body); display: grid; place-items: center; cursor: pointer; z-index: 3; box-shadow: 0 2px 12px rgba(0, 0, 0, .6); }
+.rola-seta.dir { right: 4px; animation: cutuca 1.4s ease-in-out infinite; }
+.rola-seta.esq { left: 4px; }
+.rola-seta[hidden] { display: none; }
+.rola.topo .rola-seta { top: 24px; }
+.atalhos-wrap .rola-seta { width: 28px; height: 28px; margin-top: -14px; font-size: 17px; }
+@keyframes cutuca { 0%, 100% { translate: 0 0; } 50% { translate: 4px 0; } }
+@media (prefers-reduced-motion: reduce) { .rola-seta.dir { animation: none; } }
+.atalhos { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding: 10px 0; background: rgba(7, 16, 31, .92); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
+.atalhos::-webkit-scrollbar { display: none; }
+.atalhos a { flex: none; padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px; font-size: 13px; text-decoration: none; color: var(--muted); background: var(--panel); white-space: nowrap; }
+.atalhos a:hover, .atalhos a:focus-visible { color: var(--fg); border-color: var(--gold); }
+section[id], .grade[id] { scroll-margin-top: 64px; }
+.kpi .sub b { color: var(--up); font-weight: 600; }
+.kpi .sub b.neg { color: var(--down); }
+.painel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; min-width: 0; display: grid; gap: 12px; align-content: start; }
+.painel > header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 16px; }
+.painel h2 { margin: 0; font-size: 15px; font-weight: 600; }
+.painel h2 small { font-weight: 400; color: var(--muted); font-size: 13px; margin-left: 6px; }
+.nota { margin: 0; font-size: 12px; color: var(--muted); max-width: 80ch; }
+.legenda { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12px; color: var(--muted); }
+.legenda i { display: inline-block; width: 14px; height: 3px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg button { font: inherit; font-size: 12px; padding: 5px 10px; border: 0; background: transparent; color: var(--muted); cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--gold-soft); color: var(--fg); }
+.grafico { position: relative; width: 100%; height: 260px; }
+.grafico.baixo { height: 200px; }
+.grafico svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.grafico .eixo { font-family: var(--font-data); font-size: 11px; fill: var(--muted); }
+.grafico .grade-l { stroke: var(--line); stroke-width: 1; }
+.dica { position: absolute; pointer-events: none; background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font-size: 12px; font-family: var(--font-data); white-space: nowrap; box-shadow: 0 6px 18px rgba(0,0,0,.25); transform: translate(-50%, calc(-100% - 12px)); z-index: 2; }
+.dica b { display: block; font-family: var(--font-body); font-weight: 600; margin-bottom: 2px; }
+.barra { height: 10px; border-radius: 6px; background: var(--panel-2); overflow: hidden; display: flex; }
+.barra span { display: block; height: 100%; }
+.barra.grossa { height: 14px; border-radius: 7px; }
+.num { display: grid; gap: 2px; min-width: 0; }
+.num .v { font-family: var(--font-data); font-size: 24px; font-variant-numeric: tabular-nums; line-height: 1.15; white-space: nowrap; }
+
+/* robô ao vivo */
+.aovivo { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 20px; }
+.estado { display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 600; }
+.estado .dot { width: 12px; height: 12px; }
+.sinal { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; background: var(--panel-2); display: grid; gap: 4px; }
+.sinal .linha1 { display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 600; }
+.seta { font-size: 20px; line-height: 1; }
+.abertas { display: grid; gap: 8px; }
+.posicao { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 10px; font-size: 14px; }
+.posicao .q { white-space: nowrap; }
+.posicao .p { margin-left: auto; white-space: nowrap; }
+.posicao .r { font-family: var(--font-data); font-weight: 600; font-size: 14px; white-space: nowrap; min-width: 92px; text-align: right; }
+.posicao .r.pos { color: var(--up); } .posicao .r.neg { color: var(--down); }
+.aberto-total { display: flex; justify-content: space-between; gap: 8px; padding: 10px 12px; border-radius: 10px; background: var(--panel-2); font-size: 14px; }
+.aberto-total b { font-family: var(--font-data); }
+.o-topo { display: grid; grid-template-columns: repeat(3, auto) minmax(0, 1fr); gap: 12px 28px; align-items: end; }
+.o-barra-box { display: grid; gap: 6px; min-width: 0; }
+.tag { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; padding: 3px 8px; border-radius: 6px; }
+.tag.venda { background: rgba(255,140,0,.16); color: #ffae4d; }
+.tag.compra { background: rgba(0,229,255,.12); color: #5fe8ff; }
+.posicao .p { font-family: var(--font-data); color: var(--muted); font-size: 13px; }
+
+/* calendário */
+.cal-topo { display: flex; align-items: center; gap: 10px; }
+.cal-topo button { font: inherit; background: var(--panel-2); border: 1px solid var(--line); color: var(--fg); border-radius: 8px; width: 32px; height: 32px; cursor: pointer; }
+.cal-topo button:disabled { opacity: .35; cursor: default; }
+.cal-mes { font-weight: 600; min-width: 140px; text-align: center; }
+.cal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.cal .sem { font-size: 11px; text-transform: uppercase; color: var(--muted); text-align: center; letter-spacing: .06em; }
+.dia { border-radius: 8px; border: 1px solid var(--line); background: var(--panel-2); min-height: 62px; padding: 6px 7px; display: grid; align-content: space-between; min-width: 0; }
+.dia .n { font-size: 12px; color: var(--muted); }
+.dia .pct { font-family: var(--font-data); font-size: clamp(11px, 1.5vw, 14px); font-weight: 500; white-space: nowrap; }
+.dia .ops { font-size: 10.5px; color: var(--muted); }
+.dia.vazio { background: transparent; border-style: dashed; opacity: .45; }
+.dia.fora { visibility: hidden; }
+.cal-res { display: flex; flex-wrap: wrap; gap: 8px 22px; font-size: 13px; color: var(--muted); }
+.cal-res b { color: var(--fg); font-family: var(--font-data); font-weight: 500; }
+
+/* tabela de operações */
+.tabela { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th { text-align: left; font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+td { padding: 8px 10px; border-bottom: 1px solid rgba(31,52,86,.5); font-family: var(--font-data); font-variant-numeric: tabular-nums; white-space: nowrap; }
+td.num-r, th.num-r { text-align: right; }
+.vazio-msg { color: var(--muted); font-size: 14px; padding: 18px 4px; }
+
+/* comparativo */
+.comp { display: grid; gap: 10px; }
+.comp-l { display: grid; grid-template-columns: minmax(110px, 190px) minmax(0, 1fr) 72px; align-items: center; gap: 12px; font-size: 14px; }
+.comp-l .nome { min-width: 0; }
+.comp-l .nome small { display: block; color: var(--muted); font-size: 11px; }
+.comp-trilho { position: relative; height: 16px; }
+.comp-trilho .zero { position: absolute; top: -3px; bottom: -3px; width: 1px; background: var(--muted); opacity: .5; }
+.comp-trilho .b { position: absolute; top: 0; height: 100%; border-radius: 4px; }
+.comp-l .v { font-family: var(--font-data); text-align: right; font-variant-numeric: tabular-nums; }
+.comp-l.destaque .nome { color: var(--gold); font-weight: 600; }
+
+/* simulador */
+.sim-form { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px 16px; align-items: end; }
+.sim-form label { display: grid; gap: 6px; font-size: 12px; color: var(--muted); min-width: 0; }
+.sim-form input, .sim-form select { box-sizing: border-box; font: inherit; font-family: var(--font-data); font-size: 16px; color: var(--fg); background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 9px 10px; width: 100%; min-width: 0; }
+.sim-form input:focus-visible, .sim-form select:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
+.sim-res { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px 20px; padding-top: 4px; border-top: 1px solid var(--line); }
+.sim-res .num { padding-top: 10px; container-type: inline-size; }
+.sim-res .v { font-size: clamp(15px, 11cqi, 24px); overflow: hidden; text-overflow: ellipsis; }
+
+/* como copiar */
+.passos { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin: 0; padding: 0; list-style: none; counter-reset: p; }
+.passos li { border: 1px solid var(--line); border-radius: 12px; padding: 14px; background: var(--panel-2); display: grid; gap: 6px; align-content: start; counter-increment: p; }
+.passos li::before { content: counter(p); width: 28px; height: 28px; border-radius: 50%; background: var(--gold); color: var(--bg); font-weight: 700; display: grid; place-items: center; font-size: 14px; }
+.passos b { font-size: 15px; }
+.passos span { font-size: 13px; color: var(--muted); }
+.acoes { display: flex; flex-wrap: wrap; gap: 10px; }
+.video { width: 100%; max-height: 70vh; border-radius: 12px; background: #000; border: 1px solid var(--line); }
+
+/* indique e ganhe */
+.socio { border-color: rgba(214,173,85,.45); background: linear-gradient(135deg, rgba(214,173,85,.10), transparent 60%), var(--panel); }
+.socio-grade { display: grid; grid-template-columns: minmax(180px, 240px) minmax(0, 1fr); gap: 16px; align-items: stretch; }
+.socio-destaque { border: 1px solid rgba(214,173,85,.45); border-radius: 12px; padding: 16px; display: grid; align-content: center; gap: 6px; background: var(--gold-soft); }
+.socio-num { font-family: var(--font-data); font-size: 52px; line-height: 1; color: var(--gold); }
+.socio-destaque span:last-child { font-size: 14px; }
+.socio-passos { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 760px) { .socio-grade { grid-template-columns: minmax(0, 1fr); } .passos.socio-passos { grid-template-columns: minmax(0, 1fr); } }
+
+.ind-calc { display: grid; gap: 12px; border-top: 1px solid rgba(214,173,85,.3); padding-top: 14px; margin-top: 4px; }
+.ind-calc h3 { margin: 0; font-size: 15px; font-weight: 600; }
+.ind-form { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.ind-res { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.ind-col { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; background: var(--panel-2); display: grid; gap: 2px; min-width: 0; container-type: inline-size; }
+.ind-col.destaque { border-color: rgba(214,173,85,.55); }
+.ind-col.ganho { border-color: rgba(79,195,138,.5); background: var(--up-soft); }
+.ind-v { font-family: var(--font-data); font-size: clamp(16px, 13cqi, 30px); line-height: 1.15; white-space: nowrap; }
+.ind-col.destaque .ind-v { color: var(--gold); }
+.ind-col.ganho .ind-v { color: var(--up); }
+@media (max-width: 1100px) { .ind-form { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 760px) { .ind-form { grid-template-columns: repeat(2, minmax(0, 1fr)); } .ind-res { grid-template-columns: minmax(0, 1fr); } }
+
+/* quem está por trás */
+.quem-grade { display: grid; grid-template-columns: minmax(200px, 260px) minmax(0, 1fr); gap: 24px; align-items: start; }
+.quem-perfil { display: grid; justify-items: center; text-align: center; gap: 8px; }
+.quem-foto { width: 180px; height: 180px; border-radius: 50%; object-fit: cover; border: 2px solid var(--gold); box-shadow: 0 0 0 6px var(--gold-soft); }
+.quem-nome { font-family: var(--font-display); font-weight: 500; font-size: 18px; letter-spacing: .04em; margin-top: 6px; }
+.quem-lema { margin: 4px 0 6px; font-family: var(--font-display); font-weight: 600; font-size: 17px; line-height: 1.35; color: var(--gold); letter-spacing: .02em; max-width: 26ch; text-wrap: balance; }
+.quem-texto { display: grid; gap: 16px; min-width: 0; }
+.linha-tempo { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
+.linha-tempo li { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 14px; position: relative; padding-bottom: 14px; }
+.linha-tempo li::before { content: ""; position: absolute; left: 104px; top: 7px; width: 9px; height: 9px; border-radius: 50%; background: var(--gold); }
+.linha-tempo li::after { content: ""; position: absolute; left: 108px; top: 18px; bottom: -2px; width: 1px; background: rgba(214,173,85,.35); }
+.linha-tempo li:last-child::after { display: none; }
+.linha-tempo .ano { font-family: var(--font-data); font-size: 13px; color: var(--gold); text-align: right; padding-right: 14px; padding-top: 1px; }
+.linha-tempo p { margin: 0; font-size: 14px; color: #c6d1e1; padding-left: 6px; }
+.quem-frase { margin: 0; border-left: 3px solid var(--gold); padding: 10px 16px; background: var(--gold-soft); border-radius: 0 10px 10px 0; }
+.quem-frase p { margin: 0 0 6px; font-size: 15px; font-style: italic; }
+.quem-frase cite { font-size: 12px; color: var(--muted); font-style: normal; }
+@media (max-width: 760px) {
+  .quem-grade { grid-template-columns: minmax(0, 1fr); }
+  .linha-tempo li { grid-template-columns: 86px minmax(0, 1fr); gap: 10px; }
+  .linha-tempo li::before { left: 78px; } .linha-tempo li::after { left: 82px; }
+  .linha-tempo .ano { font-size: 12px; padding-right: 12px; }
+}
+
+/* risco e FAQ */
+.risco { border: 1px solid var(--down); background: var(--down-soft); border-radius: 12px; padding: 16px 18px; display: grid; gap: 8px; align-content: start; align-self: start; }
+.risco h2 { margin: 0; font-size: 15px; font-weight: 600; color: var(--down); }
+.risco ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: 14px; }
+.faq details { border-bottom: 1px solid var(--line); padding: 12px 2px; }
+.faq details:last-child { border-bottom: 0; }
+.faq summary { cursor: pointer; font-weight: 600; font-size: 15px; list-style: none; display: flex; justify-content: space-between; gap: 12px; }
+.faq summary::after { content: "+"; color: var(--gold); font-size: 20px; line-height: 1; }
+.faq details[open] summary::after { content: "−"; }
+.faq summary::-webkit-details-marker { display: none; }
+.faq p { margin: 8px 0 0; color: #c6d1e1; font-size: 14px; max-width: 75ch; }
+.rodape { color: var(--muted); font-size: 12px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 20px; border-top: 1px solid var(--line); padding-top: 14px; }
+.rodape span { max-width: 75ch; }
+
+@media (max-width: 1100px) {
+  .placar { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .kpi:nth-child(3) { border-right: 0; }
+  .kpi:nth-child(-n+3) { border-bottom: 1px solid var(--line); }
+  .grade, .aovivo { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 760px) {
+  .sim-form, .sim-res { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .passos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .comp-l { grid-template-columns: minmax(90px, 120px) minmax(0, 1fr) 64px; gap: 8px; font-size: 13px; }
+  .dia { min-height: 54px; padding: 5px; } .dia .ops { display: none; }
+  .o-topo { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .o-barra-box { grid-column: 1 / -1; }
+  .posicao .p { margin-left: 0; flex-basis: 100%; }
+  .posicao .r { margin-left: auto; min-width: 0; }
+}
+@media (max-width: 560px) {
+  .wrap { padding-inline: 16px; }
+  .placar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .kpi { border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .kpi:nth-child(2n) { border-right: 0; }
+  .kpi:nth-last-child(-n+2) { border-bottom: 0; }
+  .brand h1 { font-size: 18px; letter-spacing: .24em; }
+  .logo { width: 36px; height: 44px; }
+  .status { width: 100%; justify-content: space-between; }
+  .cal { gap: 4px; } .cal .sem { font-size: 10px; }
+  .dia { padding: 4px 3px; } .dia .pct { font-size: 9.5px; letter-spacing: -.03em; }
+}
+
+/* Legião Legatus: placas por nível + cartas lacradas */
+.legiao { border-color: rgba(214,173,85,.45); background: radial-gradient(700px 260px at 50% 0, rgba(214,173,85,.10), transparent 70%), var(--panel); }
+.lg-intro { margin: 0; max-width: 72ch; color: var(--fg); }
+.legiao h3 { margin: 6px 0 0; font-family: var(--font-display); font-weight: 500; font-size: 13px; letter-spacing: .22em; text-transform: uppercase; color: var(--gold); }
+.lg-placas { list-style: none; margin: 0; padding: 4px 2px 8px; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 12px; align-items: start; }
+.lg-placas li { display: grid; justify-items: center; text-align: center; gap: 4px; min-width: 0; }
+.lg-placas .qd { width: 100%; aspect-ratio: 200 / 250; display: flex; align-items: flex-end; justify-content: center; }   /* placas na escala real: 40 cm = largura toda */
+.lg-placas svg { display: block; width: 100%; height: auto; filter: drop-shadow(0 8px 14px rgba(0,0,0,.45)); }
+.lg-placas b { font-family: var(--font-display); font-weight: 600; font-size: 12px; letter-spacing: .08em; margin-top: 6px; }
+.lg-placas .v { font-family: var(--font-data); color: var(--gold); font-size: 14px; }
+.lg-placas .p { font-size: 11.5px; color: var(--muted); }
+.lg-placas .sep { display: none; font-style: normal; }
+.lg-envelopes { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 12px; }
+.lg-env { all: unset; box-sizing: border-box; display: grid; justify-items: center; gap: 6px; text-align: center; font-size: 11.5px; color: var(--muted); }
+.lg-env svg { width: 100%; max-width: 120px; height: auto; filter: drop-shadow(0 8px 14px rgba(0,0,0,.5)); transition: transform .2s; }
+.lg-env.aberta { cursor: pointer; color: var(--gold); font-weight: 600; }
+.lg-env.aberta:hover svg, .lg-env.aberta:focus-visible svg { transform: translateY(-4px) rotate(-2deg); }
+.lg-env.aberta:focus-visible { outline: 2px solid var(--gold); outline-offset: 4px; border-radius: 6px; }
+.lg-env:not(.aberta) svg { opacity: .78; }
+.lg-frase { margin: 2px 0 0; font-family: "Palatino Linotype", "Book Antiqua", Georgia, serif; font-style: italic; font-size: 19px; text-align: center; color: var(--fg); }
+.lg-carta { max-width: 680px; width: 100%; margin: 4px auto 0; background: #fbf8f1; color: #262018; border-radius: 6px; overflow: hidden; box-shadow: 0 18px 40px rgba(0,0,0,.45); font-family: "Palatino Linotype", "Book Antiqua", Georgia, serif; }
+.lg-carta-topo { background: radial-gradient(circle at 50% 0, #15604a, #0a3328); text-align: center; padding: 18px 12px 14px; }
+.lg-carta-topo svg { width: 34px; height: 42px; }
+.lg-carta-topo span { display: block; margin-top: 6px; font-family: var(--font-display); font-size: 10.5px; letter-spacing: .35em; color: #d6b260; }
+.lg-carta-corpo { padding: 22px clamp(18px, 6vw, 48px) 26px; display: grid; gap: 10px; border: 1px solid #c9b07a; border-top: 0; margin: 0 10px 10px; }
+.lg-carta-corpo .cap { text-align: center; font-family: var(--font-display); font-weight: 600; font-size: 11px; letter-spacing: .4em; color: #0e5a44; }
+.lg-carta-corpo h4 { margin: 0; text-align: center; font-weight: 400; font-style: italic; font-size: 34px; line-height: 1.1; }
+.lg-carta-corpo .meta { text-align: center; font-family: var(--font-display); font-size: 10.5px; letter-spacing: .2em; color: #7a7266; text-transform: uppercase; margin-bottom: 6px; }
+.lg-carta-corpo p { margin: 0; font-size: 15.5px; line-height: 1.6; }
+.lg-carta-corpo .saud { font-weight: 700; }
+.lg-carta-corpo .fim { font-style: italic; }
+.lg-carta-corpo .ass { margin-top: 14px; padding-top: 8px; border-top: 1px solid #262018; width: min(260px, 100%); font-family: var(--font-display); font-size: 11px; letter-spacing: .2em; font-weight: 600; text-transform: uppercase; }
+.lg-carta-corpo .ass small { display: block; font-weight: 400; letter-spacing: .08em; text-transform: none; color: #7a7266; font-size: 12px; margin-top: 2px; }
+.lg-carta-corpo .aviso { font-family: var(--font-body); font-size: 11px; color: #8a8276; text-align: center; margin-top: 10px; }
+.lg-fechar { justify-self: center; }
+.lg-fica { margin: 0; padding: 10px 14px; border-left: 3px solid var(--gold); background: var(--gold-soft); border-radius: 0 10px 10px 0; font-size: 14px; }
+.lg-rec { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.lg-rec li { position: relative; display: grid; justify-items: center; text-align: center; gap: 2px; padding: 12px 10px 14px; border: 1px solid rgba(214,173,85,.35); border-radius: 12px; background: radial-gradient(circle at 50% 30%, rgba(214,173,85,.14), transparent 65%), var(--panel-2); min-width: 0; }
+.lg-rec .n { position: absolute; top: 10px; left: 10px; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: linear-gradient(#f3dc98, #c9a24f); color: #1a1408; font-weight: 700; font-size: 13px; }
+.lg-rec .im { width: 100%; height: 130px; display: grid; place-items: center; }
+.lg-rec img { max-width: 92%; max-height: 130px; object-fit: contain; -webkit-mask-image: radial-gradient(ellipse at center, #000 58%, transparent 78%); mask-image: radial-gradient(ellipse at center, #000 58%, transparent 78%); }
+.lg-rec img.png { -webkit-mask-image: none; mask-image: none; }
+.lg-rec img.foto { -webkit-mask-image: none; mask-image: none; border-radius: 8px; border: 2px solid #d6b260; max-height: 118px; }
+.lg-rec b { font-family: var(--font-display); font-weight: 600; font-size: 12.5px; letter-spacing: .08em; text-transform: uppercase; margin-top: 6px; }
+.lg-rec .v { font-family: var(--font-data); color: var(--gold); font-size: 18px; }
+.lg-rec .sub { font-size: 11.5px; color: var(--muted); }
+.lg-resgate { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; padding: 14px 16px; border: 1px solid rgba(214,173,85,.45); border-radius: 12px; background: var(--gold-soft); }
+.lg-resgate p { margin: 0; font-size: 14.5px; }
+.lg-resgate p b { font-family: var(--font-display); font-weight: 600; letter-spacing: .03em; color: var(--gold); display: block; font-size: 16px; }
+dialog.resgate { width: min(520px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); overflow: auto; box-sizing: border-box; padding: 20px; border: 1px solid rgba(214,173,85,.5); border-radius: 14px; background: var(--panel); color: var(--fg); }
+dialog.resgate::backdrop { background: rgba(3, 8, 18, .75); }
+.resgate h3 { margin: 0 0 4px; font-family: var(--font-display); font-weight: 500; font-size: 20px; color: var(--gold); }
+.resgate form { display: grid; gap: 12px; margin-top: 12px; }
+.resgate label { display: grid; gap: 5px; font-size: 12.5px; color: var(--muted); }
+.resgate input, .resgate select, .resgate textarea { box-sizing: border-box; width: 100%; font: inherit; font-size: 16px; color: var(--fg); background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 9px 10px; }
+.resgate input:focus-visible, .resgate select:focus-visible, .resgate textarea:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
+.resgate .passos-r { margin: 0; padding-left: 18px; font-size: 13px; color: var(--muted); display: grid; gap: 4px; }
+.resgate .erro { margin: 0; color: var(--down); font-size: 13px; }
+.resgate .acoes { justify-content: flex-end; }
+@media (max-width: 760px) {
+  .lg-rec { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .lg-rec .im { height: 100px; } .lg-rec img { max-height: 100px; } .lg-rec img.foto { max-height: 92px; }
+  .lg-rec .v { font-size: 15.5px; } .lg-rec b { font-size: 11px; }
+  /* celular: escada vertical, placa à esquerda no tamanho proporcional, texto à direita */
+  .lg-placas { grid-template-columns: minmax(0, 1fr); gap: 0; padding: 0; }
+  .lg-placas li { grid-template-columns: 96px minmax(0, 1fr); grid-template-rows: 1fr auto auto auto 1fr; column-gap: 16px; row-gap: 2px; justify-items: start; text-align: left; align-content: center; padding: 10px 4px; border-bottom: 1px solid var(--line); }
+  .lg-placas li:last-child { border-bottom: 0; }
+  .lg-placas .qd { grid-row: 1 / 6; grid-column: 1; align-items: center; }
+  .lg-placas b { grid-row: 2; grid-column: 2; margin-top: 0; font-size: 13px; }
+  .lg-placas .v { grid-row: 3; grid-column: 2; }
+  .lg-placas .p { grid-row: 4; grid-column: 2; }
+  .lg-placas .p br { display: none; }
+  .lg-placas .sep { display: inline; }
+  .lg-envelopes { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px 10px; }
+  .lg-frase { font-size: 17px; }
+  .lg-carta-corpo h4 { font-size: 28px; }
+  .lg-carta-corpo p { font-size: 15px; }
+}
+</style>
+
+<div class="wrap">
+  <header class="cmd">
+    <div class="brand">
+      <svg class="logo" viewBox="440 295 390 475" aria-label="Legatus Group">
+        <path d="M447 548 L502 505 L502 763 L447 763 Z" fill="var(--fg)"/>
+        <path d="M532 437 L584 394 L584 711 L612 711 L612 348 L665 303 L665 711 L773 711 L773 624 L712 585 L712 531 L823 599 L823 763 L532 763 Z" fill="var(--fg)"/>
+      </svg>
+      <div>
+        <h1>Legatus <span>Group</span></h1>
+        <p><span data-t="sub_marca">Estratégia Legatus Gold · copy trading em ouro (XAUUSD)</span> · <span data-t="conta">conta</span> <b>#46163199</b> · MT4</p>
+      </div>
+    </div>
+    <div class="status">
+      <div class="idioma" role="group" aria-label="Idioma">
+        <button type="button" data-lang="pt" aria-pressed="true">🇧🇷 PT</button>
+        <button type="button" data-lang="en" aria-pressed="false">🇺🇸 EN</button>
+        <button type="button" data-lang="es" aria-pressed="false">🇪🇸 ES</button>
+      </div>
+      <span class="pill"><span class="dot"></span><span id="atualizado">…</span></span>
+      <div class="compart">
+        <button type="button" class="btn linha recarregar" id="b-compart" aria-expanded="false" aria-controls="menu-compart"><span aria-hidden="true">⤴</span> <span data-t="b_compart">Compartilhar</span></button>
+        <div class="menu-compart" id="menu-compart" hidden>
+          <button type="button" class="btn linha" id="b-copiar-link"><span data-t="b_copiar_link">Copiar link</span></button>
+          <a class="btn zap" id="b-zap-share" target="_blank" rel="noopener"><span data-t="b_zap_share">Enviar no WhatsApp</span></a>
+          <input type="text" id="link-txt" readonly aria-label="Link do painel">
+        </div>
+      </div>
+      <button type="button" class="btn linha recarregar" id="b-live"><span aria-hidden="true">⛶</span> <span data-t="b_live">Modo live</span></button>
+      <button type="button" class="btn linha recarregar" id="recarregar" title=""><span aria-hidden="true">↻</span> <span data-t="b_atualizar">Atualizar</span></button>
+      <a class="btn ouro" id="copiar" target="_blank" rel="noopener" data-t="btn_copiar">Copiar a estratégia ↗</a>
+    </div>
+  </header>
+
+  <p class="intro" data-t="intro">Copie as operações do robô de ouro do Legatus Group direto na sua conta da RoboForex, a partir de US$ 100. Tudo o que acontece na conta aparece aqui, ao vivo.</p>
+  <nav class="atalhos" aria-label="Atalhos">
+    <a href="#resultados" data-t="nav_res">Resultados</a>
+    <a href="#operacoes" data-t="nav_ops">Operações</a>
+    <a href="#como-copiar" data-t="nav_copiar">Como copiar</a>
+    <a href="#indique" data-t="nav_indique">Indique e ganhe</a>
+    <a href="#legiao" data-t="nav_legiao">Legião Legatus</a>
+    <a href="#perguntas" data-t="nav_faq">Perguntas</a>
+  </nav>
+
+  <section class="placar" id="resultados" aria-label="Resumo">
+    <div class="kpi destaque"><span class="rot" data-t="k_rend">Rendimento</span><span class="val" id="k-rend">—</span><span class="sub" id="k-rend-sub"></span></div>
+    <div class="kpi"><span class="rot" data-t="k_lucro">Lucro</span><span class="val" id="k-lucro">—</span><span class="sub" data-t="k_lucro_sub">em dólar</span></div>
+    <div class="kpi"><span class="rot" data-t="k_dd">Rebaixamento máx.</span><span class="val neg" id="k-dd">—</span><span class="sub" data-t="k_dd_sub">pior queda do patrimônio</span></div>
+    <div class="kpi"><span class="rot" data-t="k_saldo">Saldo</span><span class="val" id="k-saldo">—</span><span class="sub" data-t="k_saldo_sub">conta cent</span></div>
+    <div class="kpi"><span class="rot" data-t="k_venc">Vencedoras</span><span class="val pos" id="k-ops">—</span><span class="sub" id="k-ops-sub"></span></div>
+    <div class="kpi"><span class="rot" id="k-subs-rot" data-t="k_port">Portfólio total</span><span class="val" id="k-subs">—</span><span class="sub" id="k-subs-sub"></span></div>
+  </section>
+
+  <section class="painel" aria-labelledby="t-aovivo">
+    <header><h2 id="t-aovivo"><span data-t="aovivo">Robô ao vivo</span> <small id="av-quando"></small></h2></header>
+    <div class="aovivo">
+      <div style="display:grid;gap:12px;align-content:start">
+        <div class="estado"><span class="dot" id="av-dot"></span><span id="av-estado">—</span></div>
+        <div class="sinal" id="av-sinal" hidden>
+          <span class="rot" data-t="ultimo_sinal">Último sinal lido</span>
+          <span class="linha1"><span class="seta" id="av-seta"></span><span id="av-sinal-txt"></span></span>
+          <span class="nota" id="av-sinal-res"></span>
+        </div>
+      </div>
+      <div style="display:grid;gap:10px;align-content:start">
+        <span class="rot"><span data-t="abertas">Operações abertas agora</span> · <span id="av-n">0</span></span>
+        <div class="abertas" id="av-abertas"></div>
+        <div class="aberto-total" id="av-total" hidden></div>
+        <p class="nota" data-t="abertas_nota">Operações abertas podem estar no negativo por um tempo; o resultado só conta quando fecham.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="painel" aria-label="Saldo e patrimônio">
+    <header>
+      <h2><span data-t="g_saldo">Saldo e patrimônio</span> <small data-t="g_saldo_sub">US$ por dia</small></h2>
+      <div class="legenda"><span><i style="background:var(--gold)"></i><span data-t="saldo">Saldo</span></span><span><i style="background:var(--equity)"></i><span data-t="patrimonio">Patrimônio (com operações abertas)</span></span></div>
+    </header>
+    <div class="grafico" id="g-saldo"></div>
+  </section>
+
+  <div class="grade">
+    <section class="painel"><header><h2><span data-t="g_rend">Rendimento acumulado</span> <small>%</small></h2></header><div class="grafico baixo" id="g-rend"></div></section>
+    <section class="painel"><header><h2><span data-t="g_dd">Rebaixamento</span> <small data-t="g_dd_sub">% abaixo do pico</small></h2></header><div class="grafico baixo" id="g-dd"></div></section>
+  </div>
+
+  <section class="painel" aria-label="Calendário">
+    <header>
+      <h2><span data-t="calendario">Calendário de resultados</span> <small data-t="cal_sub">lucro realizado por dia (horário do servidor)</small></h2>
+      <div class="cal-topo"><button type="button" id="cal-ant" aria-label="Mês anterior">‹</button><span class="cal-mes" id="cal-mes"></span><button type="button" id="cal-prox" aria-label="Próximo mês">›</button></div>
+    </header>
+    <div class="cal" id="cal"></div>
+    <div class="cal-res" id="cal-res"></div>
+  </section>
+
+  <section class="painel" id="operacoes" aria-label="Operações">
+    <header>
+      <h2><span data-t="ops_titulo">Operações</span> <small id="o-sub"></small></h2>
+      <div class="seg" role="group"><button type="button" data-tipo="robo" aria-pressed="true" data-t="tab_robo">Robô · ouro</button><button type="button" data-tipo="swing" aria-pressed="false" data-t="tab_swing">Swing trade</button></div>
+    </header>
+    <div class="o-topo" id="o-topo">
+      <div class="num"><span class="rot" data-t="acerto">Taxa de acerto</span><span class="v pos" id="o-acerto">—</span></div>
+      <div class="num"><span class="rot" data-t="vencedoras">Vencedoras</span><span class="v" id="o-venc">—</span></div>
+      <div class="num"><span class="rot" data-t="perdedoras">Perdedoras</span><span class="v" id="o-perd">—</span></div>
+      <div class="o-barra-box"><div class="barra grossa" id="o-barra"></div><p class="nota" data-t="ops_nota">A taxa de acerto conta todas as operações fechadas pelo robô, inclusive as de proteção (hedge).</p></div>
+    </div>
+    <span class="rot" data-t="ultimas">Últimas operações fechadas</span>
+    <div class="tabela"><table><thead><tr><th data-t="th_hora">Fechou (servidor)</th><th data-t="th_par">Par</th><th data-t="th_lado">Lado</th><th class="num-r" data-t="th_lote">Lote</th><th class="num-r" data-t="th_entrada">Entrada</th><th class="num-r" data-t="th_saida">Saída</th><th class="num-r" data-t="th_pts">Pontos</th><th class="num-r" data-t="th_res">Resultado</th><th class="num-r" data-t="th_dur">Duração</th></tr></thead><tbody id="o-tab"></tbody></table></div>
+    <div class="vazio-msg" id="o-vazio" hidden></div>
+  </section>
+
+  <div class="grade" id="grade-comp">
+    <section class="painel" aria-label="Comparativo">
+      <header><h2><span data-t="comp">Comparativo com outros investimentos</span> <small id="comp-sub"></small></h2></header>
+      <div class="comp" id="comp"></div>
+      <p class="nota" data-t="comp_nota">Mesmo período para todos. Legatus: rendimento oficial da estratégia (o mesmo da RoboForex), antes da comissão. CDI, poupança e Ibovespa em reais; ouro e Bitcoin em dólar.</p>
+    </section>
+    <section class="painel" id="sec-port" aria-label="Portfólio dos copiadores">
+      <header><h2><span data-t="port_titulo">Portfólio dos copiadores</span> <small>US$</small></h2></header>
+      <div class="grafico baixo" id="g-port"></div>
+      <p class="nota" id="port-nota"></p>
+    </section>
+  </div>
+
+  <section class="painel" aria-label="Se você tivesse iniciado">
+    <header><h2><span data-t="sim_titulo">Se você tivesse iniciado</span> <small data-t="sim_sub">com o resultado real e a comissão cobrada como na corretora</small></h2></header>
+    <form class="sim-form" id="sim-form" novalidate>
+      <label for="s-cap"><span data-t="s_cap">Valor inicial (US$)</span><input id="s-cap" type="number" inputmode="decimal" min="0" step="10" value="100"></label>
+      <label for="s-aporte"><span data-t="s_aporte">Aporte por mês (US$)</span><input id="s-aporte" type="number" inputmode="decimal" min="0" step="10" value="0"></label>
+      <label for="s-ini"><span data-t="s_ini">Começando em</span><select id="s-ini"></select></label>
+      <label><span data-t="s_hoje">Até</span><input type="text" id="s-ate" readonly></label>
+    </form>
+    <div class="sim-res">
+      <div class="num"><span class="rot" data-t="s_teria">Você teria hoje</span><span class="v" id="s-final" style="color:var(--gold)">—</span></div>
+      <div class="num"><span class="rot" data-t="s_invest">Total investido</span><span class="v" id="s-invest">—</span></div>
+      <div class="num"><span class="rot" data-t="s_lucro">Lucro</span><span class="v" id="s-lucro">—</span></div>
+      <div class="num"><span class="rot" data-t="s_cresc">Crescimento</span><span class="v" id="s-cresc">—</span></div>
+    </div>
+    <div class="grafico baixo" id="g-sim"></div>
+    <p class="nota" data-t="sim_nota">Calculado com o rendimento real da estratégia dia a dia. A comissão de 30% é descontada sobre os dias de lucro (a corretora cobra semanalmente sobre o lucro novo). Resultado passado não garante resultado futuro.</p>
+  </section>
+
+  <section class="painel quem" aria-labelledby="t-quem">
+    <header><h2 id="t-quem" data-t="quem_titulo">Quem está por trás</h2></header>
+    <div class="quem-grade">
+      <div class="quem-perfil">
+        <img src="allison.jpg" alt="Allison Feitoza Cordeiro" class="quem-foto" width="200" height="200">
+        <div class="quem-nome">Allison Feitoza Cordeiro</div>
+        <div class="nota" data-t="quem_cargo">Fundador do Legatus Group · no mercado financeiro desde 2018</div>
+        <p class="quem-lema" data-t="quem_lema">“Quem pensa a curto prazo nunca tem nada.”</p>
+        <a class="btn linha" id="b-insta" target="_blank" rel="noopener" href="https://instagram.com/legatusgroupfx">Instagram @legatusgroupfx ↗</a>
+      </div>
+      <div class="quem-texto">
+        <ol class="linha-tempo">
+          <li><span class="ano">2018</span><p data-t="lt1">Começou no mercado financeiro com R$ 60 mil.</p></li>
+          <li><span class="ano">2021</span><p data-t="lt2">Conquistou o primeiro milhão com scalp e day trade, o dia inteiro na frente do gráfico. O preço foi a saúde física e mental, e foi daí que nasceu a sua estratégia própria de swing trade.</p></li>
+          <li><span class="ano" data-t="lt3a">Set/2022</span><p data-t="lt3">Perdeu R$ 470 mil em poucos dias, entre a guerra na Ucrânia, a morte da rainha Elizabeth e a queda da libra. O gerenciamento era arrojado demais. Desde então, busca de 5% a 7% ao mês no swing trade, com média atual de 5,61%.</p></li>
+          <li><span class="ano">Kings Trading</span><p data-t="lt4">Ensinou mais de 300 alunos pelo mundo. Quando a estratégia passou a ser revendida sem autorização, parou de ensinar e guardou o método a sete chaves.</p></li>
+          <li><span class="ano">2025</span><p data-t="lt5">Começou o robô para o ouro (XAUUSD). Foram 8 meses de código sem o resultado esperado, até corrigir as falhas com a ajuda de inteligência artificial e chegar ao robô que opera esta conta.</p></li>
+          <li><span class="ano" data-t="lt6a">Hoje</span><p data-t="lt6">Nasce o Legatus Group: o copy trading que leva as mesmas operações para a conta de quem copia, proporcionais ao capital de cada um, sem curso e sem precisar executar nada.</p></li>
+        </ol>
+        <blockquote class="quem-frase"><p data-t="quem_frase">“Ensinando, eu via a maioria deixar a ganância tomar conta e desistir no longo prazo. Mostrar a estratégia não resolvia isso. Com o copy, a pessoa recebe as mesmas operações na conta dela, sem precisar ter a disciplina de executá-las.”</p><cite>— Allison Feitoza Cordeiro</cite></blockquote>
+      </div>
+    </div>
+  </section>
+
+  <section class="painel" id="como-copiar" aria-label="Como copiar">
+    <header><h2 data-t="como_copiar">Como copiar em 4 passos</h2></header>
+    <ol class="passos">
+      <li><b data-t="p1">Crie sua conta e verifique</b><span data-t="p1d">Cadastro gratuito na RoboForex e verificação dos documentos: identidade e comprovante de residência.</span></li>
+      <li><b data-t="p2">Abra uma conta ProCent e deposite</b><span data-t="p2d">Abra uma conta ProCent no MT4 e deposite a partir de US$ 100. O dinheiro fica na sua conta, em seu nome.</span></li>
+      <li><b data-t="p3">Copie no modo Proporcional</b><span data-t="p3d">Na página da estratégia Legatus Gold, toque em "Copiar", escolha o modo Proporcional (os lotes ficam proporcionais ao seu capital) e aceite os termos.</span></li>
+      <li><b data-t="p4">Acompanhe aqui</b><span data-t="p4d">Tudo o que o robô faz aparece neste painel, aberto.</span></li>
+    </ol>
+    <video class="video" id="video" controls playsinline preload="metadata" hidden></video>
+    <div class="acoes">
+      <a class="btn robo" id="b-cadastro" target="_blank" rel="noopener" data-t="b_cadastro">Criar conta na RoboForex ↗</a>
+      <a class="btn ouro" id="b-copiar" target="_blank" rel="noopener" data-t="btn_copiar">Copiar a estratégia ↗</a>
+      <a class="btn zap" id="b-zap" target="_blank" rel="noopener" hidden data-t="b_zap">Entrar no grupo do WhatsApp</a>
+      <a class="btn linha" id="b-zap-share2" target="_blank" rel="noopener"><span aria-hidden="true">⤴</span> <span data-t="b_compart_painel">Compartilhar este painel</span></a>
+    </div>
+  </section>
+
+  <section class="painel socio" id="indique" aria-label="Indique e ganhe">
+    <header><h2><span data-t="socio_titulo">Já copia? Indique e ganhe</span> <small data-t="socio_sub">Programa de Sócios da RoboForex</small></h2></header>
+    <div class="socio-grade">
+      <div class="socio-destaque"><span class="socio-num">15%</span><span data-t="socio_dest">da comissão do gestor sobre cada pessoa que copiar pelo seu link</span></div>
+      <ol class="passos socio-passos">
+        <li><b data-t="s1">Abra a página da estratégia</b><span data-t="s1d">Entre na página da Legatus Gold na RoboForex com a sua conta.</span></li>
+        <li><b data-t="s2">Entre no Programa de Sócios</b><span data-t="s2d">Ative o Programa de Sócios da estratégia e gere o seu link de indicação.</span></li>
+        <li><b data-t="s3">Compartilhe seu link</b><span data-t="s3d">Cada pessoa que copiar pelo seu link gera ganhos para você, toda semana, pela própria corretora.</span></li>
+      </ol>
+    </div>
+    <p class="nota" id="socio-ex"></p>
+    <div class="acoes"><a class="btn ouro" id="b-socio" target="_blank" rel="noopener" data-t="b_socio">Quero meu link de indicação ↗</a></div>
+    <div class="ind-calc">
+      <h3 data-t="ind_titulo">Quanto as indicações encurtam o seu caminho</h3>
+      <form class="sim-form ind-form" id="ind-form" novalidate>
+        <label for="i-cap"><span data-t="i_cap">Seu capital (US$)</span><input id="i-cap" type="number" inputmode="decimal" min="0" step="50" value="500"></label>
+        <label for="i-meta"><span data-t="i_meta">Sua meta (US$)</span><input id="i-meta" type="number" inputmode="decimal" min="0" step="1000" value="10000"></label>
+        <label for="i-rent"><span data-t="i_rent">Rentabilidade média ao mês (%)</span><input id="i-rent" type="number" inputmode="decimal" min="-100" max="100" step="0.5" value="5"></label>
+        <label for="i-n"><span data-t="i_n">Pessoas que você indicou</span><input id="i-n" type="number" inputmode="numeric" min="0" step="1" value="5"></label>
+        <label for="i-capind"><span data-t="i_capind">Capital médio de cada indicado (US$)</span><input id="i-capind" type="number" inputmode="decimal" min="0" step="50" value="500"></label>
+      </form>
+      <div class="ind-res">
+        <div class="ind-col"><span class="rot" data-t="i_sozinho">Sozinho</span><span class="ind-v" id="i-sem">—</span><span class="sub" id="i-sem-sub"></span></div>
+        <div class="ind-col destaque"><span class="rot" data-t="i_com">Com as indicações</span><span class="ind-v" id="i-com">—</span><span class="sub" id="i-com-sub"></span></div>
+        <div class="ind-col ganho"><span class="rot" data-t="i_ganho">Você economiza</span><span class="ind-v" id="i-eco">—</span><span class="sub" id="i-eco-sub"></span></div>
+      </div>
+      <div class="grafico baixo" id="g-ind"></div>
+      <p class="nota" data-t="ind_nota">Simulação: o seu capital e o dos indicados crescem pela rentabilidade escolhida, já sem os 30% de comissão; você recebe 15% da comissão paga pelos indicados (4,5% do lucro deles) e esse valor volta para a sua conta. Não é promessa de resultado: a rentabilidade varia e pode ser negativa.</p>
+    </div>
+  </section>
+
+  <section class="painel legiao" id="legiao" aria-labelledby="t-legiao">
+    <header><h2><span id="t-legiao" data-t="lg_titulo">Legião Legatus</span> <small data-t="lg_sub">Cada nível, uma conquista</small></h2></header>
+    <p class="lg-intro" data-t="lg_intro"></p>
+    <h3 data-t="lg_placas">As 7 placas</h3>
+    <ol class="lg-placas" id="lg-placas"></ol>
+    <h3 data-t="lg_cartas">As 7 cartas</h3>
+    <div class="lg-envelopes" id="lg-envelopes"></div>
+    <p class="lg-frase" data-t="lg_frase"></p>
+    <article class="lg-carta" id="lg-carta" hidden></article>
+    <p class="lg-fica" data-t="lg_fica"></p>
+    <h3 data-t="lg_rec">As 6 recompensas · por lucro acumulado</h3>
+    <p class="lg-intro" data-t="lg_rec_regra"></p>
+    <ol class="lg-rec" id="lg-rec"></ol>
+    <div class="lg-resgate" id="lg-resgate" hidden>
+      <p><b data-t="rg_chamada">Alcançou algum nível?</b><span data-t="rg_chamada_sub">Fale com a gente para conferir e receber a sua placa ou recompensa.</span></p>
+      <button type="button" class="btn ouro" id="b-resgate" data-t="rg_btn">Entrar em contato</button>
+    </div>
+    <div class="acoes"><a class="btn linha" id="b-legiao" target="_blank" rel="noopener" data-t="lg_btn">Quero entrar na Legião ↗</a></div>
+    <p class="nota" data-t="lg_nota"></p>
+  </section>
+
+  <div class="grade">
+    <section class="painel faq" id="perguntas" aria-label="Perguntas frequentes">
+      <header><h2 data-t="faq">Perguntas frequentes</h2></header>
+      <div id="faq"></div>
+    </section>
+    <aside class="risco" aria-label="Riscos">
+      <h2 data-t="risco">Antes de copiar, entenda o risco</h2>
+      <ul>
+        <li data-t="r1">A estratégia não usa stop loss fixo. Em quedas fortes, as operações ficam abertas até recuperar.</li>
+        <li data-t="r2">Nos testes da configuração atual (dez/2025 a out/2026), o patrimônio chegou a cair cerca de 66% antes de recuperar.</li>
+        <li data-t="r3">Em testes de 2020 a 2025, com outro comportamento de mercado, a estratégia perdeu a conta.</li>
+        <li data-t="r4">Invista só o que você pode perder. Resultado passado não garante resultado futuro.</li>
+      </ul>
+    </aside>
+  </div>
+
+  <footer class="rodape">
+    <span data-t="rodape">Números da página pública da estratégia na RoboForex e dos registros do MetaTrader da conta, atualizados automaticamente. Conta em centavos (cent), valores convertidos para dólar.</span>
+    <span id="r-fonte"></span>
+  </footer>
+</div>
+
+<dialog class="resgate" id="dlg-resgate" aria-labelledby="rg-titulo">
+  <h3 id="rg-titulo" data-t="rg_titulo">Alcancei um nível</h3>
+  <ol class="passos-r">
+    <li data-t="rg_p1">Você manda o número da sua conta e o que alcançou.</li>
+    <li data-t="rg_p2">A Legatus confere na RoboForex pelo número da conta.</li>
+    <li data-t="rg_p3">Confirmado, pedimos pelo WhatsApp os dados para o envio (CPF e endereço).</li>
+  </ol>
+  <form id="rg-form" novalidate>
+    <label for="rg-conta"><span data-t="rg_conta">Número da sua conta RoboForex que copia a estratégia</span><input id="rg-conta" inputmode="numeric" autocomplete="off" maxlength="12" required></label>
+    <label for="rg-nome"><span data-t="rg_nome">Nome completo</span><input id="rg-nome" autocomplete="name" maxlength="80" required></label>
+    <label for="rg-nivel"><span data-t="rg_nivel">O que você alcançou</span><select id="rg-nivel" required></select></label>
+    <label for="rg-obs"><span data-t="rg_obs">Observação (opcional)</span><textarea id="rg-obs" rows="2" maxlength="300"></textarea></label>
+    <p class="nota" data-t="rg_privac">Nesta etapa não pedimos CPF nem endereço. Esses dados só são pedidos depois da confirmação, direto pelo WhatsApp, e usados apenas para o envio.</p>
+    <p class="erro" id="rg-erro" role="alert" hidden></p>
+    <div class="acoes">
+      <button type="button" class="btn linha" id="rg-cancelar" data-t="rg_cancelar">Cancelar</button>
+      <button type="submit" class="btn zap" data-t="rg_enviar">Enviar pelo WhatsApp</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="live" id="live" hidden>
+  <div class="live-topo">
+    <div class="brand"><svg class="logo" viewBox="440 295 390 475" aria-hidden="true"><path d="M447 548 L502 505 L502 763 L447 763 Z" fill="var(--fg)"/><path d="M532 437 L584 394 L584 711 L612 711 L612 348 L665 303 L665 711 L773 711 L773 624 L712 585 L712 531 L823 599 L823 763 L532 763 Z" fill="var(--fg)"/></svg><div><h1>Legatus <span>Group</span></h1><p data-t="sub_marca">Estratégia Legatus Gold · copy trading em ouro (XAUUSD)</p></div></div>
+    <div class="live-acoes"><span class="pill"><span class="dot" id="lv-dot"></span><span id="lv-hora"></span></span><button type="button" class="btn linha" id="lv-sair" data-t="sair_live">Sair do modo live</button></div>
+  </div>
+  <div class="live-grade">
+    <div class="live-card grande"><span class="rot" data-t="k_rend">Rendimento</span><span class="lv-v ouro" id="lv-rend">—</span><span class="sub" id="lv-rend-sub"></span></div>
+    <div class="live-card grande"><span class="rot" data-t="hoje">Hoje</span><span class="lv-v" id="lv-hoje">—</span><span class="sub" id="lv-hoje-sub"></span></div>
+    <div class="live-card"><span class="rot" data-t="k_saldo">Saldo</span><span class="lv-m" id="lv-saldo">—</span></div>
+    <div class="live-card"><span class="rot" data-t="k_venc">Vencedoras</span><span class="lv-m pos" id="lv-acerto">—</span></div>
+    <div class="live-card"><span class="rot" data-t="k_port">Portfólio total</span><span class="lv-m" id="lv-port">—</span></div>
+    <div class="live-card"><span class="rot" data-t="abertas">Operações abertas agora</span><span class="lv-m" id="lv-abertas">—</span></div>
+    <div class="live-card largo"><span class="rot" data-t="ultimo_sinal">Último sinal lido</span><span class="lv-sinal" id="lv-sinal">—</span></div>
+    <div class="live-card largo grafico-card"><span class="rot" data-t="g_rend">Rendimento acumulado</span><div class="grafico" id="lv-graf"></div></div>
+  </div>
+  <div class="live-rodape"><span>tinyurl.com/legatusgroup-dashboard</span><span data-t="r4">Invista só o que você pode perder. Resultado passado não garante resultado futuro.</span></div>
+</div>
+
+<script src="config.js"></script>
+<script src="data.js"></script>
+<script>
+(function () {
+  const D = window.LEGATUS_DADOS, C = window.LEGATUS_CONFIG || {};
+  const $ = (id) => document.getElementById(id);
+  if (!D) { $("atualizado").textContent = "—"; return; }
+
+  // ---------- idiomas ----------
+  const TXT = {
+    pt: {
+      sub_marca: "Estratégia Legatus Gold · copy trading em ouro (XAUUSD)", conta: "conta", btn_copiar: "Copiar a estratégia ↗",
+      k_rend: "Rendimento", k_lucro: "Lucro", k_lucro_sub: "em dólar", k_dd: "Rebaixamento máx.", k_dd_sub: "pior queda do patrimônio",
+      k_saldo: "Saldo", k_saldo_sub: "conta cent", k_venc: "Vencedoras", k_port: "Portfólio total", k_subs: "Copiadores",
+      b_atualizar: "Atualizar", quem_titulo: "Quem está por trás", quem_lema: "“Quem pensa a curto prazo nunca tem nada.”", quem_cargo: "Fundador do Legatus Group · no mercado financeiro desde 2018", lt1: "Começou no mercado financeiro com R$ 60 mil.", lt2: "Conquistou o primeiro milhão com scalp e day trade, o dia inteiro na frente do gráfico. O preço foi a saúde física e mental, e foi daí que nasceu a sua estratégia própria de swing trade.", lt3a: "Set/2022", lt3: "Perdeu R$ 470 mil em poucos dias, entre a guerra na Ucrânia, a morte da rainha Elizabeth e a queda da libra. O gerenciamento era arrojado demais. Desde então, busca de 5% a 7% ao mês no swing trade, com média atual de 5,61%.", lt4: "Ensinou mais de 300 alunos pelo mundo. Quando a estratégia passou a ser revendida sem autorização, parou de ensinar e guardou o método a sete chaves.", lt5: "Começou o robô para o ouro (XAUUSD). Foram 8 meses de código sem o resultado esperado, até corrigir as falhas com a ajuda de inteligência artificial e chegar ao robô que opera esta conta.", lt6a: "Hoje", lt6: "Nasce o Legatus Group: o copy trading que leva as mesmas operações para a conta de quem copia, proporcionais ao capital de cada um, sem curso e sem precisar executar nada.", quem_frase: "“Ensinando, eu via a maioria deixar a ganância tomar conta e desistir no longo prazo. Mostrar a estratégia não resolvia isso. Com o copy, a pessoa recebe as mesmas operações na conta dela, sem precisar ter a disciplina de executá-las.”", ind_titulo: "Quanto as indicações encurtam o seu caminho", i_cap: "Seu capital (US$)", i_meta: "Sua meta (US$)", i_rent: "Rentabilidade média ao mês (%)", i_n: "Pessoas que você indicou", i_capind: "Capital médio de cada indicado (US$)", i_sozinho: "Sozinho", i_com: "Com as indicações", i_ganho: "Você economiza", ind_nota: "Simulação: o seu capital e o dos indicados crescem pela rentabilidade escolhida, já sem os 30% de comissão; você recebe 15% da comissão paga pelos indicados (4,5% do lucro deles) e esse valor volta para a sua conta. Não é promessa de resultado: a rentabilidade varia e pode ser negativa.", i_meses: (n) => n == null ? "não chega em 10 anos" : `${n} ${n === 1 ? "mês" : "meses"} até a meta`, i_eco_v: (n) => `${n} ${n === 1 ? "mês" : "meses"}`, i_eco_sub: (u) => `e ${u} ganhos só com indicações até lá`, i_nao: "—", i_eco_nada: "sem indicações, sem atalho", mes: "mês", i_ate: (u) => `até ${u}`, i_meta_l: "Meta", socio_titulo: "Já copia? Indique e ganhe", socio_sub: "Programa de Sócios da RoboForex", socio_dest: "da comissão do gestor sobre cada pessoa que copiar pelo seu link", s1: "Abra a página da estratégia", s1d: "Entre na página da Legatus Gold na RoboForex com a sua conta.", s2: "Entre no Programa de Sócios", s2d: "Ative o Programa de Sócios da estratégia e gere o seu link de indicação.", s3: "Compartilhe seu link", s3d: "Cada pessoa que copiar pelo seu link gera ganhos para você, toda semana, pela própria corretora.", b_socio: "Quero meu link de indicação ↗", socio_ex: (a, b, c) => `Exemplo: se as pessoas que você indicou lucrarem ${a} na semana, o gestor recebe ${b} de comissão (30%) e você recebe ${c} (15% dessa comissão). Elas não pagam nada a mais por isso.`, b_live: "Modo live", sair_live: "Sair do modo live", hoje: "Hoje", hoje_sub: (n, v) => `${n} operações · ${v} no verde`, sem_ops_hoje: "sem operações fechadas ainda", b_compart: "Compartilhar", b_copiar_link: "Copiar link", b_zap_share: "Enviar no WhatsApp", b_compart_painel: "Compartilhar este painel", copiado: "Link copiado ✓", msg_share: "Veja o resultado ao vivo do copy trading em ouro da Legatus Group:", prox_at: (h) => `Atualiza sozinho a cada poucos minutos`, aovivo: "Robô ao vivo", aberto_total: "Resultado em aberto agora", ultimo_sinal: "Último sinal lido", abertas: "Operações abertas agora",
+      abertas_nota: "Operações abertas podem estar no negativo por um tempo; o resultado só conta quando fecham.",
+      g_saldo: "Saldo e patrimônio", g_saldo_sub: "US$ por dia", saldo: "Saldo", patrimonio: "Patrimônio (com operações abertas)",
+      g_rend: "Rendimento acumulado", g_dd: "Rebaixamento", g_dd_sub: "% abaixo do pico",
+      calendario: "Calendário de resultados", cal_sub: "lucro realizado por dia (horário do servidor)",
+      ops_titulo: "Operações", tab_robo: "Robô · ouro", tab_swing: "Swing trade", acerto: "Taxa de acerto", vencedoras: "Vencedoras", perdedoras: "Perdedoras",
+      ops_nota: "A taxa de acerto conta todas as operações fechadas pelo robô, inclusive as de proteção (hedge).",
+      ultimas: "Últimas operações fechadas", th_hora: "Fechou (servidor)", th_par: "Par", th_lado: "Lado", th_lote: "Lote", th_entrada: "Entrada", th_saida: "Saída", th_pts: "Pontos", th_res: "Resultado", th_dur: "Duração",
+      comp: "Comparativo com outros investimentos", comp_nota: "Mesmo período para todos. Legatus: rendimento oficial da estratégia (o mesmo da RoboForex), antes da comissão. CDI, poupança e Ibovespa em reais; ouro e Bitcoin em dólar.",
+      port_titulo: "Portfólio dos copiadores",
+      sim_titulo: "Se você tivesse iniciado", sim_sub: "com o resultado real e a comissão cobrada como na corretora",
+      s_cap: "Valor inicial (US$)", s_aporte: "Aporte por mês (US$)", s_ini: "Começando em", s_hoje: "Até", s_teria: "Você teria hoje", s_invest: "Total investido", s_lucro: "Lucro", s_cresc: "Crescimento",
+      sim_nota: "Calculado com o rendimento real da estratégia dia a dia. A comissão de 30% é cobrada como na corretora: uma vez por semana, só sobre o lucro novo acima do maior valor já alcançado, contando as operações abertas. Semana que fecha abaixo desse pico não paga comissão. Resultado passado não garante resultado futuro.",
+      como_copiar: "Como copiar em 4 passos", p1: "Crie sua conta e verifique", p1d: "Cadastro gratuito na RoboForex e verificação dos documentos: identidade e comprovante de residência.",
+      p2: "Abra uma conta ProCent e deposite", p2d: "Abra uma conta ProCent no MT4 e deposite a partir de US$ 100. O dinheiro fica na sua conta, em seu nome.", p3: "Copie no modo Proporcional", p3d: "Na página da estratégia Legatus Gold, toque em \"Copiar\", escolha o modo Proporcional (os lotes ficam proporcionais ao seu capital) e aceite os termos.",
+      p4: "Acompanhe aqui", p4d: "Tudo o que o robô faz aparece neste painel, aberto.", b_cadastro: "Criar conta na RoboForex ↗", b_zap: "Entrar no grupo do WhatsApp",
+      faq: "Perguntas frequentes",
+      lg_titulo: "Legião Legatus", lg_sub: "Cada nível, uma conquista", lg_placas: "As 7 placas", lg_cartas: "As 7 cartas",
+      lg_intro: "O programa de reconhecimento de quem copia a Legatus Group. Cada nível de capital na sua conta do copy vale uma placa emoldurada com o seu nome e uma carta: um capítulo de uma história em 7 partes.",
+      lg_frase: "7 pedras. 7 capítulos. Só quem chega ao próximo nível lê o próximo capítulo.",
+      lg_ler: "Toque para ler", lg_lacrada: "Lacrada · abre em", lg_fechar: "Fechar a carta",
+      lg_fica: "A placa é sua para sempre: se a conta oscilar depois, a conquista continua sua.",
+      lg_btn: "Quero entrar na Legião ↗",
+      lg_nota: "Placas = capital na conta do cliente no copy trade Legatus; recompensas = lucro acumulado. Imagens meramente ilustrativas. Lucro não é garantido. Programa de reconhecimento para clientes Legatus. Investimentos envolvem riscos: invista apenas o que você pode perder.",
+      rg_chamada: "Alcançou algum nível?", rg_chamada_sub: "Fale com a gente para conferir e receber a sua placa ou recompensa.", rg_btn: "Entrar em contato",
+      rg_titulo: "Alcancei um nível", rg_p1: "Você manda o número da sua conta e o que alcançou.", rg_p2: "A Legatus confere na RoboForex pelo número da conta.", rg_p3: "Confirmado, pedimos pelo WhatsApp os dados para o envio (CPF e endereço).",
+      rg_conta: "Número da sua conta RoboForex que copia a estratégia", rg_nome: "Nome completo", rg_nivel: "O que você alcançou", rg_obs: "Observação (opcional)",
+      rg_privac: "Nesta etapa não pedimos CPF nem endereço. Esses dados só são pedidos depois da confirmação, direto pelo WhatsApp, e usados apenas para o envio.",
+      rg_cancelar: "Cancelar", rg_enviar: "Enviar pelo WhatsApp", rg_escolha: "Escolha…", rg_placa: "Placa", rg_rec_l: "Recompensa",
+      rg_e_conta: "Informe o número da conta (só números).", rg_e_nome: "Informe o nome completo.", rg_e_nivel: "Escolha o que você alcançou.",
+      rg_msg: (c, n, x, o) => `Olá! Alcancei um nível da Legião Legatus.\n\nConta RoboForex: ${c}\nNome: ${n}\nAlcancei: ${x}${o ? "\nObservação: " + o : ""}\n\nAguardo a conferência.`,
+      lg_rec: "As 6 recompensas · por lucro acumulado", lg_rec_sub: "de lucro acumulado",
+      lg_rec_regra: "Além das placas, o seu lucro com o copy vira conquista. Vale o lucro acumulado desde que você começou a copiar: o que você já lucrou continua contando, mesmo que você saque ou tenha um mês negativo. Frete por nossa conta; os prêmios maiores são entregues em eventos presenciais.",
+      lg_rec_nomes: ["Smartwatch premium", "Smartphone topo de linha", "Notebook premium", "Viagem internacional para 2", "Relógio de luxo", "Carro de luxo"],
+      lg_pedras: ["Esmeralda", "Safira", "Rubi", "Ametista", "Ônix", "Pérola", "Ouro"],
+      lg_carta: { cap: "Capítulo I", titulo: "A Decisão", meta: "Esmeralda · Placa Smart Move · US$ 10 mil", saud: "[Seu nome],", fim: "Parabéns pela jogada certa. Bem-vindo(a) à Legião.", cargo: "Fundador · Legatus Group FX", aviso: "Rentabilidade passada não é garantia de resultados futuros. Investimentos envolvem riscos.", p: [
+        "Toda pedra preciosa começa do mesmo jeito: como uma pedra comum, escondida debaixo da terra, que ninguém nota. O que transforma uma pedra comum numa esmeralda não é sorte. É tempo, pressão e constância.",
+        "Com patrimônio é igual.",
+        "Hoje a sua conta chegou aos <b>US$ 10 mil</b>. Muita gente passa a vida inteira dizendo que \u201cum dia\u201d vai começar. Você não esperou esse dia. Você decidiu — e é por isso que esta carta está nas suas mãos.",
+        "A esmeralda é a pedra do começo e do crescimento. Ela não fica pronta de uma vez: ganha forma camada por camada, ano após ano. É exatamente isso que você começou a construir.",
+        "Pense por um instante em quem você quer ver mais tranquilo daqui a alguns anos. Talvez essas pessoas nem saibam ainda, mas foi por elas que você deu esse passo.",
+        "Guarde esta carta. Ela é o primeiro capítulo de uma história que só você pode escrever. Cada placa da Legião vem com uma nova carta, e cada carta continua de onde a anterior parou.",
+        "A próxima pedra é a safira. Ela guarda um segredo sobre o que acontece com quem não desiste — e eu te conto quando você chegar lá."] }, risco: "Antes de copiar, entenda o risco",
+      r1: "A estratégia não usa stop loss fixo. Em quedas fortes, as operações ficam abertas até recuperar.",
+      r2: "Nos testes da configuração atual (dez/2025 a out/2026), o patrimônio chegou a cair cerca de 66% antes de recuperar.",
+      r3: "Em testes de 2020 a 2025, com outro comportamento de mercado, a estratégia perdeu a conta.",
+      r4: "Invista só o que você pode perder. Resultado passado não garante resultado futuro.",
+      rodape: "Números da página pública da estratégia na RoboForex e dos registros do MetaTrader da conta, atualizados automaticamente. Conta em centavos (cent), valores convertidos para dólar.",
+      // dinâmicos
+      atualizado: "Atualizado", ultima_at: "Última atualização", em_dias: (n) => `em ${n} dias`, bruto: "bruto", oficial: "oficial (bruto)", rend_fech: (a, b, c) => `✅ fechado: <b class="pos">${a}</b><br>⏳ em aberto: <b class="${c}">${b}</b>`, rend_liq: (p) => `quem copia: <b>${p}</b> após a comissão`, intro: "Copie as operações do robô de ouro do Legatus Group direto na sua conta da RoboForex, a partir de US$ 100. Tudo o que acontece na conta aparece aqui, ao vivo.", nav_res: "Resultados", nav_ops: "Operações", nav_copiar: "Como copiar", nav_indique: "Indique e ganhe", nav_legiao: "Legião Legatus", nav_faq: "Perguntas", ops_dia: (n, d) => `${n} operações · ≈ ${d} por dia`,
+      copiadores: (n) => `${n} copiadores`, em: "em", ligado: "Robô ligado e operando", desligado: "Robô sem sinal recente", dados_de: (h) => `· dados de ${h} (servidor)`,
+      compra: "Compra", venda: "Venda", lote: "lote", abriu: "abriu operação", ignorou: "ignorado", nenhuma_aberta: "Nenhuma operação aberta agora.", entrada: "entrada",
+      ops_fechadas: (n) => `${n} operações fechadas`, swing_vazio: `O swing trade manual (${C.swingPares || ""}) ainda não tem operações fechadas. Elas aparecem aqui automaticamente.`,
+      robo_vazio: "Ainda sem operações.", min: "min", h: "h",
+      semana: ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"], cal_mes_res: (u, p, d, v, n) => `<span>No mês: <b>${u}</b> · <b>${p}</b></span><span>Dias operados: <b>${d}</b></span><span>Dias positivos: <b>${v}</b></span><span>Dias negativos: <b>${n}</b></span>`,
+      comp_dias: (n) => `últimos ${n} dias`, legatus: "Legatus Group (Copy Trade)", legatus_b: (b) => `bruto ${b}`, cdi: "CDI", poupanca: "Poupança", ibovespa: "Ibovespa", ouro: "Ouro", bitcoin: "Bitcoin", dolar: "Dólar (R$)",
+      port_nota: (n) => n < 2 ? "O gráfico ganha pontos a cada atualização do portfólio." : "Soma do dinheiro de quem copia a estratégia.",
+      faqs: [
+        ["Posso sair quando quiser?", "Sim. O dinheiro fica na sua própria conta na RoboForex, em seu nome. Você pode parar de copiar, depositar ou sacar quando quiser."],
+        ["Quanto preciso para começar?", "O mínimo para copiar a estratégia é US$ 100."],
+        ["Como configuro a cópia?", "Ao clicar em Copiar, escolha o modo Proporcional: as operações abrem na sua conta com lotes proporcionais ao seu capital. Depois aceite os termos da RoboForex."],
+        ["Que tipo de conta eu preciso?", "Uma conta ProCent no MetaTrader 4 (MT4) na RoboForex, com os documentos verificados (identidade e comprovante de residência)."],
+        ["O que acontece num dia ruim?", "Até hoje nenhum dia fechou com prejuízo realizado (veja o calendário). O robô busca fechar o dia no positivo, mas não usa stop: em quedas fortes as operações podem ficar abertas no negativo (rebaixamento) até recuperar, e o patrimônio fica abaixo do saldo nesse período."],
+        ["Como funciona a comissão?", "30% sobre o lucro novo que a estratégia gerar na sua conta. Quem faz a divisão é a própria corretora, toda semana. Se não houver lucro novo na semana, não há comissão."],
+        ["Como funciona o Indique e ganhe?", "Quem copia pode ativar o Programa de Sócios na página da estratégia e gerar um link de indicação. Cada pessoa que copiar a estratégia pelo seu link gera ganhos para você."],
+        ["Quanto eu ganho indicando?", "15% da comissão que o gestor recebe de cada pessoa que você indicou. Como a comissão é 30% do lucro, isso dá 4,5% do lucro dos seus indicados. Exemplo: se eles lucrarem US$ 1.000, você recebe US$ 45."],
+        ["A pessoa indicada paga mais por isso?", "Não. Ela paga a mesma comissão de 30% de quem entra sem indicação. A sua parte sai da comissão do gestor."],
+        ["Quando e onde recebo?", "A própria RoboForex calcula e paga, junto com a divisão semanal da comissão. Você acompanha pela sua área na RoboForex."],
+        ["Quem opera a conta?", "No ouro (XAUUSD), o robô próprio do Legatus Group, em 5 tempos gráficos. Nos pares de moedas, o swing trade manual do gestor. As duas partes aparecem separadas neste painel."],
+        ["O que é a Legião Legatus?", "É o programa de reconhecimento de quem copia o Legatus Group. Ele tem duas trilhas: as placas, por capital na conta, e as recompensas, por lucro acumulado. Cada placa vem com uma carta, um capítulo de uma história em 7 partes."],
+        ["Como funcionam as placas?", "Quando o capital na sua conta do copy chega a US$ 10 mil, 25 mil, 50 mil, 100 mil, 200 mil, 500 mil ou 1 milhão, você recebe a placa daquele nível, emoldurada e com o seu nome. O quadro cresce a cada nível."],
+        ["Se a minha conta cair depois, perco a placa?", "Não. A placa é sua para sempre. Se a conta oscilar depois, a conquista continua sua."],
+        ["Como funcionam as recompensas?", "Elas são pelo lucro acumulado com o copy desde que você começou a copiar: US$ 10 mil (smartwatch), 35 mil (smartphone), 75 mil (notebook), 175 mil (viagem para 2), 425 mil (relógio de luxo) e 2 milhões (carro de luxo)."],
+        ["Se eu sacar dinheiro, perco o progresso das recompensas?", "Não. O que você já lucrou continua contando, mesmo que você saque. Saques não diminuem o valor a ser alcançado."],
+        ["Um mês negativo diminui o lucro acumulado?", "Não. Se houver um mês negativo, ele não diminui o lucro acumulado das recompensas. O que você já conquistou continua contando."],
+        ["Quem paga o frete?", "O Legatus Group. O envio não tem custo nenhum para você."],
+        ["Qual é o prazo de entrega?", "As placas e as recompensas até o notebook chegam em até 30 dias depois do pedido feito. Os prêmios maiores (viagem, relógio de luxo e carro de luxo) são entregues em eventos presenciais."],
+        ["O que são as cartas?", "Cada placa vem com uma carta assinada pelo fundador, um capítulo de uma história em 7 partes. A primeira você pode ler aqui no painel. As outras só quem chega ao nível lê."],
+        ["Como peço a minha placa ou recompensa?", "Toque em “Entrar em contato” na seção Legião Legatus e mande o número da sua conta RoboForex, o seu nome completo e o que você alcançou. Nós conferimos na RoboForex pelo número da conta. Confirmado, pedimos pelo WhatsApp o CPF e o endereço com CEP, usados apenas para o envio."],
+        ["As recompensas são garantidas?", "Elas são entregues a quem atinge o nível. O lucro, porém, não é garantido: é renda variável e pode haver perdas. As imagens são meramente ilustrativas."],
+        ["Por que o rendimento oficial é diferente do resultado fechado?", "O rendimento oficial é o mesmo da página da RoboForex e já desconta as operações que ainda estão abertas. Embaixo dele aparecem as duas partes: o que já foi fechado (lucro realizado) e o que está em aberto agora. O valor em aberto muda a cada momento: se as operações fecharem no lucro, ele some; se fecharem no prejuízo, vira perda realizada. Como a estratégia não usa stop, mostramos os dois."],
+        ["Posso perder dinheiro?", "Sim. É renda variável: o rebaixamento pode ser forte e resultados passados não garantem resultados futuros. Copie só o valor que você pode perder."],
+      ],
+    },
+    en: {
+      sub_marca: "Legatus Gold strategy · gold (XAUUSD) copy trading", conta: "account", btn_copiar: "Copy the strategy ↗",
+      k_rend: "Return", k_lucro: "Profit", k_lucro_sub: "in dollars", k_dd: "Max drawdown", k_dd_sub: "worst equity drop",
+      k_saldo: "Balance", k_saldo_sub: "cent account", k_venc: "Winners", k_port: "Total portfolio", k_subs: "Copiers",
+      b_atualizar: "Refresh", quem_titulo: "Who is behind it", quem_lema: "“Those who think short term never have anything.”", quem_cargo: "Founder of Legatus Group · in the financial markets since 2018", lt1: "Started in the financial markets with R$ 60,000 (Brazilian reais).", lt2: "Made his first million scalping and day trading, glued to the charts all day. It cost him his physical and mental health, and that is how his own swing-trading strategy was born.", lt3a: "Sep/2022", lt3: "Lost R$ 470,000 in a few days, between the war in Ukraine, the death of Queen Elizabeth and the fall of the pound. His risk management was far too aggressive. Since then, he aims for 5% to 7% a month in swing trading, with a current average of 5.61%.", lt4: "Taught more than 300 students around the world. When the strategy started being resold without permission, he stopped teaching and kept the method under lock and key.", lt5: "Started the gold (XAUUSD) robot. After 8 months of coding without the expected results, he fixed its flaws with the help of artificial intelligence and reached the robot that trades this account.", lt6a: "Today", lt6: "Legatus Group is born: copy trading that brings the same trades to each copier's own account, in proportion to their capital, with no course and nothing to execute.", quem_frase: "“Teaching, I watched most people let greed take over and give up in the long run. Showing the strategy did not fix that. With copy trading, people get the same trades in their own account, without needing the discipline to execute them.”", ind_titulo: "How much referrals shorten your path", i_cap: "Your capital (US$)", i_meta: "Your goal (US$)", i_rent: "Average monthly return (%)", i_n: "People you referred", i_capind: "Average capital per referral (US$)", i_sozinho: "On your own", i_com: "With referrals", i_ganho: "You save", ind_nota: "Simulation: your capital and your referrals' capital grow at the chosen return, after the 30% fee; you receive 15% of the fee paid by your referrals (4.5% of their profit) and that money goes back into your account. This is not a promise of results: returns vary and can be negative.", i_meses: (n) => n == null ? "does not reach it in 10 years" : `${n} ${n === 1 ? "month" : "months"} to the goal`, i_eco_v: (n) => `${n} ${n === 1 ? "month" : "months"}`, i_eco_sub: (u) => `plus ${u} earned from referrals alone by then`, i_nao: "—", i_eco_nada: "no referrals, no shortcut", mes: "month", i_ate: (u) => `to reach ${u}`, i_meta_l: "Goal", socio_titulo: "Already copying? Refer and earn", socio_sub: "RoboForex Partner Program", socio_dest: "of the manager's fee on everyone who copies through your link", s1: "Open the strategy page", s1d: "Go to the Legatus Gold page on RoboForex, logged in to your account.", s2: "Join the Partner Program", s2d: "Activate the strategy's Partner Program and generate your referral link.", s3: "Share your link", s3d: "Everyone who copies through your link earns you money, every week, paid by the broker itself.", b_socio: "Get my referral link ↗", socio_ex: (a, b, c) => `Example: if the people you referred make ${a} in profit in a week, the manager earns ${b} in fees (30%) and you earn ${c} (15% of that fee). They pay nothing extra for it.`, b_live: "Live mode", sair_live: "Exit live mode", hoje: "Today", hoje_sub: (n, v) => `${n} trades · ${v} winners`, sem_ops_hoje: "no closed trades yet", b_compart: "Share", b_copiar_link: "Copy link", b_zap_share: "Send on WhatsApp", b_compart_painel: "Share this dashboard", copiado: "Link copied ✓", msg_share: "See the live results of Legatus Group gold copy trading:", prox_at: (h) => `Updates itself every few minutes`, aovivo: "Robot live", aberto_total: "Open result right now", ultimo_sinal: "Last signal read", abertas: "Open trades now",
+      abertas_nota: "Open trades can be negative for a while; the result only counts once they close.",
+      g_saldo: "Balance and equity", g_saldo_sub: "US$ per day", saldo: "Balance", patrimonio: "Equity (with open trades)",
+      g_rend: "Cumulative return", g_dd: "Drawdown", g_dd_sub: "% below peak",
+      calendario: "Results calendar", cal_sub: "realized profit per day (server time)",
+      ops_titulo: "Trades", tab_robo: "Robot · gold", tab_swing: "Swing trade", acerto: "Win rate", vencedoras: "Winners", perdedoras: "Losers",
+      ops_nota: "The win rate counts every trade the robot closed, including protection (hedge) trades.",
+      ultimas: "Latest closed trades", th_hora: "Closed (server)", th_par: "Pair", th_lado: "Side", th_lote: "Lot", th_entrada: "Entry", th_saida: "Exit", th_pts: "Points", th_res: "Result", th_dur: "Duration",
+      comp: "Compared with other investments", comp_nota: "Same period for all. Legatus: the strategy's official return (same as RoboForex), before the fee. CDI, savings and Ibovespa in BRL; gold and Bitcoin in USD.",
+      port_titulo: "Copiers' portfolio",
+      sim_titulo: "If you had started", sim_sub: "with the real result and the fee charged the way the broker does",
+      s_cap: "Starting amount (US$)", s_aporte: "Monthly deposit (US$)", s_ini: "Starting on", s_hoje: "Until", s_teria: "You would have today", s_invest: "Total invested", s_lucro: "Profit", s_cresc: "Growth",
+      sim_nota: "Calculated with the strategy's real day-by-day return. The 30% fee is charged the way the broker does: once a week, only on new profit above the highest value ever reached, including open trades. A week that closes below that peak pays no fee. Past results do not guarantee future results.",
+      como_copiar: "How to copy in 4 steps", p1: "Open and verify your account", p1d: "Free sign-up at RoboForex plus document verification: ID and proof of address.",
+      p2: "Open a ProCent account and deposit", p2d: "Open a ProCent account on MT4 and deposit from US$ 100. The money stays in your own account, in your name.", p3: "Copy in Proportional mode", p3d: "On the Legatus Gold strategy page, tap \"Copy\", choose Proportional mode (lot sizes follow your capital) and accept the terms.",
+      p4: "Follow it here", p4d: "Everything the robot does shows up on this dashboard, in the open.", b_cadastro: "Open a RoboForex account ↗", b_zap: "Join the WhatsApp group",
+      faq: "Frequently asked questions",
+      lg_titulo: "Legatus Legion", lg_sub: "Every level, an achievement", lg_placas: "The 7 plaques", lg_cartas: "The 7 letters",
+      lg_intro: "The recognition program for those who copy Legatus Group. Each capital level in your copy account earns a framed plaque with your name and a letter: one chapter of a 7-part story.",
+      lg_frase: "7 stones. 7 chapters. Only those who reach the next level read the next chapter.",
+      lg_ler: "Tap to read", lg_lacrada: "Sealed · opens at", lg_fechar: "Close the letter",
+      lg_fica: "The plaque is yours forever: if the account fluctuates later, the achievement is still yours.",
+      lg_btn: "I want to join the Legion ↗",
+      lg_nota: "Plaques = capital in the client's Legatus copy trading account; rewards = accumulated profit. Illustrative images only. Profit is not guaranteed. Recognition program for Legatus clients. Investing involves risk: only invest what you can afford to lose.",
+      rg_chamada: "Reached a level?", rg_chamada_sub: "Get in touch so we can check it and send your plaque or reward.", rg_btn: "Get in touch",
+      rg_titulo: "I reached a level", rg_p1: "You send your account number and what you reached.", rg_p2: "Legatus checks it on RoboForex using the account number.", rg_p3: "Once confirmed, we ask on WhatsApp for the shipping details (tax ID and address).",
+      rg_conta: "Your RoboForex account number that copies the strategy", rg_nome: "Full name", rg_nivel: "What you reached", rg_obs: "Note (optional)",
+      rg_privac: "At this step we do not ask for your tax ID or address. Those are only requested after confirmation, directly on WhatsApp, and used only for shipping.",
+      rg_cancelar: "Cancel", rg_enviar: "Send on WhatsApp", rg_escolha: "Choose…", rg_placa: "Plaque", rg_rec_l: "Reward",
+      rg_e_conta: "Enter the account number (digits only).", rg_e_nome: "Enter your full name.", rg_e_nivel: "Choose what you reached.",
+      rg_msg: (c, n, x, o) => `Hi! I reached a Legatus Legion level.\n\nRoboForex account: ${c}\nName: ${n}\nReached: ${x}${o ? "\nNote: " + o : ""}\n\nLooking forward to the check.`,
+      lg_rec: "The 6 rewards · by accumulated profit", lg_rec_sub: "in accumulated profit",
+      lg_rec_regra: "Beyond the plaques, your copy trading profit becomes an achievement. What counts is the profit accumulated since you started copying: what you have already earned keeps counting, even if you withdraw or have a negative month. Shipping is on us; the bigger prizes are handed over at in-person events.",
+      lg_rec_nomes: ["Premium smartwatch", "Top-of-the-line smartphone", "Premium laptop", "International trip for 2", "Luxury watch", "Luxury car"],
+      lg_pedras: ["Emerald", "Sapphire", "Ruby", "Amethyst", "Onyx", "Pearl", "Gold"],
+      lg_carta: { cap: "Chapter I", titulo: "The Decision", meta: "Emerald · Smart Move plaque · US$ 10,000", saud: "[Your name],", fim: "Congratulations on the smart move. Welcome to the Legion.", cargo: "Founder · Legatus Group FX", aviso: "Past performance is no guarantee of future results. Investing involves risk.", p: [
+        "Every precious stone starts the same way: as an ordinary stone, hidden underground, that nobody notices. What turns an ordinary stone into an emerald is not luck. It is time, pressure and consistency.",
+        "Wealth works the same way.",
+        "Today your account reached <b>US$ 10,000</b>. Many people spend their whole lives saying they will start \u201csomeday\u201d. You did not wait for that day. You decided — and that is why this letter is in your hands.",
+        "The emerald is the stone of beginnings and growth. It is not formed all at once: it takes shape layer by layer, year after year. That is exactly what you have started to build.",
+        "Think for a moment about who you want to see more at ease a few years from now. They may not even know it yet, but you took this step for them.",
+        "Keep this letter. It is the first chapter of a story only you can write. Every Legion plaque comes with a new letter, and each letter picks up where the last one left off.",
+        "The next stone is the sapphire. It holds a secret about what happens to those who do not give up — and I will tell you when you get there."] }, risco: "Before copying, understand the risk",
+      r1: "The strategy does not use a fixed stop loss. In strong drops, trades stay open until they recover.",
+      r2: "In tests of the current setup (Dec/2025 to Oct/2026), equity fell about 66% before recovering.",
+      r3: "In 2020–2025 tests, under different market behavior, the strategy blew the account.",
+      r4: "Only invest what you can afford to lose. Past results do not guarantee future results.",
+      rodape: "Figures from the strategy's public RoboForex page and the account's MetaTrader logs, updated automatically. Cent account, values converted to dollars.",
+      atualizado: "Updated", ultima_at: "Last update", em_dias: (n) => `in ${n} days`, bruto: "gross", oficial: "official (gross)", rend_fech: (a, b, c) => `✅ closed: <b class="pos">${a}</b><br>⏳ open: <b class="${c}">${b}</b>`, rend_liq: (p) => `copiers: <b>${p}</b> after the fee`, intro: "Copy the trades of Legatus Group's gold robot straight into your own RoboForex account, from US$ 100. Everything that happens in the account shows up here, live.", nav_res: "Results", nav_ops: "Trades", nav_copiar: "How to copy", nav_indique: "Refer and earn", nav_legiao: "Legatus Legion", nav_faq: "FAQ", ops_dia: (n, d) => `${n} trades · ≈ ${d} per day`,
+      copiers: null, copiadores: (n) => `${n} copiers`, em: "on", ligado: "Robot on and trading", desligado: "No recent signal from the robot", dados_de: (h) => `· data from ${h} (server)`,
+      compra: "Buy", venda: "Sell", lote: "lot", abriu: "opened a trade", ignorou: "ignored", nenhuma_aberta: "No open trades right now.", entrada: "entry",
+      ops_fechadas: (n) => `${n} closed trades`, swing_vazio: "The manual swing trade (major currency pairs, except USDJPY) has no closed trades yet. They will show up here automatically.",
+      robo_vazio: "No trades yet.", min: "min", h: "h",
+      semana: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"], cal_mes_res: (u, p, d, v, n) => `<span>This month: <b>${u}</b> · <b>${p}</b></span><span>Days traded: <b>${d}</b></span><span>Positive days: <b>${v}</b></span><span>Negative days: <b>${n}</b></span>`,
+      comp_dias: (n) => `last ${n} days`, legatus: "Legatus Group (Copy Trade)", legatus_b: (b) => `gross ${b}`, cdi: "CDI (Brazil)", poupanca: "Savings (Brazil)", ibovespa: "Ibovespa", ouro: "Gold", bitcoin: "Bitcoin", dolar: "Dollar (BRL)",
+      port_nota: (n) => n < 2 ? "The chart gains a point with every portfolio update." : "Sum of the money copying the strategy.",
+      faqs: [
+        ["Can I leave whenever I want?", "Yes. The money stays in your own RoboForex account, in your name. You can stop copying, deposit or withdraw at any time."],
+        ["How much do I need to start?", "The minimum to copy the strategy is US$ 100."],
+        ["How do I set up the copy?", "When you click Copy, choose Proportional mode: trades open in your account with lot sizes proportional to your capital. Then accept the RoboForex terms."],
+        ["What kind of account do I need?", "A ProCent account on MetaTrader 4 (MT4) at RoboForex, with verified documents (ID and proof of address)."],
+        ["What happens on a bad day?", "So far no day has closed with a realized loss (see the calendar). The robot aims to close the day positive, but it uses no stop: in strong drops, trades can stay open in the red (drawdown) until they recover, and equity sits below the balance meanwhile."],
+        ["How does the fee work?", "30% of the new profit the strategy makes in your account. The broker itself splits it every week. No new profit in the week, no fee."],
+        ["How does Refer and earn work?", "Copiers can activate the Partner Program on the strategy page and generate a referral link. Everyone who copies the strategy through your link earns you money."],
+        ["How much do I earn by referring?", "15% of the fee the manager receives from each person you referred. Since the fee is 30% of profit, that is 4.5% of your referrals' profit. Example: if they make US$ 1,000, you receive US$ 45."],
+        ["Does the referred person pay more?", "No. They pay the same 30% fee as anyone who joins without a referral. Your share comes out of the manager's fee."],
+        ["When and where do I get paid?", "RoboForex itself calculates and pays it, together with the weekly fee split. You can follow it in your RoboForex area."],
+        ["Who trades the account?", "On gold (XAUUSD), the Legatus Group's own robot, on 5 timeframes. On currency pairs, the manager's manual swing trading. Both are shown separately on this dashboard."],
+        ["What is the Legatus Legion?", "It is the recognition program for those who copy Legatus Group. It has two tracks: plaques, by capital in the account, and rewards, by accumulated profit. Each plaque comes with a letter, one chapter of a 7-part story."],
+        ["How do the plaques work?", "When the capital in your copy account reaches US$ 10k, 25k, 50k, 100k, 200k, 500k or 1 million, you receive that level's plaque, framed and with your name. The frame gets bigger at each level."],
+        ["If my account drops later, do I lose the plaque?", "No. The plaque is yours forever. If the account fluctuates later, the achievement is still yours."],
+        ["How do the rewards work?", "They are based on the profit accumulated with the copy since you started copying: US$ 10k (smartwatch), 35k (smartphone), 75k (laptop), 175k (trip for 2), 425k (luxury watch) and 2 million (luxury car)."],
+        ["If I withdraw money, do I lose my reward progress?", "No. What you have already earned keeps counting, even if you withdraw. Withdrawals do not reduce the amount to be reached."],
+        ["Does a negative month reduce the accumulated profit?", "No. If there is a negative month, it does not reduce the accumulated profit for the rewards. What you have already achieved keeps counting."],
+        ["Who pays for shipping?", "Legatus Group. Shipping costs you nothing."],
+        ["How long does delivery take?", "Plaques and rewards up to the laptop arrive within 30 days after the request is made. The bigger prizes (trip, luxury watch and luxury car) are handed over at in-person events."],
+        ["What are the letters?", "Each plaque comes with a letter signed by the founder, one chapter of a 7-part story. You can read the first one here on the dashboard. Only those who reach each level read the others."],
+        ["How do I claim my plaque or reward?", "Tap “Get in touch” in the Legatus Legion section and send your RoboForex account number, your full name and what you reached. We check it on RoboForex using the account number. Once confirmed, we ask on WhatsApp for your tax ID and address, used only for shipping."],
+        ["Are the rewards guaranteed?", "They are delivered to those who reach the level. Profit, however, is not guaranteed: this is a risky investment and losses can happen. Images are for illustration only."],
+        ["Why is the official return different from the closed result?", "The official return is the same as on the RoboForex page and already accounts for trades that are still open. Below it you see both parts: what has already closed (realized profit) and what is open right now. The open amount changes all the time: if those trades close in profit it disappears; if they close at a loss it becomes a realized loss. Since the strategy uses no stop loss, we show both."],
+        ["Can I lose money?", "Yes. This is a risky investment: drawdowns can be deep and past results do not guarantee future results. Only copy an amount you can afford to lose."],
+      ],
+    },
+    es: {
+      sub_marca: "Estrategia Legatus Gold · copy trading en oro (XAUUSD)", conta: "cuenta", btn_copiar: "Copiar la estrategia ↗",
+      k_rend: "Rendimiento", k_lucro: "Ganancia", k_lucro_sub: "en dólares", k_dd: "Reducción máx.", k_dd_sub: "peor caída del patrimonio",
+      k_saldo: "Saldo", k_saldo_sub: "cuenta cent", k_venc: "Ganadoras", k_port: "Portafolio total", k_subs: "Copiadores",
+      b_atualizar: "Actualizar", quem_titulo: "Quién está detrás", quem_lema: "“Quien piensa a corto plazo nunca tiene nada.”", quem_cargo: "Fundador de Legatus Group · en el mercado financiero desde 2018", lt1: "Empezó en el mercado financiero con R$ 60.000 (reales).", lt2: "Logró su primer millón con scalping y day trading, todo el día frente a los gráficos. Le costó la salud física y mental, y de ahí nació su estrategia propia de swing trading.", lt3a: "Sep/2022", lt3: "Perdió R$ 470.000 en pocos días, entre la guerra en Ucrania, la muerte de la reina Isabel y la caída de la libra. Su gestión de riesgo era demasiado agresiva. Desde entonces busca del 5% al 7% mensual en swing trading, con un promedio actual de 5,61%.", lt4: "Enseñó a más de 300 alumnos en todo el mundo. Cuando la estrategia empezó a revenderse sin autorización, dejó de enseñar y guardó el método bajo siete llaves.", lt5: "Empezó el robot para el oro (XAUUSD). Tras 8 meses de código sin el resultado esperado, corrigió las fallas con ayuda de inteligencia artificial y llegó al robot que opera esta cuenta.", lt6a: "Hoy", lt6: "Nace Legatus Group: el copy trading que lleva las mismas operaciones a la cuenta de quien copia, proporcionales al capital de cada uno, sin curso y sin tener que ejecutar nada.", quem_frase: "“Enseñando, veía a la mayoría dejar que la codicia tomara el control y rendirse a largo plazo. Mostrar la estrategia no lo resolvía. Con el copy, la persona recibe las mismas operaciones en su cuenta, sin necesitar la disciplina de ejecutarlas.”", ind_titulo: "Cuánto acortan tu camino las recomendaciones", i_cap: "Tu capital (US$)", i_meta: "Tu meta (US$)", i_rent: "Rendimiento medio mensual (%)", i_n: "Personas que recomendaste", i_capind: "Capital medio de cada recomendado (US$)", i_sozinho: "Solo", i_com: "Con recomendaciones", i_ganho: "Ahorras", ind_nota: "Simulación: tu capital y el de tus recomendados crecen al rendimiento elegido, ya sin el 30% de comisión; recibes el 15% de la comisión pagada por tus recomendados (4,5% de su ganancia) y ese dinero vuelve a tu cuenta. No es una promesa de resultados: el rendimiento varía y puede ser negativo.", i_meses: (n) => n == null ? "no llega en 10 años" : `${n} ${n === 1 ? "mes" : "meses"} hasta la meta`, i_eco_v: (n) => `${n} ${n === 1 ? "mes" : "meses"}`, i_eco_sub: (u) => `y ${u} ganados solo con recomendaciones hasta entonces`, i_nao: "—", i_eco_nada: "sin recomendaciones, sin atajo", mes: "mes", i_ate: (u) => `hasta ${u}`, i_meta_l: "Meta", socio_titulo: "¿Ya copias? Recomienda y gana", socio_sub: "Programa de Socios de RoboForex", socio_dest: "de la comisión del gestor sobre cada persona que copie con tu enlace", s1: "Abre la página de la estrategia", s1d: "Entra a la página de Legatus Gold en RoboForex con tu cuenta.", s2: "Únete al Programa de Socios", s2d: "Activa el Programa de Socios de la estrategia y genera tu enlace de referido.", s3: "Comparte tu enlace", s3d: "Cada persona que copie con tu enlace te genera ganancias, cada semana, pagadas por el propio bróker.", b_socio: "Quiero mi enlace de referido ↗", socio_ex: (a, b, c) => `Ejemplo: si las personas que recomendaste ganan ${a} en la semana, el gestor recibe ${b} de comisión (30%) y tú recibes ${c} (15% de esa comisión). Ellas no pagan nada extra por eso.`, b_live: "Modo en vivo", sair_live: "Salir del modo en vivo", hoje: "Hoy", hoje_sub: (n, v) => `${n} operaciones · ${v} ganadoras`, sem_ops_hoje: "sin operaciones cerradas aún", b_compart: "Compartir", b_copiar_link: "Copiar enlace", b_zap_share: "Enviar por WhatsApp", b_compart_painel: "Compartir este panel", copiado: "Enlace copiado ✓", msg_share: "Mira en vivo los resultados del copy trading en oro de Legatus Group:", prox_at: (h) => `Se actualiza solo cada pocos minutos`, aovivo: "Robot en vivo", aberto_total: "Resultado abierto ahora", ultimo_sinal: "Última señal leída", abertas: "Operaciones abiertas ahora",
+      abertas_nota: "Las operaciones abiertas pueden estar en negativo un tiempo; el resultado solo cuenta cuando cierran.",
+      g_saldo: "Saldo y patrimonio", g_saldo_sub: "US$ por día", saldo: "Saldo", patrimonio: "Patrimonio (con operaciones abiertas)",
+      g_rend: "Rendimiento acumulado", g_dd: "Reducción", g_dd_sub: "% debajo del pico",
+      calendario: "Calendario de resultados", cal_sub: "ganancia realizada por día (hora del servidor)",
+      ops_titulo: "Operaciones", tab_robo: "Robot · oro", tab_swing: "Swing trade", acerto: "Tasa de acierto", vencedoras: "Ganadoras", perdedoras: "Perdedoras",
+      ops_nota: "La tasa de acierto cuenta todas las operaciones cerradas por el robot, incluidas las de protección (hedge).",
+      ultimas: "Últimas operaciones cerradas", th_hora: "Cerró (servidor)", th_par: "Par", th_lado: "Lado", th_lote: "Lote", th_entrada: "Entrada", th_saida: "Salida", th_pts: "Puntos", th_res: "Resultado", th_dur: "Duración",
+      comp: "Comparación con otras inversiones", comp_nota: "Mismo período para todos. Legatus: rendimiento oficial de la estrategia (el mismo de RoboForex), antes de la comisión. CDI, ahorro e Ibovespa en reales; oro y Bitcoin en dólares.",
+      port_titulo: "Portafolio de los copiadores",
+      sim_titulo: "Si hubieras empezado", sim_sub: "con el resultado real y la comisión cobrada como en el bróker",
+      s_cap: "Monto inicial (US$)", s_aporte: "Aporte mensual (US$)", s_ini: "Empezando el", s_hoje: "Hasta", s_teria: "Tendrías hoy", s_invest: "Total invertido", s_lucro: "Ganancia", s_cresc: "Crecimiento",
+      sim_nota: "Calculado con el rendimiento real de la estrategia día a día. La comisión del 30% se cobra como en el bróker: una vez por semana, solo sobre la ganancia nueva por encima del valor más alto alcanzado, contando las operaciones abiertas. La semana que cierra por debajo de ese pico no paga comisión. Los resultados pasados no garantizan resultados futuros.",
+      como_copiar: "Cómo copiar en 4 pasos", p1: "Crea y verifica tu cuenta", p1d: "Registro gratuito en RoboForex y verificación de documentos: identidad y comprobante de domicilio.",
+      p2: "Abre una cuenta ProCent y deposita", p2d: "Abre una cuenta ProCent en MT4 y deposita desde US$ 100. El dinero queda en tu propia cuenta, a tu nombre.", p3: "Copia en modo Proporcional", p3d: "En la página de la estrategia Legatus Gold, toca \"Copiar\", elige el modo Proporcional (los lotes siguen tu capital) y acepta los términos.",
+      p4: "Síguelo aquí", p4d: "Todo lo que hace el robot aparece en este panel, a la vista.", b_cadastro: "Crear cuenta en RoboForex ↗", b_zap: "Entrar al grupo de WhatsApp",
+      faq: "Preguntas frecuentes",
+      lg_titulo: "Legión Legatus", lg_sub: "Cada nivel, una conquista", lg_placas: "Las 7 placas", lg_cartas: "Las 7 cartas",
+      lg_intro: "El programa de reconocimiento de quienes copian Legatus Group. Cada nivel de capital en tu cuenta de copy vale una placa enmarcada con tu nombre y una carta: un capítulo de una historia en 7 partes.",
+      lg_frase: "7 piedras. 7 capítulos. Solo quien llega al siguiente nivel lee el siguiente capítulo.",
+      lg_ler: "Toca para leer", lg_lacrada: "Sellada · se abre en", lg_fechar: "Cerrar la carta",
+      lg_fica: "La placa es tuya para siempre: si la cuenta oscila después, la conquista sigue siendo tuya.",
+      lg_btn: "Quiero entrar a la Legión ↗",
+      lg_nota: "Placas = capital en la cuenta del cliente en el copy trade Legatus; recompensas = ganancia acumulada. Imágenes meramente ilustrativas. La ganancia no está garantizada. Programa de reconocimiento para clientes Legatus. Invertir implica riesgos: invierte solo lo que puedas perder.",
+      rg_chamada: "¿Alcanzaste algún nivel?", rg_chamada_sub: "Escríbenos para verificarlo y recibir tu placa o recompensa.", rg_btn: "Contactar",
+      rg_titulo: "Alcancé un nivel", rg_p1: "Envías el número de tu cuenta y lo que alcanzaste.", rg_p2: "Legatus lo verifica en RoboForex por el número de cuenta.", rg_p3: "Confirmado, te pedimos por WhatsApp los datos para el envío (documento y dirección).",
+      rg_conta: "Número de tu cuenta RoboForex que copia la estrategia", rg_nome: "Nombre completo", rg_nivel: "Lo que alcanzaste", rg_obs: "Observación (opcional)",
+      rg_privac: "En esta etapa no pedimos documento ni dirección. Esos datos solo se piden después de la confirmación, directamente por WhatsApp, y se usan solo para el envío.",
+      rg_cancelar: "Cancelar", rg_enviar: "Enviar por WhatsApp", rg_escolha: "Elige…", rg_placa: "Placa", rg_rec_l: "Recompensa",
+      rg_e_conta: "Indica el número de cuenta (solo números).", rg_e_nome: "Indica tu nombre completo.", rg_e_nivel: "Elige lo que alcanzaste.",
+      rg_msg: (c, n, x, o) => `¡Hola! Alcancé un nivel de la Legión Legatus.\n\nCuenta RoboForex: ${c}\nNombre: ${n}\nAlcancé: ${x}${o ? "\nObservación: " + o : ""}\n\nQuedo atento(a) a la verificación.`,
+      lg_rec: "Las 6 recompensas · por ganancia acumulada", lg_rec_sub: "de ganancia acumulada",
+      lg_rec_regra: "Además de las placas, tu ganancia con el copy se convierte en conquista. Cuenta la ganancia acumulada desde que empezaste a copiar: lo que ya ganaste sigue contando, aunque retires o tengas un mes negativo. El envío corre por nuestra cuenta; los premios mayores se entregan en eventos presenciales.",
+      lg_rec_nomes: ["Smartwatch premium", "Smartphone de gama alta", "Notebook premium", "Viaje internacional para 2", "Reloj de lujo", "Auto de lujo"],
+      lg_pedras: ["Esmeralda", "Zafiro", "Rubí", "Amatista", "Ónix", "Perla", "Oro"],
+      lg_carta: { cap: "Capítulo I", titulo: "La Decisión", meta: "Esmeralda · Placa Smart Move · US$ 10.000", saud: "[Tu nombre],", fim: "Felicidades por la jugada correcta. Bienvenido(a) a la Legión.", cargo: "Fundador · Legatus Group FX", aviso: "La rentabilidad pasada no garantiza resultados futuros. Invertir implica riesgos.", p: [
+        "Toda piedra preciosa empieza igual: como una piedra común, escondida bajo la tierra, que nadie nota. Lo que convierte una piedra común en una esmeralda no es la suerte. Es tiempo, presión y constancia.",
+        "Con el patrimonio pasa lo mismo.",
+        "Hoy tu cuenta llegó a los <b>US$ 10.000</b>. Mucha gente pasa la vida entera diciendo que \u201calgún día\u201d va a empezar. Tú no esperaste ese día. Tú decidiste — y por eso esta carta está en tus manos.",
+        "La esmeralda es la piedra del comienzo y del crecimiento. No se forma de una vez: toma forma capa por capa, año tras año. Eso es exactamente lo que empezaste a construir.",
+        "Piensa por un instante en quién quieres ver más tranquilo dentro de algunos años. Tal vez esas personas aún no lo sepan, pero fue por ellas que diste este paso.",
+        "Guarda esta carta. Es el primer capítulo de una historia que solo tú puedes escribir. Cada placa de la Legión viene con una nueva carta, y cada carta continúa donde terminó la anterior.",
+        "La próxima piedra es el zafiro. Guarda un secreto sobre lo que pasa con quien no se rinde — y te lo cuento cuando llegues allí."] }, risco: "Antes de copiar, entiende el riesgo",
+      r1: "La estrategia no usa stop loss fijo. En caídas fuertes, las operaciones quedan abiertas hasta recuperarse.",
+      r2: "En las pruebas de la configuración actual (dic/2025 a oct/2026), el patrimonio llegó a caer cerca del 66% antes de recuperarse.",
+      r3: "En pruebas de 2020 a 2025, con otro comportamiento del mercado, la estrategia perdió la cuenta.",
+      r4: "Invierte solo lo que puedas perder. Los resultados pasados no garantizan resultados futuros.",
+      rodape: "Cifras de la página pública de la estrategia en RoboForex y de los registros de MetaTrader de la cuenta, actualizadas automáticamente. Cuenta cent, valores convertidos a dólares.",
+      atualizado: "Actualizado", ultima_at: "Última actualización", em_dias: (n) => `en ${n} días`, bruto: "bruto", oficial: "oficial (bruto)", rend_fech: (a, b, c) => `✅ cerrado: <b class="pos">${a}</b><br>⏳ abierto: <b class="${c}">${b}</b>`, rend_liq: (p) => `quien copia: <b>${p}</b> tras la comisión`, intro: "Copia las operaciones del robot de oro de Legatus Group directamente en tu cuenta de RoboForex, desde US$ 100. Todo lo que pasa en la cuenta aparece aquí, en vivo.", nav_res: "Resultados", nav_ops: "Operaciones", nav_copiar: "Cómo copiar", nav_indique: "Recomienda y gana", nav_legiao: "Legión Legatus", nav_faq: "Preguntas", ops_dia: (n, d) => `${n} operaciones · ≈ ${d} por día`,
+      copiadores: (n) => `${n} copiadores`, em: "el", ligado: "Robot encendido y operando", desligado: "Sin señal reciente del robot", dados_de: (h) => `· datos de las ${h} (servidor)`,
+      compra: "Compra", venda: "Venta", lote: "lote", abriu: "abrió operación", ignorou: "ignorada", nenhuma_aberta: "Ninguna operación abierta ahora.", entrada: "entrada",
+      ops_fechadas: (n) => `${n} operaciones cerradas`, swing_vazio: "El swing trade manual (pares de divisas principales, excepto USDJPY) aún no tiene operaciones cerradas. Aparecerán aquí automáticamente.",
+      robo_vazio: "Aún sin operaciones.", min: "min", h: "h",
+      semana: ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"], cal_mes_res: (u, p, d, v, n) => `<span>En el mes: <b>${u}</b> · <b>${p}</b></span><span>Días operados: <b>${d}</b></span><span>Días positivos: <b>${v}</b></span><span>Días negativos: <b>${n}</b></span>`,
+      comp_dias: (n) => `últimos ${n} días`, legatus: "Legatus Group (Copy Trade)", legatus_b: (b) => `bruto ${b}`, cdi: "CDI (Brasil)", poupanca: "Ahorro (Brasil)", ibovespa: "Ibovespa", ouro: "Oro", bitcoin: "Bitcoin", dolar: "Dólar (BRL)",
+      port_nota: (n) => n < 2 ? "El gráfico gana un punto con cada actualización del portafolio." : "Suma del dinero de quienes copian la estrategia.",
+      faqs: [
+        ["¿Puedo salir cuando quiera?", "Sí. El dinero queda en tu propia cuenta de RoboForex, a tu nombre. Puedes dejar de copiar, depositar o retirar cuando quieras."],
+        ["¿Cuánto necesito para empezar?", "El mínimo para copiar la estrategia es US$ 100."],
+        ["¿Cómo configuro la copia?", "Al hacer clic en Copiar, elige el modo Proporcional: las operaciones se abren en tu cuenta con lotes proporcionales a tu capital. Luego acepta los términos de RoboForex."],
+        ["¿Qué tipo de cuenta necesito?", "Una cuenta ProCent en MetaTrader 4 (MT4) en RoboForex, con los documentos verificados (identidad y comprobante de domicilio)."],
+        ["¿Qué pasa en un mal día?", "Hasta hoy ningún día cerró con pérdida realizada (mira el calendario). El robot busca cerrar el día en positivo, pero no usa stop: en caídas fuertes las operaciones pueden quedar abiertas en negativo (reducción) hasta recuperarse, y el patrimonio queda debajo del saldo mientras tanto."],
+        ["¿Cómo funciona la comisión?", "30% sobre la ganancia nueva que la estrategia genere en tu cuenta. El propio bróker hace la división cada semana. Si no hay ganancia nueva en la semana, no hay comisión."],
+        ["¿Cómo funciona Recomienda y gana?", "Quien copia puede activar el Programa de Socios en la página de la estrategia y generar un enlace de referido. Cada persona que copie la estrategia con tu enlace te genera ganancias."],
+        ["¿Cuánto gano recomendando?", "El 15% de la comisión que el gestor recibe de cada persona que recomendaste. Como la comisión es el 30% de la ganancia, eso equivale al 4,5% de la ganancia de tus recomendados. Ejemplo: si ganan US$ 1.000, recibes US$ 45."],
+        ["¿La persona recomendada paga más?", "No. Paga la misma comisión del 30% que quien entra sin recomendación. Tu parte sale de la comisión del gestor."],
+        ["¿Cuándo y dónde cobro?", "El propio RoboForex la calcula y la paga, junto con la división semanal de la comisión. Puedes seguirla en tu área de RoboForex."],
+        ["¿Quién opera la cuenta?", "En el oro (XAUUSD), el robot propio de Legatus Group, en 5 marcos temporales. En los pares de divisas, el swing trade manual del gestor. Ambas partes aparecen separadas en este panel."],
+        ["¿Qué es la Legión Legatus?", "Es el programa de reconocimiento de quienes copian Legatus Group. Tiene dos caminos: las placas, por capital en la cuenta, y las recompensas, por ganancia acumulada. Cada placa viene con una carta, un capítulo de una historia en 7 partes."],
+        ["¿Cómo funcionan las placas?", "Cuando el capital en tu cuenta de copy llega a US$ 10 mil, 25 mil, 50 mil, 100 mil, 200 mil, 500 mil o 1 millón, recibes la placa de ese nivel, enmarcada y con tu nombre. El cuadro crece en cada nivel."],
+        ["Si mi cuenta baja después, ¿pierdo la placa?", "No. La placa es tuya para siempre. Si la cuenta oscila después, la conquista sigue siendo tuya."],
+        ["¿Cómo funcionan las recompensas?", "Son por la ganancia acumulada con el copy desde que empezaste a copiar: US$ 10 mil (smartwatch), 35 mil (smartphone), 75 mil (notebook), 175 mil (viaje para 2), 425 mil (reloj de lujo) y 2 millones (auto de lujo)."],
+        ["Si retiro dinero, ¿pierdo el progreso de las recompensas?", "No. Lo que ya ganaste sigue contando, aunque retires. Los retiros no reducen el valor a alcanzar."],
+        ["¿Un mes negativo reduce la ganancia acumulada?", "No. Si hay un mes negativo, no reduce la ganancia acumulada de las recompensas. Lo que ya conquistaste sigue contando."],
+        ["¿Quién paga el envío?", "Legatus Group. El envío no tiene ningún costo para ti."],
+        ["¿Cuál es el plazo de entrega?", "Las placas y las recompensas hasta el notebook llegan en hasta 30 días después de hecho el pedido. Los premios mayores (viaje, reloj de lujo y auto de lujo) se entregan en eventos presenciales."],
+        ["¿Qué son las cartas?", "Cada placa viene con una carta firmada por el fundador, un capítulo de una historia en 7 partes. La primera puedes leerla aquí en el panel. Las demás solo las lee quien llega a cada nivel."],
+        ["¿Cómo pido mi placa o recompensa?", "Toca “Contactar” en la sección Legión Legatus y envía el número de tu cuenta RoboForex, tu nombre completo y lo que alcanzaste. Lo verificamos en RoboForex por el número de cuenta. Confirmado, te pedimos por WhatsApp tu documento y dirección, usados solo para el envío."],
+        ["¿Las recompensas están garantizadas?", "Se entregan a quien alcanza el nivel. La ganancia, sin embargo, no está garantizada: es renta variable y puede haber pérdidas. Las imágenes son meramente ilustrativas."],
+        ["¿Por qué el rendimiento oficial es distinto del resultado cerrado?", "El rendimiento oficial es el mismo de la página de RoboForex y ya descuenta las operaciones que siguen abiertas. Debajo aparecen las dos partes: lo que ya se cerró (ganancia realizada) y lo que está abierto ahora. El valor abierto cambia a cada momento: si esas operaciones cierran en ganancia, desaparece; si cierran en pérdida, se vuelve pérdida realizada. Como la estrategia no usa stop, mostramos las dos."],
+        ["¿Puedo perder dinero?", "Sí. Es renta variable: la reducción puede ser fuerte y los resultados pasados no garantizan resultados futuros. Copia solo un monto que puedas perder."],
+      ],
+    },
+  };
+  const LOC = { pt: "pt-BR", en: "en-US", es: "es-ES" };
+  let L = "pt";
+  try { const h = location.hash.replace("#", ""); if (TXT[h]) L = h; else { const s = localStorage.getItem("legatus_lang"); if (TXT[s]) L = s; } } catch (e) {}
+  const T = (k, ...a) => { const v = TXT[L][k] ?? TXT.pt[k]; return typeof v === "function" ? v(...a) : v; };
+
+  // ---------- formatação ----------
+  const nf = (v, c = 2) => Math.abs(v).toLocaleString(LOC[L], { minimumFractionDigits: c, maximumFractionDigits: c });
+  const fmtUSD = (v, c = 2) => (v < 0 ? "−" : "") + "US$ " + nf(v, c);
+  const fmtPct = (v, sinal = true) => (v > 0 && sinal ? "+" : v < 0 ? "−" : "") + nf(v) + "%";
+  const ddmm = (s) => { const [a, m, d] = s.slice(0, 10).split("-"); return L === "en" ? `${m}/${d}` : `${d}/${m}`; };
+  const ddmmaa = (s) => { const [a, m, d] = s.slice(0, 10).split("-"); return L === "en" ? `${m}/${d}/${a}` : `${d}/${m}/${a}`; };
+  const hora = (s) => s.slice(11, 16);
+  const abrev = (v) => { const a = Math.abs(v); for (const [lim, suf] of [[1e12, L === "pt" ? " tri" : " T"], [1e9, L === "pt" ? " bi" : " B"], [1e6, L === "pt" ? " mi" : " M"]]) if (a >= lim) return (v < 0 ? "−" : "") + (a / lim).toLocaleString(LOC[L], { maximumFractionDigits: a / lim < 10 ? 2 : 1 }) + suf; return null; };
+  const usdSim = (v) => { const ab = abrev(v); return ab ? "US$ " + ab : fmtUSD(v); };
+
+  // ---------- gráficos em SVG ----------
+  const NS = "http://www.w3.org/2000/svg";
+  function el(tag, attrs, pai) { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (pai) pai.appendChild(e); return e; }
+  function niceTicks(min, max, n) {
+    if (min === max) { min -= 1; max += 1; }
+    const pb = (max - min) / n, pot = Math.pow(10, Math.floor(Math.log10(pb)));
+    const passo = [1, 2, 2.5, 5, 10].map((m) => m * pot).find((p) => p >= pb);
+    const ini = Math.floor(min / passo) * passo, fim = Math.ceil(max / passo) * passo, t = [];
+    for (let v = ini; v <= fim + passo / 2; v += passo) t.push(+v.toFixed(6));
+    return t;
+  }
+  function observa(caixa, desenhar) { desenhar(); if (caixa._obs) caixa._obs.disconnect(); let raf; caixa._obs = new ResizeObserver(() => { cancelAnimationFrame(raf); raf = requestAnimationFrame(desenhar); }); caixa._obs.observe(caixa); }
+  function grafico(caixa, series, opts) {
+    observa(caixa, () => {
+      caixa.innerHTML = "";
+      const W = caixa.clientWidth, H = caixa.clientHeight; if (!W || !H || !series[0].pontos.length) return;
+      const m = { t: 10, r: 14, b: 26, l: opts.margemEsq || 56 };
+      const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": opts.rotulo }, caixa);
+      const datas = series[0].pontos.map((p) => p[0]);
+      const todos = series.flatMap((s) => s.pontos.map((p) => p[1]));
+      let lo = Math.min(...todos, opts.incluiZero ? 0 : Infinity), hi = Math.max(...todos, opts.incluiZero ? 0 : -Infinity);
+      const ticks = niceTicks(lo, hi, opts.nTicks || 4); lo = ticks[0]; hi = ticks[ticks.length - 1];
+      const x = (i) => m.l + (datas.length === 1 ? (W - m.l - m.r) / 2 : i * (W - m.l - m.r) / (datas.length - 1));
+      const y = (v) => m.t + (hi - v) / (hi - lo) * (H - m.t - m.b);
+      ticks.forEach((t) => { el("line", { x1: m.l, x2: W - m.r, y1: y(t), y2: y(t), class: "grade-l" }, svg); el("text", { x: m.l - 8, y: y(t) + 4, "text-anchor": "end", class: "eixo" }, svg).textContent = opts.fmtEixo(t); });
+      const passoX = Math.max(1, Math.ceil(datas.length / Math.max(2, Math.floor((W - m.l - m.r) / 70))));
+      datas.forEach((d, i) => {
+        const ult = datas.length - 1;
+        if (i !== ult && (i % passoX || (ult - i) * (W - m.l - m.r) / Math.max(1, ult) < 56)) return;
+        el("text", { x: x(i), y: H - 6, "text-anchor": i === 0 ? "start" : i === ult ? "end" : "middle", class: "eixo" }, svg).textContent = (opts.fmtX || ddmm)(d);
+      });
+      const defs = el("defs", {}, svg);
+      series.forEach((s, si) => {
+        const pts = s.pontos.map((p, i) => [x(i), y(p[1])]);
+        const linha = pts.map((p, i) => (i ? "L" : "M") + p[0].toFixed(1) + " " + p[1].toFixed(1)).join(" ");
+        if (s.area) {
+          const gid = "g" + caixa.id + si, lg = el("linearGradient", { id: gid, x1: 0, x2: 0, y1: 0, y2: 1 }, defs);
+          el("stop", { offset: "0%", "stop-color": s.cor, "stop-opacity": s.areaInvertida ? 0.05 : 0.32 }, lg);
+          el("stop", { offset: "100%", "stop-color": s.cor, "stop-opacity": s.areaInvertida ? 0.32 : 0.02 }, lg);
+          const base = s.areaInvertida ? y(Math.min(0, hi)) : y(Math.max(lo, 0 > lo && 0 < hi ? 0 : lo));
+          el("path", { d: linha + ` L${pts[pts.length - 1][0].toFixed(1)} ${base} L${pts[0][0].toFixed(1)} ${base} Z`, fill: `url(#${gid})`, stroke: "none" }, svg);
+        }
+        el("path", { d: linha, fill: "none", stroke: s.cor, "stroke-width": s.espessura || 2, "stroke-linejoin": "round", "stroke-linecap": "round", "stroke-dasharray": s.tracejado ? "5 4" : "none" }, svg);
+        const u = pts[pts.length - 1]; el("circle", { cx: u[0], cy: u[1], r: 4, fill: s.cor, stroke: "var(--panel)", "stroke-width": 2 }, svg);
+      });
+      const guia = el("line", { y1: m.t, y2: H - m.b, stroke: "var(--muted)", "stroke-dasharray": "3 3", opacity: 0 }, svg);
+      const marcas = series.map((s) => el("circle", { r: 4, fill: s.cor, stroke: "var(--panel)", "stroke-width": 2, opacity: 0 }, svg));
+      const dica = document.createElement("div"); dica.className = "dica"; dica.hidden = true; caixa.appendChild(dica);
+      const mover = (ev) => {
+        const r = svg.getBoundingClientRect(), px = (ev.touches ? ev.touches[0].clientX : ev.clientX) - r.left;
+        const i = Math.max(0, Math.min(datas.length - 1, Math.round((px - m.l) / ((W - m.l - m.r) / Math.max(1, datas.length - 1)))));
+        guia.setAttribute("x1", x(i)); guia.setAttribute("x2", x(i)); guia.setAttribute("opacity", 0.6);
+        series.forEach((s, si) => { marcas[si].setAttribute("cx", x(i)); marcas[si].setAttribute("cy", y(s.pontos[i][1])); marcas[si].setAttribute("opacity", 1); });
+        dica.innerHTML = "<b>" + (opts.fmtTitulo || ddmmaa)(datas[i]) + "</b>" + series.map((s) => s.nome + ": " + opts.fmtDica(s.pontos[i][1])).join("<br>");
+        dica.hidden = false; dica.style.left = Math.min(Math.max(x(i), 70), W - 70) + "px"; dica.style.top = Math.min(...series.map((s) => y(s.pontos[i][1]))) + "px";
+      };
+      const sair = () => { dica.hidden = true; guia.setAttribute("opacity", 0); marcas.forEach((c) => c.setAttribute("opacity", 0)); };
+      svg.addEventListener("mousemove", mover); svg.addEventListener("touchmove", mover, { passive: true }); svg.addEventListener("mouseleave", sair); svg.addEventListener("touchend", sair);
+    });
+  }
+
+  // ---------- links e configurações ----------
+  ["copiar", "b-copiar"].forEach((id) => ($(id).href = C.estrategia || "https://roboforex.com/copy-trading/rating/aaao/46163199/"));
+  $("b-cadastro").href = C.cadastro || "https://my.roboforex.com/en/register/";
+  if (C.whatsapp) { $("b-zap").href = C.whatsapp; $("b-zap").hidden = false; }
+  if (C.video) { const v = $("video"); v.src = C.video; if (C.videoCapa) v.poster = C.videoCapa; v.hidden = false; }
+
+  // ---------- estado de telas ----------
+  let tipoOps = "robo", mesCal = null;
+  const cal = (D.mt4 && D.mt4.calendario) || [];
+  const meses = [...new Set(cal.map((c) => c.dia.slice(0, 7)))].sort();
+  mesCal = meses[meses.length - 1] || null;
+
+  function render() {
+    document.documentElement.lang = LOC[L];
+    document.querySelectorAll("[data-t]").forEach((e) => { const v = TXT[L][e.dataset.t]; if (typeof v === "string") e.textContent = v; });
+    document.querySelectorAll(".idioma button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.lang === L)));
+    legiao();
+
+    // placar
+    const dias = Math.max(1, Math.round((Date.now() - new Date(D.inicio).getTime()) / 864e5));
+    $("k-rend").textContent = fmtPct(D.rendimento_pct); $("k-rend").className = "val " + (D.rendimento_pct >= 0 ? "pos" : "neg");
+    $("k-rend").style.color = "var(--gold)";
+    const liq = D.comparativo && (D.comparativo.itens || []).find((i) => i.id === "legatus");
+    // separa o resultado já fechado (operações encerradas, dia a dia) do que ainda está em aberto (flutuante)
+    let fech = 1; ((D.mt4 && D.mt4.calendario) || []).forEach((x) => { if (x.pct != null) fech *= 1 + x.pct / 100; });
+    const sp = D.saldo_patrimonio || {}, sb = (sp.balance || []).slice(-1)[0], sq = (sp.equity || []).slice(-1)[0];
+    const flut = D.mt4 && D.mt4.flutuante_pct != null ? D.mt4.flutuante_pct : (sb && sq && sb[1] ? (sq[1] - sb[1]) / sb[1] * 100 : 0);
+    const linhaFech = Math.abs(flut) >= 0.1 ? "<br>" + T("rend_fech", fmtPct((fech - 1) * 100), fmtPct(flut), flut < 0 ? "neg" : "pos") : "";
+    $("k-rend-sub").innerHTML = T("em_dias", dias) + " · " + T("oficial") + linhaFech;
+    $("k-lucro").textContent = fmtUSD(D.lucro_usd);
+    $("k-dd").textContent = fmtPct(-Math.abs(D.dd_max_pct), false);
+    $("k-saldo").textContent = fmtUSD(D.saldo_usd);
+    const R = D.resultado_ops;
+    $("k-ops").textContent = R && R.acerto_pct != null ? R.acerto_pct.toLocaleString(LOC[L], { maximumFractionDigits: 1 }) + "%" : "—";
+    const nOps = (R && R.total) || D.operacoes || 0;   // mesmo número da tabela de operações
+    $("k-ops-sub").textContent = T("ops_dia", nOps.toLocaleString(LOC[L]), Math.round(nOps / dias));
+    if (D.capital_copiadores && D.capital_copiadores.valor_usd != null) {
+      $("k-subs-rot").textContent = T("k_port"); $("k-subs").textContent = fmtUSD(D.capital_copiadores.valor_usd);
+      $("k-subs-sub").textContent = T("copiadores", D.assinantes ?? "—") + (D.capital_copiadores.data ? " · " + T("em") + " " + ddmm(D.capital_copiadores.data) : "");
+    } else { $("k-subs-rot").textContent = T("k_subs"); $("k-subs").textContent = D.assinantes ?? "—"; $("k-subs-sub").textContent = ""; }
+    const dt = new Date(D.atualizado);
+    $("atualizado").textContent = T("atualizado") + " " + dt.toLocaleString(LOC[L], { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+    $("r-fonte").textContent = T("ultima_at") + ": " + dt.toLocaleString(LOC[L]);
+    const prox = new Date(dt.getTime()); prox.setMinutes(5, 0, 0); if (prox <= dt) prox.setHours(prox.getHours() + 1);
+    $("recarregar").title = T("prox_at", prox.toLocaleTimeString(LOC[L], { hour: "2-digit", minute: "2-digit" }));
+
+    // robô ao vivo
+    const M = D.mt4;
+    if (M) {
+      // ligado = MT4 aberto e alguma atividade do robô nas últimas 3 h (sinal lido, operação aberta ou fechada)
+      const atividade = [M.ultimo_sinal && M.ultimo_sinal.quando, ...(M.abertas || []).filter((o) => o.tipo === "robo").map((o) => o.t), ...((M.por_tipo && M.por_tipo.robo && M.por_tipo.robo.ultimas) || []).map((o) => o.t)].filter(Boolean).sort().pop();
+      const ligado = M.mt4_rodando && atividade && (new Date(M.agora_srv) - new Date(atividade)) < 3 * 3600e3;
+      $("av-dot").className = "dot" + (ligado ? "" : " off");
+      $("av-estado").textContent = ligado ? T("ligado") : T("desligado");
+      $("av-quando").textContent = T("dados_de", hora(M.agora_srv));
+      const S = M.ultimo_sinal;
+      if (S) {
+        $("av-sinal").hidden = false;
+        const compra = S.lado === "compra";
+        $("av-seta").textContent = compra ? "▲" : "▼"; $("av-seta").style.color = compra ? "#5fe8ff" : "#ffae4d";
+        $("av-sinal-txt").textContent = `${compra ? T("compra") : T("venda")} · ${S.tf} · ${hora(S.quando)}`;
+        const abriu = /cesta aberta/i.test(S.resultado);
+        const motivo = S.resultado.replace(/^ignorado\s*-\s*/i, "");
+        $("av-sinal-res").textContent = abriu ? T("abriu") : T("ignorou") + (L === "pt" ? ": " + motivo : "");
+      }
+      const AB = M.abertas || [];
+      $("av-n").textContent = AB.length;
+      $("av-total").hidden = M.flutuante == null || !AB.length;
+      if (M.flutuante != null) $("av-total").innerHTML = `<span>${T("aberto_total")}</span><b class="${M.flutuante >= 0 ? "pos" : "neg"}">${M.flutuante >= 0 ? "+" : ""}${fmtUSD(M.flutuante)} (${fmtPct(M.flutuante_pct)})</b>`;
+      $("av-abertas").innerHTML = AB.length ? "" : `<p class="nota">${T("nenhuma_aberta")}</p>`;
+      AB.slice().reverse().forEach((o) => {
+        const d = document.createElement("div"); d.className = "posicao";
+        const venda = o.lado === "sell";
+        const r = o.lucro == null ? "" : `<span class="r ${o.lucro >= 0 ? "pos" : "neg"}">${o.lucro >= 0 ? "+" : ""}${fmtUSD(o.lucro)}</span>`;
+        d.innerHTML = `<span class="tag ${venda ? "venda" : "compra"}">${venda ? T("venda") : T("compra")}</span><span class="q">${o.par} · ${nf(o.lote)} ${T("lote")}</span>${r}<span class="p">${T("entrada")} ${nf(o.abre)} · ${hora(o.t)}</span>`;
+        $("av-abertas").appendChild(d);
+      });
+    }
+
+    // operações (robô / swing)
+    const P = M && M.por_tipo ? M.por_tipo[tipoOps] : null;
+    document.querySelectorAll("[data-tipo]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.tipo === tipoOps)));
+    $("o-barra").innerHTML = ""; $("o-tab").innerHTML = "";
+    if (P && P.total) {
+      $("o-topo").hidden = false; $("o-vazio").hidden = true; $("o-tab").parentElement.parentElement.hidden = false;
+      $("o-acerto").textContent = P.acerto_pct.toLocaleString(LOC[L], { maximumFractionDigits: 1 }) + "%";
+      $("o-venc").textContent = P.vencedoras; $("o-perd").textContent = P.perdedoras; $("o-sub").textContent = T("ops_fechadas", P.total);
+      [["var(--up)", P.vencedoras], ["var(--down)", P.perdedoras]].forEach(([cor, n]) => { const s = document.createElement("span"); s.style.width = (n / P.total * 100) + "%"; s.style.background = cor; $("o-barra").appendChild(s); });
+      P.ultimas.forEach((o) => {
+        const tr = document.createElement("tr"); const venda = o.lado === "sell";
+        const dur = o.min == null ? "—" : o.min >= 60 ? Math.floor(o.min / 60) + T("h") + String(o.min % 60).padStart(2, "0") : o.min + " " + T("min");
+        tr.innerHTML = `<td>${ddmm(o.t)} ${hora(o.t)}</td><td>${o.par}</td><td><span class="tag ${venda ? "venda" : "compra"}">${venda ? T("venda") : T("compra")}</span></td><td class="num-r">${nf(o.lote)}</td><td class="num-r">${nf(o.abre)}</td><td class="num-r">${nf(o.fecha)}</td><td class="num-r ${o.pts >= 0 ? "pos" : "neg"}">${o.pts > 0 ? "+" : ""}${o.pts}</td><td class="num-r ${o.usd >= 0 ? "pos" : "neg"}">${o.usd == null ? "—" : fmtUSD(o.usd)}</td><td class="num-r">${dur}</td>`;
+        $("o-tab").appendChild(tr);
+      });
+    } else {
+      $("o-topo").hidden = true; $("o-tab").parentElement.parentElement.hidden = true; $("o-vazio").hidden = false; $("o-sub").textContent = "";
+      $("o-vazio").textContent = tipoOps === "swing" ? T("swing_vazio") : T("robo_vazio");
+    }
+
+    // calendário
+    desenhaCal();
+
+    // comparativo
+    const CP = D.comparativo;
+    $("comp").innerHTML = "";
+    if (CP && CP.itens.length) {
+      CP.itens = CP.itens.map((i) => (i.id === "legatus" && i.bruto != null ? { id: i.id, pct: i.bruto } : i));   // oficial, igual ao topo
+      $("comp-sub").textContent = T("comp_dias", CP.dias);
+      const lo = Math.min(0, ...CP.itens.map((i) => i.pct)), hi = Math.max(0, ...CP.itens.map((i) => i.pct));
+      const pos = (v) => (v - lo) / (hi - lo || 1) * 100;
+      CP.itens.slice().sort((a, b) => (a.id === "legatus" ? -1 : b.id === "legatus" ? 1 : b.pct - a.pct)).forEach((it) => {
+        const d = document.createElement("div"); d.className = "comp-l" + (it.id === "legatus" ? " destaque" : "");
+        const a = pos(Math.min(0, it.pct)), b = pos(Math.max(0, it.pct));
+        const cor = it.id === "legatus" ? "linear-gradient(90deg, #c9952f, #f2cf73 55%, #fff0b8); box-shadow: 0 0 12px rgba(242, 207, 115, .45)" : it.pct >= 0 ? "var(--up)" : "var(--down)";
+        d.innerHTML = `<span class="nome">${T(it.id)}${it.bruto != null ? `<small>${T("legatus_b", fmtPct(it.bruto))}</small>` : ""}</span><span class="comp-trilho"><span class="zero" style="left:${pos(0)}%"></span><span class="b" style="left:${a}%;width:${Math.max(0.6, b - a)}%;background:${cor}"></span></span><span class="v ${it.pct >= 0 ? "pos" : "neg"}">${fmtPct(it.pct)}</span>`;
+        $("comp").appendChild(d);
+      });
+    }
+
+    // portfólio dos copiadores
+    const PH = D.portfolio_hist || [];
+    $("port-nota").textContent = T("port_nota", PH.length);
+    // com um registro só, o valor já está no placar: esconde o quadro até existir histórico
+    $("sec-port").hidden = PH.length < 2; $("grade-comp").classList.toggle("um", PH.length < 2);
+    if (PH.length === 1) {   // um ponto só: mostra o valor em destaque até o gráfico ter histórico
+      const g = $("g-port"); if (g._obs) g._obs.disconnect();
+      g.innerHTML = `<div style="height:100%;display:grid;place-content:center;justify-items:center;gap:6px"><span style="font-family:var(--font-data);font-size:40px;color:var(--gold)">${fmtUSD(PH[0][1])}</span><span class="nota">${ddmmaa(PH[0][0])} · ${T("copiadores", D.assinantes ?? "—")}</span></div>`;
+    } else if (PH.length) grafico($("g-port"),[{ nome: T("k_port"), pontos: PH, cor: "var(--gold)", area: true, espessura: 2.5 }], { rotulo: T("port_titulo"), fmtEixo: (v) => "$" + Math.round(v), fmtDica: (v) => fmtUSD(v), margemEsq: 52 });
+
+    // gráficos principais
+    const se = D.saldo_patrimonio || { balance: [], equity: [] };
+    if (se.balance.length) grafico($("g-saldo"), [{ nome: T("saldo"), pontos: se.balance, cor: "var(--gold)", area: true, espessura: 2.5 }, { nome: T("patrimonio"), pontos: se.equity, cor: "var(--equity)", espessura: 1.8, tracejado: true }], { rotulo: T("g_saldo"), fmtEixo: (v) => "$" + Math.round(v), fmtDica: (v) => fmtUSD(v), margemEsq: 52 });
+    if ((D.rendimento_curva || []).length) grafico($("g-rend"), [{ nome: T("g_rend"), pontos: D.rendimento_curva, cor: "var(--up)", area: true }], { rotulo: T("g_rend"), fmtEixo: (v) => v + "%", fmtDica: (v) => fmtPct(v), incluiZero: true, margemEsq: 44 });
+    if ((D.dd_curva || []).length) grafico($("g-dd"), [{ nome: T("g_dd"), pontos: D.dd_curva, cor: "var(--down)", area: true, areaInvertida: true }], { rotulo: T("g_dd"), fmtEixo: (v) => v + "%", fmtDica: (v) => fmtPct(v), incluiZero: true, margemEsq: 44 });
+
+    // indique e ganhe
+    $("b-socio").href = C.parceiros || C.estrategia || "https://roboforex.com/copy-trading/rating/aaao/46163199/";
+    $("socio-ex").textContent = T("socio_ex", fmtUSD(1000, 0), fmtUSD(300, 0), fmtUSD(45, 0));
+
+    calcIndicacao();
+
+    // FAQ
+    $("faq").innerHTML = "";
+    T("faqs").forEach(([p, r]) => { const d = document.createElement("details"); d.innerHTML = `<summary></summary><p></p>`; d.querySelector("summary").textContent = p; d.querySelector("p").textContent = r; $("faq").appendChild(d); });
+
+    // simulador
+    preencheInicio(); simular();
+  }
+
+  function desenhaCal() {
+    const c = $("cal"); c.innerHTML = "";
+    if (!mesCal) { $("cal-mes").textContent = "—"; return; }
+    const [a, m] = mesCal.split("-").map(Number);
+    const nomeMes = new Date(a, m - 1, 1).toLocaleString(LOC[L], { month: "long", year: "numeric" });
+    $("cal-mes").textContent = nomeMes.charAt(0).toUpperCase() + nomeMes.slice(1);
+    $("cal-ant").disabled = meses.indexOf(mesCal) <= 0; $("cal-prox").disabled = meses.indexOf(mesCal) >= meses.length - 1;
+    T("semana").forEach((s) => { const e = document.createElement("div"); e.className = "sem"; e.textContent = s; c.appendChild(e); });
+    const primeiro = (new Date(a, m - 1, 1).getDay() + 6) % 7, nDias = new Date(a, m, 0).getDate();
+    for (let i = 0; i < primeiro; i++) { const e = document.createElement("div"); e.className = "dia fora"; c.appendChild(e); }
+    const mapa = Object.fromEntries(cal.map((x) => [x.dia, x]));
+    const maxAbs = Math.max(0.5, ...cal.filter((x) => x.dia.startsWith(mesCal) && x.pct != null).map((x) => Math.abs(x.pct)));
+    let usdMes = 0, nDiasOp = 0, verdes = 0, vermelhos = 0;
+    for (let d = 1; d <= nDias; d++) {
+      const k = `${mesCal}-${String(d).padStart(2, "0")}`, x = mapa[k], e = document.createElement("div");
+      if (x) {
+        nDiasOp++; usdMes += x.usd; if (x.usd > 0) verdes++; else if (x.usd < 0) vermelhos++;
+        const v = x.pct != null ? x.pct : x.usd, int = 0.12 + 0.45 * Math.min(1, Math.abs(v) / maxAbs);
+        e.className = "dia"; e.style.background = x.usd >= 0 ? `rgba(79,195,138,${int})` : `rgba(239,111,95,${int})`; e.style.borderColor = x.usd >= 0 ? "rgba(79,195,138,.45)" : "rgba(239,111,95,.45)";
+        e.title = `${ddmmaa(k)} · ${fmtUSD(x.usd)} · ${x.ops} ops (${x.venc}/${x.perd})`;
+        e.innerHTML = `<span class="n">${d}</span><span class="pct">${x.pct != null ? fmtPct(x.pct) : fmtUSD(x.usd)}</span><span class="ops">${x.ops} ops</span>`;
+      } else { e.className = "dia vazio"; e.innerHTML = `<span class="n">${d}</span>`; }
+      c.appendChild(e);
+    }
+    const base = (D.saldo_patrimonio && D.saldo_patrimonio.balance || []).filter((b) => b[0] < mesCal + "-01").pop();
+    const pctMes = base ? usdMes / base[1] * 100 : null;
+    $("cal-res").innerHTML = T("cal_mes_res", fmtUSD(usdMes), pctMes != null ? fmtPct(pctMes) : "—", nDiasOp, verdes, vermelhos);
+  }
+  $("cal-ant").addEventListener("click", () => { const i = meses.indexOf(mesCal); if (i > 0) { mesCal = meses[i - 1]; desenhaCal(); } });
+  $("cal-prox").addEventListener("click", () => { const i = meses.indexOf(mesCal); if (i < meses.length - 1) { mesCal = meses[i + 1]; desenhaCal(); } });
+  document.querySelectorAll("[data-tipo]").forEach((b) => b.addEventListener("click", () => { tipoOps = b.dataset.tipo; render(); }));
+  document.querySelectorAll(".idioma button").forEach((b) => b.addEventListener("click", () => { L = b.dataset.lang; try { localStorage.setItem("legatus_lang", L); } catch (e) {} render(); }));
+
+  // ---------- "se você tivesse copiado" (resultado real, dia a dia) ----------
+  const curva = D.rendimento_curva || [];
+  const comissao = (D.comissao_pct ?? 30) / 100;
+  function preencheInicio() {
+    const s = $("s-ini"), atual = s.value; s.innerHTML = "";
+    curva.slice(0, -1).forEach(([d]) => { const o = document.createElement("option"); o.value = d; o.textContent = ddmmaa(d); s.appendChild(o); });
+    if (atual && [...s.options].some((o) => o.value === atual)) s.value = atual;
+    $("s-ate").value = curva.length ? ddmmaa(curva[curva.length - 1][0]) : "";
+  }
+  const num = (id) => { const v = parseFloat(String($(id).value).replace(",", ".")); return isFinite(v) ? v : 0; };
+  function simular() {
+    if (curva.length < 2) return;
+    const cap = Math.max(0, num("s-cap")), aporte = Math.max(0, num("s-aporte")), ini = $("s-ini").value || curva[0][0];
+    // comissão como a corretora cobra: 1x por semana (no último dia da semana), 30% só do lucro novo
+    // acima do maior valor já alcançado (pico). Semana que fecha abaixo do pico não paga nada.
+    let saldo = cap, investido = cap, pico = cap, ultimoAporte = new Date(ini), ant = null; const pts = [], inv = [];
+    const semana = (d) => { const x = new Date(d + "T12:00:00"); x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); return x.toISOString().slice(0, 10); };
+    const usados = curva.filter(([d]) => d >= ini);
+    usados.forEach(([d, v], i) => {
+      const f = 1 + v / 100;
+      if (ant != null) {
+        saldo *= f / ant;
+        const hoje = new Date(d); if (aporte > 0 && (hoje - ultimoAporte) >= 30 * 864e5) { saldo += aporte; investido += aporte; pico += aporte; ultimoAporte = hoje; }
+      }
+      const prox = usados[i + 1];
+      if (prox && semana(prox[0]) !== semana(d)) {   // fechou a semana: acerta a comissão
+        if (saldo > pico) { saldo -= (saldo - pico) * comissao; pico = saldo; }
+      }
+      ant = f; pts.push([d, saldo]); inv.push([d, investido]);
+    });
+    const lucro = saldo - investido;
+    $("s-final").textContent = usdSim(saldo); $("s-final").title = fmtUSD(saldo);
+    $("s-invest").textContent = usdSim(investido);
+    $("s-lucro").textContent = usdSim(lucro); $("s-lucro").className = "v " + (lucro >= 0 ? "pos" : "neg");
+    $("s-cresc").textContent = investido > 0 ? fmtPct(lucro / investido * 100) : "—";
+    if (pts.length) grafico($("g-sim"), [{ nome: T("s_teria"), pontos: pts, cor: "var(--gold)", area: true, espessura: 2.5 }, { nome: T("s_invest"), pontos: inv, cor: "var(--muted)", espessura: 1.5, tracejado: true }], { rotulo: T("sim_titulo"), fmtEixo: (v) => "$" + Math.round(v).toLocaleString(LOC[L]), fmtDica: usdSim, margemEsq: 58 });
+  }
+  // compartilhar: copiar link (área de transferência) ou mandar no WhatsApp
+  const LINK = C.linkPublico || "https://tinyurl.com/legatusgroup-dashboard";
+  const linkZap = () => "https://wa.me/?text=" + encodeURIComponent(T("msg_share") + " " + LINK);
+  function atualizaCompart() { $("link-txt").value = LINK; $("b-zap-share").href = linkZap(); $("b-zap-share2").href = linkZap(); }
+  $("b-compart").addEventListener("click", () => { const m = $("menu-compart"); m.hidden = !m.hidden; $("b-compart").setAttribute("aria-expanded", String(!m.hidden)); atualizaCompart(); });
+  document.addEventListener("click", (e) => { if (!e.target.closest(".compart")) { $("menu-compart").hidden = true; $("b-compart").setAttribute("aria-expanded", "false"); } });
+  $("b-copiar-link").addEventListener("click", () => {
+    const ok = () => { const s = $("b-copiar-link").querySelector("span"); s.textContent = T("copiado"); setTimeout(() => (s.textContent = T("b_copiar_link")), 1800); };
+    try { navigator.clipboard.writeText(LINK).then(ok, () => { $("link-txt").select(); }); } catch (e) { $("link-txt").select(); }
+  });
+  atualizaCompart();
+  document.querySelectorAll(".idioma button").forEach((b) => b.addEventListener("click", atualizaCompart));
+  // ---------- modo live (tela cheia para live / gravação) ----------
+  function preencheLive() {
+    $("lv-rend").textContent = fmtPct(D.rendimento_pct);
+    $("lv-rend-sub").textContent = T("em_dias", Math.max(1, Math.round((Date.now() - new Date(D.inicio).getTime()) / 864e5)));
+    const M = D.mt4 || {}, hojeSrv = (M.agora_srv || "").slice(0, 10), H = (M.calendario || []).find((c) => c.dia === hojeSrv);
+    $("lv-hoje").textContent = H ? (H.pct != null ? fmtPct(H.pct) : fmtUSD(H.usd)) : "—";
+    $("lv-hoje").className = "lv-v " + (H && H.usd < 0 ? "neg" : "pos");
+    $("lv-hoje-sub").textContent = H ? T("hoje_sub", H.ops, H.venc) : T("sem_ops_hoje");
+    $("lv-saldo").textContent = fmtUSD(D.saldo_usd);
+    $("lv-acerto").textContent = D.resultado_ops && D.resultado_ops.acerto_pct != null ? D.resultado_ops.acerto_pct.toLocaleString(LOC[L], { maximumFractionDigits: 1 }) + "%" : "—";
+    $("lv-port").textContent = D.capital_copiadores ? fmtUSD(D.capital_copiadores.valor_usd) : "—";
+    $("lv-abertas").textContent = (M.abertas || []).length;
+    const S = M.ultimo_sinal;
+    $("lv-sinal").textContent = S ? `${S.lado === "compra" ? "▲ " + T("compra") : "▼ " + T("venda")} · ${S.tf} · ${hora(S.quando)} — ${/cesta aberta/i.test(S.resultado) ? T("abriu") : T("ignorou")}` : "—";
+    $("lv-dot").className = $("av-dot").className;
+    $("lv-hora").textContent = $("atualizado").textContent;
+    if ((D.rendimento_curva || []).length) grafico($("lv-graf"), [{ nome: T("g_rend"), pontos: D.rendimento_curva, cor: "var(--gold)", area: true, espessura: 3 }], { rotulo: T("g_rend"), fmtEixo: (v) => v + "%", fmtDica: (v) => fmtPct(v), incluiZero: true, margemEsq: 44 });
+  }
+  let recarga = null;
+  function abreLive() {
+    $("live").hidden = false; document.body.classList.add("modo-live"); preencheLive();
+    try { if (location.hash !== "#live") history.replaceState(null, "", "#live"); } catch (e) {}
+    try { const p = document.documentElement.requestFullscreen && document.documentElement.requestFullscreen(); if (p && p.catch) p.catch(() => {}); } catch (e) {}
+    clearTimeout(recarga); recarga = setTimeout(() => location.reload(), 5 * 60 * 1000);   // pega a versão mais nova a cada 5 min
+  }
+  function fechaLive() {
+    $("live").hidden = true; document.body.classList.remove("modo-live"); clearTimeout(recarga);
+    try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
+    try { if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); } catch (e) {}
+  }
+  $("b-live").addEventListener("click", abreLive);
+  $("lv-sair").addEventListener("click", fechaLive);
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("live").hidden) fechaLive(); });
+  document.querySelectorAll(".idioma button").forEach((b) => b.addEventListener("click", () => { if (!$("live").hidden) preencheLive(); }));
+  if (location.hash === "#live") setTimeout(abreLive, 0);   // depois do render() inicial
+  $("recarregar").addEventListener("click", () => { $("recarregar").setAttribute("aria-busy", "true"); setTimeout(() => location.reload(), 150); });   // pega a última versão publicada
+  // ---------- calculadora: quanto as indicações encurtam o caminho ----------
+  function calcIndicacao() {
+    const v = (id) => { const x = parseFloat(String($(id).value).replace(",", ".")); return isFinite(x) ? x : 0; };
+    const cap = Math.max(0, v("i-cap")), meta = Math.max(0, v("i-meta")), r = Math.min(100, Math.max(-100, v("i-rent"))) / 100;
+    const n = Math.max(0, Math.round(v("i-n"))), capInd = Math.max(0, v("i-capind"));
+    const com = (D.comissao_pct ?? 30) / 100, parte = 0.15 * com;   // você recebe 15% da comissão = 4,5% do lucro dos indicados
+    const liq = r > 0 ? r * (1 - com) : r;
+    let sem = cap, comInd = cap, ind = n * capInd, bonusTot = 0, mSem = null, mCom = null, bonusAteMeta = 0;
+    const ptsSem = [[0, sem]], ptsCom = [[0, comInd]];
+    for (let m = 1; m <= 120; m++) {
+      sem *= 1 + liq;
+      const lucroInd = ind * r, bonus = lucroInd > 0 ? lucroInd * parte : 0;
+      comInd = comInd * (1 + liq) + bonus; bonusTot += bonus; ind *= 1 + liq;
+      if (mSem == null && meta > 0 && sem >= meta) mSem = m;
+      if (mCom == null && meta > 0 && comInd >= meta) { mCom = m; bonusAteMeta = bonusTot; }
+      ptsSem.push([m, sem]); ptsCom.push([m, comInd]);
+    }
+    $("i-sem").textContent = mSem == null ? "—" : T("i_eco_v", mSem); $("i-sem-sub").textContent = mSem == null ? T("i_meses", null) : T("i_ate", usdSim(meta));
+    $("i-com").textContent = mCom == null ? "—" : T("i_eco_v", mCom); $("i-com-sub").textContent = mCom == null ? T("i_meses", null) : T("i_ate", usdSim(meta));
+    if (n === 0 || capInd === 0) { $("i-eco").textContent = "—"; $("i-eco-sub").textContent = T("i_eco_nada"); }
+    else if (mCom != null && mSem != null) { $("i-eco").textContent = T("i_eco_v", mSem - mCom); $("i-eco-sub").textContent = T("i_eco_sub", usdSim(bonusAteMeta)); }
+    else if (mCom != null) { $("i-eco").textContent = "> " + T("i_eco_v", 120 - mCom); $("i-eco-sub").textContent = T("i_eco_sub", usdSim(bonusAteMeta)); }
+    else { $("i-eco").textContent = "—"; $("i-eco-sub").textContent = T("i_meses", null); }
+    const fim = Math.min(120, Math.max(12, Math.max(mSem || 0, mCom || 0) + 3));
+    grafico($("g-ind"), [
+      { nome: T("i_com"), pontos: ptsCom.slice(0, fim + 1), cor: "var(--gold)", area: true, espessura: 2.5 },
+      { nome: T("i_sozinho"), pontos: ptsSem.slice(0, fim + 1), cor: "var(--muted)", espessura: 1.8, tracejado: true },
+      ...(meta > 0 ? [{ nome: T("i_meta_l"), pontos: ptsSem.slice(0, fim + 1).map((p) => [p[0], meta]), cor: "var(--up)", espessura: 1.2, tracejado: true }] : []),
+    ], { rotulo: T("ind_titulo"), fmtEixo: (x) => "$" + (Math.abs(x) >= 1e6 ? (x / 1e6).toLocaleString(LOC[L], { maximumFractionDigits: 1 }) + "M" : Math.abs(x) >= 1e4 ? Math.round(x / 1000) + "k" : Math.round(x)), fmtDica: usdSim, margemEsq: 58,
+      fmtX: (m) => m + "m", fmtTitulo: (m) => m + " " + T("mes") });
+  }
+
+  // ---------- Legião Legatus: pedido de conferência pelo WhatsApp ----------
+  const zapContato = String(C.whatsappContato || "").replace(/\D/g, "");
+  const dlg = $("dlg-resgate");
+  $("b-resgate").addEventListener("click", () => { $("rg-erro").hidden = true; dlg.showModal(); $("rg-conta").focus(); });
+  $("rg-cancelar").addEventListener("click", () => dlg.close());
+  dlg.addEventListener("click", (e) => { if (e.target === dlg) dlg.close(); });
+  $("rg-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const conta = $("rg-conta").value.replace(/\D/g, ""), nome = $("rg-nome").value.trim().replace(/\s+/g, " ");
+    const sel = $("rg-nivel"), obs = $("rg-obs").value.trim();
+    const erro = !/^\d{5,12}$/.test(conta) ? "rg_e_conta" : nome.split(" ").length < 2 ? "rg_e_nome" : !sel.value ? "rg_e_nivel" : "";
+    if (erro) { $("rg-erro").textContent = TXT[L][erro]; $("rg-erro").hidden = false; return; }
+    const texto = TXT[L].rg_msg(conta, nome, sel.options[sel.selectedIndex].text, obs);
+    window.open("https://wa.me/" + zapContato + "?text=" + encodeURIComponent(texto), "_blank", "noopener");
+    dlg.close();
+  });
+
+  // ---------- Legião Legatus ----------
+  const LG = [
+    { n: 1, rom: "I",   valor: 10000,   txt: "10K",  titulo: "SMART MOVE",         cm: "16 × 20 cm", f: ["#13513f", "#0a3328"], selo: "#0e5a44" },
+    { n: 2, rom: "II",  valor: 25000,   txt: "25K",  titulo: "ON TRACK",           cm: "20 × 25 cm", f: ["#1a3f8a", "#0c214f"], selo: "#1e4fa0" },
+    { n: 3, rom: "III", valor: 50000,   txt: "50K",  titulo: "MOMENTUM",           cm: "24 × 30 cm", f: ["#7a1630", "#3d0b18"], selo: "#9a1f3a" },
+    { n: 4, rom: "IV",  valor: 100000,  txt: "100K", titulo: "NEXT MILLIONAIRE",   cm: "28 × 35 cm", f: ["#4e2588", "#22113f"], selo: "#6a35a8" },
+    { n: 5, rom: "V",   valor: 200000,  txt: "200K", titulo: "MILLIONAIRE",        cm: "32 × 40 cm", f: ["#2a2a2d", "#0b0b0c"], selo: "#2a2a2d" },
+    { n: 6, rom: "VI",  valor: 500000,  txt: "500K", titulo: "MULTI-MILLIONAIRE",  cm: "36 × 45 cm", f: ["#fbf7ee", "#e6dcc6"], selo: "#efe6d2", escuro: true },
+    { n: 7, rom: "VII", valor: 1000000, txt: "1M",   titulo: "DOLLAR MILLIONAIRE", cm: "40 × 50 cm", f: ["#f0d68f", "#b98c3c"], selo: "#d9b25f", escuro: true },
+  ];
+  const LOGO_PATH = '<path d="M447 548 L502 505 L502 763 L447 763 Z"/><path d="M532 437 L584 394 L584 711 L612 711 L612 348 L665 303 L665 711 L773 711 L773 624 L712 585 L712 531 L823 599 L823 763 L532 763 Z"/>';
+  const usdLg = (v) => "US$ " + v.toLocaleString(LOC[L]);
+  let lgAberta = false;
+
+  function placaMini(p) {
+    const id = "lg" + p.n, ouro = p.n === 7 ? "#2b1f12" : (p.n === 6 ? "#a87b2e" : "url(#" + id + "o)");
+    const mat = p.n === 7 ? "#111" : "url(#" + id + "f)";
+    const tam = p.txt.length > 3 ? 46 : 54;
+    return `<svg viewBox="0 0 200 250" role="img" aria-label="${p.titulo}">
+      <defs>
+        <radialGradient id="${id}f" cx="50%" cy="38%" r="80%"><stop offset="0" stop-color="${p.f[0]}"/><stop offset="1" stop-color="${p.f[1]}"/></radialGradient>
+        <linearGradient id="${id}o" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f6e3a6"/><stop offset=".5" stop-color="#d9b25f"/><stop offset="1" stop-color="#a87b2e"/></linearGradient>
+        <linearGradient id="${id}m" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d8b98c"/><stop offset=".5" stop-color="#b8956a"/><stop offset="1" stop-color="#8f6d45"/></linearGradient>
+      </defs>
+      <rect width="200" height="250" rx="3" fill="url(#${id}m)"/>
+      <rect x="13" y="13" width="174" height="224" fill="${mat}"/>
+      ${p.n === 7 ? `<rect x="30" y="28" width="140" height="160" fill="url(#${id}f)"/>` : ""}
+      <rect x="30" y="28" width="140" height="160" fill="none" stroke="${p.n === 7 ? "#8a6726" : "#d6b260"}" stroke-width="1.6"/>
+      <rect x="36" y="34" width="128" height="148" fill="none" stroke="${p.escuro ? "#8a6726" : "#d6b260"}" stroke-width=".6" opacity=".7"/>
+      <g transform="translate(91 46) scale(.047)" fill="${ouro}"><g transform="translate(-440 -295)">${LOGO_PATH}</g></g>
+      <text x="100" y="${84 + tam * 0.72}" text-anchor="middle" font-family="Palatino Linotype, Book Antiqua, Georgia, serif" fill="${ouro}"><tspan font-size="11" dy="-${tam * 0.42}">US$</tspan><tspan font-size="${tam}" dx="5" dy="${tam * 0.42}">${p.txt}</tspan></text>
+      <line x1="62" y1="152" x2="138" y2="152" stroke="${p.escuro ? "#8a6726" : "#d6b260"}" stroke-width=".7"/>
+      <text x="100" y="166" text-anchor="middle" font-family="Segoe UI, sans-serif" font-weight="700" font-size="${p.titulo.length > 14 ? 7 : 8.5}" letter-spacing="1.4" fill="${ouro}">${p.titulo}</text>
+      <rect x="66" y="203" width="68" height="16" rx="1.5" fill="url(#${id}o)"/>
+    </svg>`;
+  }
+
+  function envelope(p) {
+    const txtSelo = p.escuro ? "#2b1f12" : "#f3e2b0";
+    return `<svg viewBox="0 0 120 150" aria-hidden="true">
+      <defs><linearGradient id="env${p.n}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2c2c31"/><stop offset=".45" stop-color="#16161a"/><stop offset="1" stop-color="#0d0d10"/></linearGradient></defs>
+      <rect x="2" y="2" width="116" height="146" rx="2" fill="url(#env${p.n})" stroke="#c9a24f" stroke-width="1"/>
+      <path d="M3 3 L60 62 L117 3" fill="none" stroke="#c9a24f" stroke-width=".9"/>
+      <g transform="translate(53 18) scale(.036)" fill="#d6b260"><g transform="translate(-440 -295)">${LOGO_PATH}</g></g>
+      <circle cx="60" cy="62" r="13" fill="${p.selo}" stroke="#d6b260" stroke-width="1.2"/>
+      <text x="60" y="66.5" text-anchor="middle" font-family="Palatino Linotype, Georgia, serif" font-weight="700" font-size="${p.rom.length > 2 ? 9 : 11}" fill="${txtSelo}">${p.rom}</text>
+    </svg>`;
+  }
+
+  function cartaI() {
+    const c = TXT[L].lg_carta;
+    return `<div class="lg-carta-topo"><svg viewBox="440 295 390 475" aria-hidden="true" fill="#d6b260">${LOGO_PATH}</svg><span>LEGATUS GROUP FX</span></div>
+      <div class="lg-carta-corpo">
+        <div class="cap">${c.cap}</div><h4>${c.titulo}</h4><div class="meta">${c.meta}</div>
+        <p class="saud">${c.saud}</p>
+        ${c.p.map((t) => `<p>${t}</p>`).join("")}
+        <p class="fim">${c.fim}</p>
+        <div class="ass">Allison Feitoza Cordeiro<small>${c.cargo}</small></div>
+        <p class="aviso">${c.aviso}</p>
+        <button type="button" class="btn linha lg-fechar" id="lg-fechar">${TXT[L].lg_fechar}</button>
+      </div>`;
+  }
+
+  function legiao() {
+    const pedras = TXT[L].lg_pedras;
+    $("lg-placas").innerHTML = LG.map((p, i) => `<li><div class="qd"><div style="width:${parseInt(p.cm) / 40 * 100}%">${placaMini(p)}</div></div><b>${p.titulo}</b><span class="v">${usdLg(p.valor)}</span><span class="p">${pedras[i]}<i class="sep"> · </i><br>${p.cm}</span></li>`).join("");
+    $("lg-envelopes").innerHTML = LG.map((p, i) => i === 0
+      ? `<button type="button" class="lg-env aberta" id="lg-env1" aria-expanded="${lgAberta}" aria-controls="lg-carta">${envelope(p)}<span>${TXT[L].lg_ler}</span></button>`
+      : `<div class="lg-env">${envelope(p)}<span>🔒 ${TXT[L].lg_lacrada} ${usdLg(p.valor)}</span></div>`).join("");
+    const REC = [10000, 35000, 75000, 175000, 425000, 2000000];
+    $("lg-rec").innerHTML = REC.map((v, i) => `<li><span class="n">${i + 1}</span><div class="im"><img src="rec${i + 1}.${i === 2 ? "png" : "jpg"}" alt=""${i === 3 ? ' class="foto"' : i === 2 ? ' class="png"' : ""}></div><b>${TXT[L].lg_rec_nomes[i]}</b><span class="v">${usdLg(v)}</span><span class="sub">${TXT[L].lg_rec_sub}</span></li>`).join("");
+    $("lg-carta").innerHTML = cartaI();
+    $("lg-carta").hidden = !lgAberta;
+    $("lg-env1").addEventListener("click", () => { lgAberta = !lgAberta; legiao(); if (lgAberta) $("lg-carta").scrollIntoView({ behavior: "smooth", block: "start" }); });
+    $("lg-fechar").addEventListener("click", () => { lgAberta = false; legiao(); $("lg-env1").focus(); });
+    $("b-legiao").href = C.estrategia || "https://roboforex.com/copy-trading/rating/aaao/46163199/";
+    // botão "Alcançou algum nível?" só aparece com o número do WhatsApp configurado
+    $("lg-resgate").hidden = !zapContato;
+    const sel = $("rg-nivel"), atual = sel.value;
+    sel.innerHTML = `<option value="">${TXT[L].rg_escolha}</option><optgroup label="${TXT[L].lg_placas}">` +
+      LG.map((p, i) => `<option value="p${p.n}">${TXT[L].rg_placa} ${p.n} · ${p.titulo} · ${usdLg(p.valor)}</option>`).join("") +
+      `</optgroup><optgroup label="${TXT[L].lg_rec}">` +
+      [10000, 35000, 75000, 175000, 425000, 2000000].map((v, i) => `<option value="r${i + 1}">${TXT[L].rg_rec_l} ${i + 1} · ${TXT[L].lg_rec_nomes[i]} · ${usdLg(v)}</option>`).join("") + "</optgroup>";
+    sel.value = atual;
+  }
+  $("ind-form").addEventListener("input", calcIndicacao);
+  $("ind-form").addEventListener("submit", (e) => e.preventDefault());
+  $("sim-form").addEventListener("input", simular);
+  $("sim-form").addEventListener("submit", (e) => e.preventDefault());
+
+  // setas nas áreas que rolam para o lado (no celular a pessoa não percebe que tem mais coisa)
+  function setas(el, extra) {
+    const w = document.createElement("div"); w.className = "rola " + (extra || "");
+    el.parentNode.insertBefore(w, el); w.appendChild(el);
+    const mk = (lado, txt) => { const b = document.createElement("button"); b.type = "button"; b.className = "rola-seta " + lado; b.textContent = txt; b.setAttribute("aria-label", lado === "dir" ? "→" : "←"); w.appendChild(b); return b; };
+    const esq = mk("esq", "‹"), dir = mk("dir", "›");
+    const atualiza = () => { const max = el.scrollWidth - el.clientWidth; esq.hidden = el.scrollLeft < 8; dir.hidden = max < 8 || el.scrollLeft > max - 8; };
+    dir.addEventListener("click", () => el.scrollBy({ left: el.clientWidth * 0.8, behavior: "smooth" }));
+    esq.addEventListener("click", () => el.scrollBy({ left: -el.clientWidth * 0.8, behavior: "smooth" }));
+    el.addEventListener("scroll", atualiza, { passive: true });
+    new ResizeObserver(atualiza).observe(el);
+    new MutationObserver(atualiza).observe(el, { childList: true, subtree: true });
+    atualiza();
+  }
+  setas(document.querySelector(".atalhos"), "atalhos-wrap");
+  setas($("lg-placas"));
+  setas(document.querySelector(".tabela"), "topo");
+
+  // dados novos a cada 2 min, sem recarregar a página (no GitHub Pages o PC envia de minuto em minuto)
+  async function puxaDados() {
+    if (document.hidden) return;
+    try {
+      const txt = await (await fetch("data.js?" + Date.now(), { cache: "no-store" })).text();
+      const novo = JSON.parse(txt.slice(txt.indexOf("{"), txt.lastIndexOf("}") + 1));
+      if (novo.atualizado === D.atualizado && JSON.stringify(novo.mt4 && novo.mt4.abertas) === JSON.stringify(D.mt4 && D.mt4.abertas)) return;
+      Object.keys(D).forEach((k) => delete D[k]); Object.assign(D, novo); render();
+    } catch (e) {}
+  }
+  setInterval(puxaDados, 120000);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) puxaDados(); });
+
+  render();
+})();
+</script>
+</body></html>
