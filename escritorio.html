@@ -551,9 +551,22 @@
     const cabelo = new THREE.Mesh(new THREE.SphereGeometry(0.265, 18, 12, 0, Math.PI * 2, 0, Math.PI * (id % 5 === 1 ? 0.62 : 0.5)), mat(CABELOS[(id * 5) % CABELOS.length])); cabelo.position.y = 0.05; cabelo.rotation.x = -0.25; cabelo.castShadow = true; cab.add(cabelo);
     if (id % 6 === 2) { const bone = new THREE.Mesh(new THREE.SphereGeometry(0.27, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2), mat(CAMISAS[(id * 7) % CAMISAS.length])); bone.position.y = 0.07; cab.add(bone); bloco(0.3, 0.03, 0.22, mat(CAMISAS[(id * 7) % CAMISAS.length]), 0, 0.08, 0.28, cab); }
     // olhos discretos
-    esfera(0.03, mat(0x1a1a1a), -0.09, 0.07, 0.22, cab); esfera(0.03, mat(0x1a1a1a), 0.09, 0.07, 0.22, cab);
+    // rosto: olhos com pupila, sobrancelhas, nariz, boca sorrindo (e barba/óculos em alguns)
+    const corCab = CABELOS[(id * 5) % CABELOS.length], olhos = [];
+    [-0.09, 0.09].forEach((ox) => {
+      const o = new THREE.Group(); o.position.set(ox, 0.07, 0.205); cab.add(o);
+      esfera(0.058, mat(0xffffff, { roughness: 0.3 }), 0, 0, 0, o).castShadow = false;
+      esfera(0.032, mat(id % 3 === 1 ? 0x3b6fa8 : 0x2a1a10, { roughness: 0.2 }), 0, 0, 0.038, o).castShadow = false;
+      esfera(0.011, mat(0xffffff, { emissive: 0xffffff, emissiveIntensity: 0.6 }), 0.012, 0.012, 0.064, o).castShadow = false;
+      olhos.push(o);
+      const sb = bloco(0.1, 0.022, 0.03, mat(corCab), ox, 0.155, 0.222, cab, false); sb.rotation.z = ox < 0 ? 0.12 : -0.12;
+    });
+    esfera(0.038, pele, 0, 0.0, 0.245, cab).castShadow = false;                                   // nariz
+    const boca = new THREE.Mesh(new THREE.TorusGeometry(0.06, 0.013, 6, 14, Math.PI), mat(0x7a2e24)); boca.rotation.z = Math.PI; boca.position.set(0, -0.06, 0.218); cab.add(boca);
+    if (id % 4 === 3) { const bb = new THREE.Mesh(new THREE.SphereGeometry(0.255, 16, 10, Math.PI * 1.1, Math.PI * 0.8, Math.PI * 0.55, Math.PI * 0.4), mat(corCab)); bb.position.y = 0.035; cab.add(bb); }   // barba
+    if (id % 5 === 2) { [-0.09, 0.09].forEach((ox) => { const l = new THREE.Mesh(new THREE.TorusGeometry(0.062, 0.01, 6, 16), mat(0x111111)); l.position.set(ox, 0.07, 0.25); cab.add(l); }); bloco(0.06, 0.012, 0.012, mat(0x111111), 0, 0.075, 0.255, cab, false); }   // óculos
     S.add(g);
-    const p = { id, g, pE, pD, bE, bD, cab, papel: papel || "livre", op: null, mesa: null, x: 0, z: 0, tx: 0, tz: 0, rot: 0, alvoRot: null, fase: Math.random() * 6, espera: 0, ponto: null, ate: 0 };
+    const p = { id, g, pE, pD, bE, bD, cab, olhos, papel: papel || "livre", op: null, mesa: null, x: 0, z: 0, tx: 0, tz: 0, rot: 0, alvoRot: null, fase: Math.random() * 6, espera: 0, ponto: null, ate: 0 };
     p.item = new THREE.Group(); bD.add(p.item); p.item.position.set(0, -0.62, 0.08);
     gente.push(p); return p;
   }
@@ -850,6 +863,7 @@
     if (senta) { pernas = [-1.5, -1.5]; y = p.ponto && p.ponto.acao === "sofa" ? -0.35 : -0.15; incl = 0; }
     p.pE.rotation.x = pernas[0]; p.pD.rotation.x = pernas[1]; p.bE.rotation.x = bracos[0]; p.bD.rotation.x = bracos[1]; p.bE.rotation.z = ab[0]; p.bD.rotation.z = ab[1];
     p.cab.rotation.set(cx, cy, 0); p.g.position.y = y; p.g.rotation.x = incl;
+    const pisca = ((T + p.fase * 3) % 4.2) < 0.12; p.olhos.forEach((o) => (o.scale.y = pisca ? 0.12 : 1));   // piscadas
     if (p.papel === "livre" && !anda && p.espera <= 0) {
       if (p.resultado && !p.vip && T - p.desde > LAZER_S && mesas.filter((m) => m.livre).length > 2) { vaiAnalisar(p); return; }
       if (!p.ate) p.ate = T + rnd(8, 18); if (T > p.ate) { p.ate = 0; proximoPonto(p); }
