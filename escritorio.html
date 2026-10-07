@@ -472,7 +472,7 @@
   const AZ0 = LZ + 0.9, AZ1 = LZ + 7.4, AZC = (AZ0 + AZ1) / 2;
   const NIVEIS = [
     { min: 0, nome: "Escritório" },
-    { min: 2500, zona: "terraco", nome: "Terraço com vista para o mar", x0: 6, x1: 20 },
+    { min: 2500, zona: "terraco", nome: "Sala VIP com DJ", x0: 6, x1: 20 },
     { min: 5000, zona: "diretoria", nome: "Sala da diretoria", x0: -7, x1: 6 },
     { min: 10000, zona: "academia", nome: "Academia", x0: -20, x1: -7 },
   ];
@@ -499,21 +499,29 @@
     const pl = placaObra(n, cx + 0.5, AZC - 0.4); obra.add(pl);
     zonas[n.zona] = { n, obra, pronta, cx, w, gente: [] };
   });
-  // ----- terraço: deck, espreguiçadeiras, guarda-sol, plantas e o mar em volta do prédio
-  { const z = zonas.terraco, g = z.pronta, d = document.createElement("canvas"); d.width = 256; d.height = 64; const dx = d.getContext("2d");
-    for (let y = 0; y < 64; y += 8) { dx.fillStyle = y % 16 ? "#a0744a" : "#b3845a"; dx.fillRect(0, y, 256, 8); dx.fillStyle = "rgba(0,0,0,.2)"; dx.fillRect(0, y, 256, 1); }
-    const dt2 = new THREE.CanvasTexture(d); dt2.wrapS = dt2.wrapT = THREE.RepeatWrapping; dt2.repeat.set(4, 6); dt2.encoding = THREE.sRGBEncoding;
-    const deck = new THREE.Mesh(new THREE.PlaneGeometry(z.w - 0.3, AZ1 - AZ0 - 0.3), new THREE.MeshStandardMaterial({ map: dt2, roughness: 0.8 })); deck.rotation.x = -Math.PI / 2; deck.position.set(z.cx, 0.03, AZC); deck.receiveShadow = true; g.add(deck);
-    bloco(z.w - 0.3, 1.0, 0.06, new THREE.MeshStandardMaterial({ color: 0xbfe6ff, transparent: true, opacity: 0.25 }), z.cx, 0.55, AZ1 - 0.2, g, false); bloco(z.w - 0.3, 0.06, 0.1, mat(0xcfd8e6), z.cx, 1.06, AZ1 - 0.2, g, false);
-    [z.cx - 4, z.cx - 1.4, z.cx + 1.2].forEach((x) => { const l = bloco(0.8, 0.2, 2.0, mat(0xffffff), x, 0.35, AZC + 0.2, g); bloco(0.8, 0.5, 0.15, mat(0xffffff), x, 0.6, AZC - 0.75, g).rotation.x = -0.5; bloco(0.7, 0.08, 1.7, mat(0x3fb6c9), x, 0.48, AZC + 0.25, g); });
-    cil(0.05, 0.05, 2.6, mat(0xdddddd), z.cx - 2.7, 1.3, AZC - 1.3, g); const gs = new THREE.Mesh(new THREE.ConeGeometry(1.6, 0.6, 10), mat(0xff7a5a)); gs.position.set(z.cx - 2.7, 2.6, AZC - 1.3); gs.castShadow = true; g.add(gs);
-    cil(0.4, 0.4, 0.06, mat(0xf2f2f2), z.cx + 4, 0.75, AZC, g); cil(0.05, 0.05, 0.75, mat(0x999999), z.cx + 4, 0.38, AZC, g);
-    // o mar em volta do prédio
-    const mc = document.createElement("canvas"); mc.width = 256; mc.height = 256; const mx2 = mc.getContext("2d"); const gm = mx2.createLinearGradient(0, 0, 256, 256); gm.addColorStop(0, "#0c4a7a"); gm.addColorStop(1, "#1a7fb3"); mx2.fillStyle = gm; mx2.fillRect(0, 0, 256, 256);
-    for (let i = 0; i < 70; i++) { mx2.strokeStyle = "rgba(255,255,255,.22)"; mx2.lineWidth = 2; const x = Math.random() * 256, y = Math.random() * 256; mx2.beginPath(); mx2.moveTo(x, y); mx2.quadraticCurveTo(x + 8, y - 4, x + 16, y); mx2.stroke(); }
-    const mt = new THREE.CanvasTexture(mc); mt.wrapS = mt.wrapT = THREE.RepeatWrapping; mt.repeat.set(10, 10); mt.encoding = THREE.sRGBEncoding;
-    const mar = new THREE.Mesh(new THREE.PlaneGeometry(260, 260), new THREE.MeshStandardMaterial({ map: mt, roughness: 0.3, metalness: 0.1 })); mar.rotation.x = -Math.PI / 2; mar.position.set(0, -1.2, 0); g.add(mar); z.mar = mt;
-    const areia = new THREE.Mesh(new THREE.PlaneGeometry(LX * 2 + 6, AZ1 + LZ + 6), mat(0xe8d3a0)); areia.rotation.x = -Math.PI / 2; areia.position.set(0, -1.1, (AZ1 - LZ) / 2); g.add(areia);
+  // ----- sala VIP: pista com luzes, DJ, caixas de som, bar com drinks
+  { const z = zonas.terraco, g = z.pronta;
+    bloco(z.w - 0.3, 0.03, AZ1 - AZ0 - 0.3, mat(0x0c0d12), z.cx, 0.02, AZC, g);
+    bloco(z.w - 0.3, 2.6, 0.12, mat(0x15121f), z.cx, 1.3, AZ1 - 0.15, g); bloco(0.12, 2.6, AZ1 - AZ0 - 0.3, mat(0x15121f), z.n.x1 - 0.2, 1.3, AZC, g);   // paredes baixas da VIP
+    bloco(z.w - 0.3, 0.06, 0.14, brilho(0xb44dff, 1.6), z.cx, 2.62, AZ1 - 0.15, g, false);
+    // pista de dança com ladrilhos que acendem no ritmo
+    z.pista = [];
+    for (let a = 0; a < 6; a++) for (let b = 0; b < 4; b++) { const t = bloco(0.95, 0.04, 0.95, new THREE.MeshStandardMaterial({ color: 0x222222, emissive: 0x000000, roughness: 0.4 }), z.cx - 3.2 + a * 1.0, 0.05, AZC - 1.2 + b * 1.0, g, false); z.pista.push(t); }
+    // cabine do DJ
+    bloco(3.0, 1.0, 0.9, mat(0x111111), z.cx - 0.7, 0.5, AZ0 + 0.9, g); bloco(3.0, 0.06, 0.9, brilho(0x3a7bff, 1.2), z.cx - 0.7, 1.02, AZ0 + 0.9, g, false);
+    z.discos = [-1.6, 0.2].map((dx) => { const d = cil(0.3, 0.3, 0.04, mat(0x222222), z.cx - 0.7 + dx, 1.07, AZ0 + 0.9, g); cil(0.08, 0.08, 0.05, brilho(0xff3b5c, 1.2), 0, 0.01, 0, d); return d; });
+    bloco(0.5, 0.05, 0.35, brilho(0x8affbe, 1.2), z.cx - 0.7 + 1.1, 1.08, AZ0 + 0.85, g, false);   // notebook
+    // caixas de som que pulsam
+    z.caixas = [z.cx - 3.0, z.cx + 1.6].map((x) => { const c = new THREE.Group(); c.position.set(x, 0, AZ0 + 0.7); g.add(c); bloco(0.9, 2.0, 0.8, mat(0x0a0a0a), 0, 1.0, 0, c); const a1 = cil(0.3, 0.3, 0.05, mat(0x333333), 0, 0.6, 0.41, c); a1.rotation.x = Math.PI / 2; const a2 = cil(0.18, 0.18, 0.05, mat(0x333333), 0, 1.45, 0.41, c); a2.rotation.x = Math.PI / 2; return [a1, a2]; });
+    // canhões de luz girando (feixes coloridos)
+    z.feixes = [[z.cx - 3.5, 0xff2fd0], [z.cx, 0x2ff3ff], [z.cx + 3.5, 0xffe02f]].map(([x, cor]) => { const piv = new THREE.Group(); piv.position.set(x, 2.55, AZC); g.add(piv); const f = new THREE.Mesh(new THREE.ConeGeometry(0.7, 2.6, 12, 1, true), new THREE.MeshBasicMaterial({ color: cor, transparent: true, opacity: 0.22, depthWrite: false, side: THREE.DoubleSide })); f.position.y = -1.3; piv.add(f); return piv; });
+    z.globo = esfera(0.3, new THREE.MeshStandardMaterial({ color: 0xdddddd, metalness: 1, roughness: 0.15, emissive: 0x333333 }), z.cx - 1, 2.35, AZC - 0.4, g);
+    // bar com drinks
+    bloco(0.9, 1.1, 4.2, mat(0x2a1a3a), z.n.x1 - 1.0, 0.55, AZC + 0.4, g); bloco(0.95, 0.06, 4.25, brilho(0xb44dff, 1.0), z.n.x1 - 1.0, 1.12, AZC + 0.4, g, false);
+    bloco(0.3, 1.6, 4.0, mat(0x1a1a22), z.n.x1 - 0.35, 1.9, AZC + 0.4, g);
+    [0xffb347, 0x8affbe, 0xff6fae, 0x7fc8ff, 0xfff27a, 0xffffff].forEach((c, k) => { cil(0.06, 0.06, 0.32, new THREE.MeshStandardMaterial({ color: c, emissive: c, emissiveIntensity: 0.5, transparent: true, opacity: 0.85 }), z.n.x1 - 0.35, 1.5 + (k % 2) * 0.55, AZC - 1.2 + k * 0.6, g); });
+    [-0.6, 0.6, 1.6].forEach((dz) => { cil(0.05, 0.04, 0.16, new THREE.MeshStandardMaterial({ color: 0xff6fae, transparent: true, opacity: 0.8 }), z.n.x1 - 1.05, 1.22, AZC + dz, g); });
+    [-0.8, 0.4, 1.6].forEach((dz) => { cil(0.25, 0.25, 0.06, mat(0x222222), z.n.x1 - 1.9, 0.85, AZC + dz, g); cil(0.04, 0.04, 0.85, mat(0x777777), z.n.x1 - 1.9, 0.42, AZC + dz, g); });
   }
   // ----- diretoria: tapete, mesa executiva, poltrona, troféus, quadro
   { const z = zonas.diretoria, g = z.pronta;
@@ -551,7 +559,7 @@
     if (typeof novaPessoa !== "function") return;
     genteAnexo.splice(0).forEach((p) => { S.remove(p.g); const i = gente.indexOf(p); if (i >= 0) gente.splice(i, 1); });
     const poe = (papel, x, z, r) => { const p = novaPessoa(papel); const i = gente.indexOf(p); if (i >= 0) gente.splice(i, 1); p.x = p.tx = x; p.z = p.tz = z; p.rot = p.alvoRot = r; genteAnexo.push(p); return p; };
-    if (port >= 2500) { const z = zonas.terraco; poe("relaxa", z.cx - 4, AZC + 0.2, Math.PI); poe("relaxa", z.cx + 1.2, AZC + 0.2, Math.PI); poe("anexoEmPe", z.cx + 4.6, AZC + 0.7, -2.2); }
+    if (port >= 2500) { const z = zonas.terraco; poe("dj", z.cx - 0.7, AZ0 + 1.75, Math.PI); poe("anexoEmPe", z.n.x1 - 0.65, AZC + 0.2, -Math.PI / 2); [[-2.6, -0.6], [-1.2, 0.5], [0.3, -0.4], [-0.2, 1.3]].forEach(([dx, dz]) => poe("danca", z.cx + dx, AZC + dz, rnd(0, 6.3))); poe("anexoEmPe", z.n.x1 - 2.4, AZC + 1.0, Math.PI / 2); }
     if (port >= 5000) { const z = zonas.diretoria; const d = poe("diretor", z.cx, AZC - 1.85, 0); d.diretor = true; poe("reuniao", z.cx - 0.9, AZC + 0.85, Math.PI); }
     if (port >= 10000) { const z = zonas.academia; z.esteiras.slice(0, 2).forEach((x) => poe("esteira", x, AZC - 0.3, Math.PI)); poe("anexoEmPe", z.cx + 3.3, AZC + 1.2, -1.2); }
   }
@@ -945,6 +953,8 @@
     let senta = false, pernas = [s, -s], bracos = [-s * 0.7, s * 0.7], ab = [0, 0], cx = 0, cy = 0, y = anda ? Math.abs(Math.sin(T * 9 + p.fase)) * 0.04 : 0, incl = 0;
     if (!anda) {
       const ac = p.ponto && p.ponto.acao;
+      if (p.papel === "dj") { const bt = T * 128 / 60; cy = Math.sin(bt * Math.PI) * 0.15; cx = 0.25 + Math.abs(Math.sin(bt * Math.PI)) * 0.15; bracos = [-1.0 + Math.sin(bt * Math.PI * 2) * 0.15, (Math.floor(bt / 8) % 2 ? -2.9 : -1.0)]; y = Math.abs(Math.sin(bt * Math.PI)) * 0.06; }
+      if (p.papel === "danca") { const bt = T * 128 / 60 + p.fase; y = Math.abs(Math.sin(bt * Math.PI)) * 0.18; bracos = [-2.6 + Math.sin(bt * Math.PI) * 0.5, -0.5 - Math.abs(Math.cos(bt * Math.PI)) * 2.2]; pernas = [Math.sin(bt * Math.PI) * 0.4, -Math.sin(bt * Math.PI) * 0.4]; p.rot += dt * 0.6; cy = Math.sin(bt * Math.PI) * 0.3; }
       if (p.papel === "relaxa") { senta = true; incl = -0.5; bracos = [-2.6, -2.6]; }
       if (p.papel === "diretor") { bracos = [-0.9, -0.7 + Math.sin(T * 1.1) * 0.2]; cy = Math.sin(T * 0.4) * 0.5; }
       if (p.papel === "esteira") { const s2 = Math.sin(T * 11 + p.fase) * 0.7; pernas = [s2, -s2]; bracos = [-s2 * 0.8, s2 * 0.8]; y = Math.abs(Math.sin(T * 11 + p.fase)) * 0.06 + 0.3; }
@@ -1034,7 +1044,12 @@
     patas.forEach((pt, i) => (pt.rotation.z = dAnda ? Math.sin(T * 14 + i * Math.PI) * 0.5 : 0)); rabo.rotation.y = Math.sin(T * 12) * 0.6;
     gente.forEach((p) => anima(p, dt));
     if (MERC.aberto) genteAnexo.forEach((p) => { p.g.visible = true; anima(p, dt); }); else genteAnexo.forEach((p) => (p.g.visible = false));
-    if (zonas.terraco && zonas.terraco.mar) { zonas.terraco.mar.offset.x = T * 0.01; zonas.terraco.mar.offset.y = T * 0.006; }
+    { const z = zonas.terraco; if (z && z.pronta.visible) {   // balada: luzes no ritmo (128 bpm)
+      const bt = T * 128 / 60, batida = Math.pow(1 - (bt % 1), 3), cores = [0xff2fd0, 0x2ff3ff, 0xffe02f, 0x8affbe, 0xb44dff, 0xff6f3c];
+      z.pista.forEach((t, k) => { const c = cores[(k * 7 + Math.floor(bt)) % cores.length]; t.material.emissive.setHex(c); t.material.emissiveIntensity = ((k + Math.floor(bt)) % 3 === 0 ? 1.4 : 0.25) * (0.5 + batida * 0.5); });
+      z.caixas.forEach(([a1, a2]) => { a1.scale.set(1 + batida * 0.25, 1, 1 + batida * 0.25); a2.scale.set(1 + batida * 0.2, 1, 1 + batida * 0.2); });
+      z.discos.forEach((d) => (d.rotation.y = T * 4)); z.feixes.forEach((f, k) => { f.rotation.z = Math.sin(T * 0.9 + k * 2) * 0.6; f.rotation.x = Math.cos(T * 0.7 + k) * 0.5; }); z.globo.rotation.y = T;
+    } }
     for (let i = gente.length - 1; i >= 0; i--) if (gente[i].removido) gente.splice(i, 1);
     tCeu += dt; if (tCeu > 0.1) { desenhaCeu(tCeu); tCeu = 0; }
     tMon += dt; if (tMon > 0.25) { tMon = 0; mesas.forEach((m) => desenhaMonitores(m, T)); mesas.forEach((m) => { m.led.material.emissiveIntensity = 1.2 + Math.sin(T * 3 + m.semente) * 0.8; }); }
