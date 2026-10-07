@@ -653,12 +653,27 @@
     if (anda) {
       const k = Math.min(1, 2.4 * dt / d); let mx = dx * k, mz = dz * k;
       // desvia de quem está perto (sem atravessar)
-      gente.forEach((o) => { if (o === p) return; const ox = p.x - o.x, oz = p.z - o.z, od = Math.hypot(ox, oz); if (od < 0.55 && od > 0.001) { mx += ox / od * (0.55 - od) * 0.5; mz += oz / od * (0.55 - od) * 0.5; } });
+      gente.forEach((o) => {
+        if (o === p) return; const ox = p.x - o.x, oz = p.z - o.z, od = Math.hypot(ox, oz);
+        if (od < 0.7 && od > 0.001) { const f = (0.7 - od) * 0.9; mx += ox / od * f + (-oz / od) * f * 0.6; mz += oz / od * f + (ox / od) * f * 0.6; }   // afasta e contorna pela direita
+      });
       const [ci, cj] = celula(p.x + mx, p.z + mz), ultimo = !p.rota || p.rota.length <= 1;
       if (!bloqueado[ci + cj * NX] || (ultimo && d < 0.9)) { p.x += mx; p.z += mz; } else { p.x += dx * k; p.z += dz * k; }
       let a = Math.atan2(dx, dz) - p.rot; a = Math.atan2(Math.sin(a), Math.cos(a)); p.rot += a * Math.min(1, dt * 10);
     }
     else if (p.alvoRot != null) { let a = p.alvoRot - p.rot; a = Math.atan2(Math.sin(a), Math.cos(a)); p.rot += a * Math.min(1, dt * 6); }
+    // travou? (não chega mais perto do destino) -> recalcula o caminho ou escolhe outro lugar
+    const falta = Math.hypot(p.tx - p.x, p.tz - p.z);
+    if (anda) {
+      if (p.melhor == null || falta < p.melhor - 0.15) { p.melhor = falta; p.desdeMelhor = T; }
+      else if (T - p.desdeMelhor > 1.5) {
+        p.melhor = null; p.alvoK = null;
+        if (p.papel === "livre" && falta < 2.5) proximoPonto(p);
+        else { const a = rnd(0, 6.3), [ci, cj] = celula(p.x + Math.cos(a) * 0.4, p.z + Math.sin(a) * 0.4); if (!bloqueado[ci + cj * NX]) { p.x += Math.cos(a) * 0.4; p.z += Math.sin(a) * 0.4; } }
+      }
+    } else p.melhor = null;
+    // parado colado em alguém: quem está de bobeira muda de lugar
+    if (!anda && p.papel === "livre" && p.espera <= 0 && gente.some((o) => o !== p && o.papel !== "saindo" && Math.hypot(o.x - p.x, o.z - p.z) < 0.55)) { if (!p.colado) p.colado = T; if (T - p.colado > 0.8) { p.colado = 0; proximoPonto(p); } } else p.colado = 0;
     p.g.position.set(p.x, 0, p.z); p.g.rotation.y = p.rot;
     const s = anda ? Math.sin(T * 9 + p.fase) * 0.6 : 0;
     let senta = false, pernas = [s, -s], bracos = [-s * 0.7, s * 0.7], ab = [0, 0], cx = 0, cy = 0, y = anda ? Math.abs(Math.sin(T * 9 + p.fase)) * 0.04 : 0, incl = 0;
