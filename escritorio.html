@@ -435,8 +435,12 @@
   // ================= laboratório do Analista (testa a estratégia inteira no histórico) =================
   const LABX = 5.0, LABZ = -9.6;
   const LAB = { leds: [], mon: [] };
-  { const piso = new THREE.Mesh(new THREE.PlaneGeometry(6.2, 6.4), mat(0x1b2a3f)); piso.rotation.x = -Math.PI / 2; piso.position.set(LABX, 0.032, -9.55); piso.receiveShadow = true; S.add(piso);
-    [[LABX, -6.35, 6.2, 0.06], [LABX - 3.1, -9.55, 0.06, 6.4]].forEach(([x, z, w, d]) => bloco(w, 0.02, d, brilho(0x5aa0e6, 1.2), x, 0.045, z, S, false));
+  { // piso próprio do laboratório: porcelanato claro em placas, do canto da parede até o vidro da sala de treino
+    const pc0 = document.createElement("canvas"); pc0.width = pc0.height = 128; const p0 = pc0.getContext("2d");
+    p0.fillStyle = "#d9dee5"; p0.fillRect(0, 0, 128, 128); p0.strokeStyle = "#b9c1cc"; p0.lineWidth = 3; p0.strokeRect(1.5, 1.5, 125, 125);
+    const pt0 = new THREE.CanvasTexture(pc0); pt0.wrapS = pt0.wrapT = THREE.RepeatWrapping; pt0.repeat.set(6, 6.5); pt0.encoding = THREE.sRGBEncoding; pt0.anisotropy = 4;
+    const piso = new THREE.Mesh(new THREE.PlaneGeometry(6.15, 6.65), new THREE.MeshStandardMaterial({ map: pt0, roughness: 0.35, metalness: 0.05 })); piso.rotation.x = -Math.PI / 2; piso.position.set(4.975, 0.032, -9.625); piso.receiveShadow = true; S.add(piso);
+    bloco(6.15, 0.05, 0.08, mat(0x9aa3b0), 4.975, 0.055, -6.3); bloco(0.08, 0.05, 6.65, mat(0x9aa3b0), 1.9, 0.055, -9.625);   // rodapé nas bordas abertas
     // quadro grande em pé (de frente para a sala)
     bloco(3.7, 2.3, 0.1, mat(0x8a6a2c), LABX, 2.45, -12.35); [-1.6, 1.6].forEach((dx) => bloco(0.1, 1.4, 0.1, mat(0x6d7078), LABX + dx, 0.7, -12.35));
     const c = document.createElement("canvas"); c.width = 1120; c.height = 680; const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; t.anisotropy = 4;
@@ -627,7 +631,7 @@
   }
 
   // ================= rua, calçada e estacionamento (ao lado da porta) =================
-  const grama = new THREE.Mesh(new THREE.PlaneGeometry(220, 220), mat(0x2f4a33)); grama.rotation.x = -Math.PI / 2; grama.position.y = -0.06; grama.receiveShadow = true; S.add(grama);
+  const grama = new THREE.Mesh(new THREE.PlaneGeometry(220, 220), new THREE.MeshStandardMaterial({ color: 0x2f4a33, roughness: 0.9 })); grama.rotation.x = -Math.PI / 2; grama.position.y = -0.06; grama.receiveShadow = true; S.add(grama);
   const plano = (w, d, cor, x, z, y = 0.004) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), mat(cor)); m.rotation.x = -Math.PI / 2; m.position.set(x, y, z); m.receiveShadow = true; S.add(m); return m; };
   const RUA_Z = AZ1 + 4.2;
   plano(160, 5, 0x2b2d31, -15, RUA_Z);                                            // rua
@@ -753,6 +757,31 @@
   const PELES = [0xf3cfa6, 0xe0b088, 0xb9805a, 0x8a5a3a, 0x5e3b24];
   const CABELOS = [0x1a120c, 0x6b4423, 0xf2d27a, 0x0d0d0d, 0xb5481e, 0x8a8a8a, 0x3b2416, 0xd9b26a];
   const gente = []; let nId = 0;
+  // ================= clima lá fora: o mesmo da janela (chuva, nuvens, relâmpago) =================
+  const CHUVA_N = 2600, chuvaPos = new Float32Array(CHUVA_N * 6), chuvaV = new Float32Array(CHUVA_N);
+  const dentro = (x, z) => x > -LX - 0.3 && x < LX + 0.3 && z > -LZ - 0.3 && z < AZ1 + 0.3;   // prédio sem teto: não chove dentro
+  function gota(i, topo) { let x, z; do { x = rnd(-62, 34); z = rnd(-34, 40); } while (dentro(x, z)); const y = topo ? rnd(18, 24) : rnd(0, 24); chuvaPos.set([x, y, z, x + 0.06, y - 0.7, z + 0.04], i * 6); chuvaV[i] = rnd(16, 22); }
+  for (let i = 0; i < CHUVA_N; i++) gota(i, false);
+  const chuvaGeo = new THREE.BufferGeometry(); chuvaGeo.setAttribute("position", new THREE.BufferAttribute(chuvaPos, 3));
+  const chuva = new THREE.LineSegments(chuvaGeo, new THREE.LineBasicMaterial({ color: 0xbfd4ee, transparent: true, opacity: 0.55 })); chuva.frustumCulled = false; chuva.visible = false; S.add(chuva);
+  const pocas = [[-24, RUA_Z - 0.8, 3.2], [-8, RUA_Z + 1, 2.4], [9, RUA_Z - 0.4, 3.6], [-LX - 6, 2, 2.2], [-LX - 4.5, -8, 1.8], [-LX - 7.5, 9, 2.6], [22, -4, 2.4], [-30, -16, 3]].map(([x, z, r]) => { const m = new THREE.Mesh(new THREE.CircleGeometry(r, 24), new THREE.MeshStandardMaterial({ color: 0x5d6f86, roughness: 0.05, metalness: 0.6, transparent: true, opacity: 0 })); m.rotation.x = -Math.PI / 2; m.scale.set(1, 0.55, 1); m.position.set(x, 0.02, z); S.add(m); return m; });
+  const CLIMA = { sol: 1, ceu: 1, tipo: "sol" };
+  const corGrama = new THREE.Color(0x2f4a33), corGramaChuva = new THREE.Color(0x24382a), corFundo = new THREE.Color(0x07090d);
+  function animaClima(dt) {
+    const cl = climaOuro(), tipo = cl ? cl.tipo : "sol", molhado = tipo === "chuva" || tipo === "tempestade";
+    const alvoSol = { "sol forte": 1.15, sol: 1, nublado: 0.6, chuva: 0.35, tempestade: 0.22 }[tipo], alvoCeu = { "sol forte": 1.05, sol: 1, nublado: 0.85, chuva: 0.72, tempestade: 0.62 }[tipo];
+    CLIMA.sol += (alvoSol - CLIMA.sol) * Math.min(1, dt * 0.8); CLIMA.ceu += (alvoCeu - CLIMA.ceu) * Math.min(1, dt * 0.8); CLIMA.tipo = tipo;
+    const k = Math.max(0, Math.min(1, (1 - CLIMA.sol) / 0.78));   // 0 = sol, 1 = tempestade
+    grama.material.color.copy(corGrama).lerp(corGramaChuva, k);
+    pocas.forEach((m) => (m.material.opacity += ((molhado ? 0.55 : 0) - m.material.opacity) * Math.min(1, dt * 0.3)));
+    chuva.visible = molhado;
+    if (molhado) {
+      const n = tipo === "tempestade" ? CHUVA_N : CHUVA_N * 0.6, inc = tipo === "tempestade" ? 4 : 1.5;
+      chuvaGeo.setDrawRange(0, n * 2);
+      for (let i = 0; i < n; i++) { const o = i * 6, d = chuvaV[i] * dt; chuvaPos[o + 1] -= d; chuvaPos[o + 4] -= d; chuvaPos[o] += inc * dt * 0.1; chuvaPos[o + 3] += inc * dt * 0.1; if (chuvaPos[o + 4] < 0) gota(i, true); }
+      chuvaGeo.attributes.position.needsUpdate = true;
+    }
+  }
   function novaPessoa(papel) {
     const id = nId++, g = new THREE.Group();
     const social = id % 3 === 0;
@@ -1167,7 +1196,9 @@
   function quadro(agora) { const dt = Math.min(0.05, (agora - tAnt) / 1000); tAnt = agora; passo(dt); requestAnimationFrame(quadro); }
   function passo(dt) {
     T += dt;
-    const luz = MERC.aberto ? 1 : 0.35; ceuL.intensity += (0.62 * luz - ceuL.intensity) * dt; sol.intensity += (0.75 * luz - sol.intensity) * dt;
+    animaClima(dt);
+    const luz = MERC.aberto ? 1 : 0.35; ceuL.intensity += (0.62 * luz * CLIMA.ceu - ceuL.intensity) * dt; sol.intensity += (0.75 * luz * CLIMA.sol - sol.intensity) * dt;
+    if (relampago > 0.12) { ceuL.intensity = 1.6; }
     if (VIDEO) cameraVideo(VT);
     else {
       if (!arrasta && zoom < 1.05 && performance.now() - ultimoToque > 8000) giro += (Math.PI / 4 + Math.sin(T * 0.07) * 0.14 - giro) * dt * 0.4;
