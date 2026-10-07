@@ -483,7 +483,7 @@ dialog.resgate::backdrop { background: rgba(3, 8, 18, .75); }
     <section class="painel" aria-label="Comparativo">
       <header><h2><span data-t="comp">Comparativo com outros investimentos</span> <small id="comp-sub"></small></h2></header>
       <div class="comp" id="comp"></div>
-      <p class="nota" data-t="comp_nota">Mesmo período para todos. Legatus: rendimento oficial da estratégia (o mesmo da RoboForex), antes da comissão. CDI, poupança e Ibovespa em reais; ouro e Bitcoin em dólar.</p>
+      <p class="nota" data-t="comp_nota">Mesmo período para todos. Legatus: resultado das operações já fechadas, antes da comissão (sem contar as que ainda estão abertas). CDI, poupança e Ibovespa em reais; ouro e Bitcoin em dólar.</p>
     </section>
     <section class="painel" id="sec-port" aria-label="Portfólio dos copiadores">
       <header><h2><span data-t="port_titulo">Portfólio dos copiadores</span> <small>US$</small></h2></header>
@@ -686,7 +686,7 @@ dialog.resgate::backdrop { background: rgba(3, 8, 18, .75); }
       ops_titulo: "Operações", tab_robo: "Robô · ouro", tab_swing: "Swing trade", acerto: "Taxa de acerto", vencedoras: "Vencedoras", perdedoras: "Perdedoras",
       ops_nota: "A taxa de acerto conta todas as operações fechadas pelo robô, inclusive as de proteção (hedge).",
       ultimas: "Últimas operações fechadas", th_hora: "Fechou (servidor)", th_par: "Par", th_lado: "Lado", th_lote: "Lote", th_entrada: "Entrada", th_saida: "Saída", th_pts: "Pontos", th_res: "Resultado", th_dur: "Duração",
-      comp: "Comparativo com outros investimentos", comp_nota: "Mesmo período para todos. Legatus: rendimento oficial da estratégia (o mesmo da RoboForex), antes da comissão. CDI, poupança e Ibovespa em reais; ouro e Bitcoin em dólar.",
+      comp: "Comparativo com outros investimentos", comp_nota: "Mesmo período para todos. Legatus: resultado das operações já fechadas, antes da comissão (sem contar as que ainda estão abertas). CDI, poupança e Ibovespa em reais; ouro e Bitcoin em dólar.",
       port_titulo: "Portfólio dos copiadores",
       sim_titulo: "Se você tivesse iniciado", sim_sub: "com o resultado real e a comissão cobrada como na corretora",
       s_cap: "Valor inicial (US$)", s_aporte: "Aporte por mês (US$)", s_ini: "Começando em", s_hoje: "Até", s_teria: "Você teria hoje", s_invest: "Total investido", s_lucro: "Lucro", s_cresc: "Crescimento",
@@ -774,7 +774,7 @@ dialog.resgate::backdrop { background: rgba(3, 8, 18, .75); }
       ops_titulo: "Trades", tab_robo: "Robot · gold", tab_swing: "Swing trade", acerto: "Win rate", vencedoras: "Winners", perdedoras: "Losers",
       ops_nota: "The win rate counts every trade the robot closed, including protection (hedge) trades.",
       ultimas: "Latest closed trades", th_hora: "Closed (server)", th_par: "Pair", th_lado: "Side", th_lote: "Lot", th_entrada: "Entry", th_saida: "Exit", th_pts: "Points", th_res: "Result", th_dur: "Duration",
-      comp: "Compared with other investments", comp_nota: "Same period for all. Legatus: the strategy's official return (same as RoboForex), before the fee. CDI, savings and Ibovespa in BRL; gold and Bitcoin in USD.",
+      comp: "Compared with other investments", comp_nota: "Same period for all. Legatus: result of trades already closed, before the fee (open trades not included). CDI, savings and Ibovespa in BRL; gold and Bitcoin in USD.",
       port_titulo: "Copiers' portfolio",
       sim_titulo: "If you had started", sim_sub: "with the real result and the fee charged the way the broker does",
       s_cap: "Starting amount (US$)", s_aporte: "Monthly deposit (US$)", s_ini: "Starting on", s_hoje: "Until", s_teria: "You would have today", s_invest: "Total invested", s_lucro: "Profit", s_cresc: "Growth",
@@ -861,7 +861,7 @@ dialog.resgate::backdrop { background: rgba(3, 8, 18, .75); }
       ops_titulo: "Operaciones", tab_robo: "Robot · oro", tab_swing: "Swing trade", acerto: "Tasa de acierto", vencedoras: "Ganadoras", perdedoras: "Perdedoras",
       ops_nota: "La tasa de acierto cuenta todas las operaciones cerradas por el robot, incluidas las de protección (hedge).",
       ultimas: "Últimas operaciones cerradas", th_hora: "Cerró (servidor)", th_par: "Par", th_lado: "Lado", th_lote: "Lote", th_entrada: "Entrada", th_saida: "Salida", th_pts: "Puntos", th_res: "Resultado", th_dur: "Duración",
-      comp: "Comparación con otras inversiones", comp_nota: "Mismo período para todos. Legatus: rendimiento oficial de la estrategia (el mismo de RoboForex), antes de la comisión. CDI, ahorro e Ibovespa en reales; oro y Bitcoin en dólares.",
+      comp: "Comparación con otras inversiones", comp_nota: "Mismo período para todos. Legatus: resultado de las operaciones ya cerradas, antes de la comisión (sin contar las abiertas). CDI, ahorro e Ibovespa en reales; oro y Bitcoin en dólares.",
       port_titulo: "Portafolio de los copiadores",
       sim_titulo: "Si hubieras empezado", sim_sub: "con el resultado real y la comisión cobrada como en el bróker",
       s_cap: "Monto inicial (US$)", s_aporte: "Aporte mensual (US$)", s_ini: "Empezando el", s_hoje: "Hasta", s_teria: "Tendrías hoy", s_invest: "Total invertido", s_lucro: "Ganancia", s_cresc: "Crecimiento",
@@ -1119,7 +1119,8 @@ dialog.resgate::backdrop { background: rgba(3, 8, 18, .75); }
     const CP = D.comparativo;
     $("comp").innerHTML = "";
     if (CP && CP.itens.length) {
-      CP.itens = CP.itens.map((i) => (i.id === "legatus" && i.bruto != null ? { id: i.id, pct: i.bruto } : i));   // oficial, igual ao topo
+      let fc = 1; ((D.mt4 && D.mt4.calendario) || []).forEach((x) => { if (x.dia >= CP.inicio && x.pct != null) fc *= 1 + x.pct / 100; });
+      CP.itens = CP.itens.map((i) => (i.id === "legatus" ? { id: i.id, pct: (fc - 1) * 100 } : i));   // só operações fechadas (sem o flutuante)
       $("comp-sub").textContent = T("comp_dias", CP.dias);
       const lo = Math.min(0, ...CP.itens.map((i) => i.pct)), hi = Math.max(0, ...CP.itens.map((i) => i.pct));
       const pos = (v) => (v - lo) / (hi - lo || 1) * 100;
