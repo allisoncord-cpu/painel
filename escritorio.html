@@ -22,6 +22,7 @@
   .rot small i { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 3px; background: var(--gold); }
   .rot.swing small i { background: #5aa0e6; }
   .rot.fechou { border-style: dashed; }
+  .rot.vip { border: 2px solid #e2b85c; color: #ffe08a; background: rgba(28,20,4,.92); box-shadow: 0 0 18px rgba(226,184,92,.6); } .rot.vip small { color: #ffe08a; }
   .rot.analisa { border-color: #5a6b85; color: #cfd8e6; background: rgba(10,14,22,.85); box-shadow: none; font-size: 10px; padding: 1px 6px 2px; }
   .rot.analisa small { color: #8ea1bd; }
   .rot.treino { border-color: #f0a43a; color: #ffc46b; background: rgba(24,16,4,.9); box-shadow: 0 0 12px rgba(240,164,58,.3); }
@@ -65,6 +66,9 @@
   .banner small { display: block; font: 500 13px "Jost"; color: #cfe9d8; }
   .confete { position: fixed; top: -12px; width: 8px; height: 14px; pointer-events: none; z-index: 4; animation: cai linear forwards; }
   @keyframes cai { to { transform: translateY(110vh) rotate(720deg); } }
+  #zoomq { position: fixed; inset: 0; z-index: 9; display: grid; place-content: center; justify-items: center; gap: 10px; background: rgba(3,6,10,.85); cursor: zoom-out; padding: 16px; }
+  #zoomq[hidden] { display: none; } #zoomq img { max-width: min(92vw, 1100px); max-height: 80vh; border-radius: 10px; border: 2px solid #e2b85c; box-shadow: 0 20px 60px rgba(0,0,0,.6); }
+  #zoomq p { margin: 0; font-size: 12px; color: #8ea1bd; }
   .cartao { position: fixed; z-index: 6; min-width: 210px; padding: 12px 14px; border-radius: 12px; background: rgba(10,14,22,.96); border: 1px solid #2a3a55; box-shadow: 0 10px 30px rgba(0,0,0,.5); font-size: 13px; }
   .cartao h3 { margin: 0 0 6px; font: 600 15px "Jost"; } .cartao .v { font: 700 24px "IBM Plex Mono"; margin-bottom: 6px; }
   .cartao dl { display: grid; grid-template-columns: auto auto; gap: 3px 12px; margin: 0; color: #cfd8e6; } .cartao dt { color: #8ea1bd; } .cartao dd { margin: 0; font-family: "IBM Plex Mono"; text-align: right; }
@@ -122,6 +126,7 @@
 <div class="ticker"><div id="ticker"></div></div>
 <div class="banner" id="banner"><b>CESTA FECHADA</b><span id="banner-v"></span><small id="banner-s"></small></div>
 <div class="cartao" id="cartao" hidden></div>
+<div id="zoomq" hidden><img alt="Quadro ampliado"><p>Toque em qualquer lugar para fechar</p></div>
 <div id="vid">
   <div class="logo"><svg viewBox="440 295 390 475"><path fill="#e2b85c" d="M447 548 L502 505 L502 763 L447 763 Z"/><path fill="#e2b85c" d="M532 437 L584 394 L584 711 L612 711 L612 348 L665 303 L665 711 L773 711 L773 624 L712 585 L712 531 L823 599 L823 763 L532 763 Z"/></svg><div>LEGATUS <i>GROUP</i></div></div>
   <div class="leg" id="vleg"><b id="vleg-a"></b><span id="vleg-b"></span></div>
@@ -240,10 +245,10 @@
   bloco(0.06, 0.1, 0.3, mat(0xe2b85c), -LX + 0.2, 1.55, 11.8); bloco(0.05, 0.35, 1.1, brilho(0x4fd18f, 1.5), -LX + 0.12, 3.55, 11.2, S, false);
   const PORTA = { x: -LX + 0.6, z: 11.2 };
   // ================= janelas: céu na hora real e clima conforme o ouro no dia =================
-  const ceuC = document.createElement("canvas"); ceuC.width = 512; ceuC.height = 160; const cc = ceuC.getContext("2d");
+  const ceuC = document.createElement("canvas"); ceuC.width = 1000; ceuC.height = 200; const cc = ceuC.getContext("2d");
   const ceuTex = new THREE.CanvasTexture(ceuC); ceuTex.encoding = THREE.sRGBEncoding;
-  const predios = Array.from({ length: 30 }, (_, i) => ({ x: i * 18 - 6, w: rnd(12, 20), h: rnd(40, 110), luzes: Array.from({ length: 40 }, () => Math.random() < 0.35) }));
-  const gotas = Array.from({ length: 70 }, () => ({ x: rnd(0, 512), y: rnd(0, 160), v: rnd(140, 220) }));
+  const predios = Array.from({ length: 58 }, (_, i) => ({ x: i * 18 - 6, w: rnd(12, 20), h: rnd(50, 140), luzes: Array.from({ length: 40 }, () => Math.random() < 0.35) }));
+  const gotas = Array.from({ length: 130 }, () => ({ x: rnd(0, 1000), y: rnd(0, 200), v: rnd(170, 260) }));
   let relampago = 0;
   function climaOuro() {
     const o = D && D.mt4 && D.mt4.ouro; if (!o || !o.abre_dia) return null;
@@ -253,29 +258,31 @@
   function desenhaCeu(dt) {
     const h = (new Date().getUTCHours() + 21) % 24 + new Date().getUTCMinutes() / 60;   // hora de Brasília
     const dia = h >= 6.5 && h < 17.5, crep = !dia && (h >= 17.5 && h < 19 || h >= 5.5 && h < 6.5), cl = climaOuro(), tipo = cl ? cl.tipo : "sol";
-    const g = cc.createLinearGradient(0, 0, 0, 160), escuro = tipo === "chuva" || tipo === "tempestade";
+    const g = cc.createLinearGradient(0, 0, 0, 200), escuro = tipo === "chuva" || tipo === "tempestade";
     if (dia) { g.addColorStop(0, escuro ? "#5d6b7d" : tipo === "nublado" ? "#8fa6bf" : "#4aa3ef"); g.addColorStop(1, escuro ? "#8a95a3" : "#bfe3ff"); }
     else if (crep) { g.addColorStop(0, "#3b2f6b"); g.addColorStop(0.6, "#e0775a"); g.addColorStop(1, "#ffc27a"); }
     else { g.addColorStop(0, "#050a1c"); g.addColorStop(1, "#16234a"); }
-    cc.fillStyle = g; cc.fillRect(0, 0, 512, 160);
-    if (!dia && !crep) { cc.fillStyle = "rgba(255,255,255,.8)"; for (let i = 0; i < 40; i++) cc.fillRect((i * 97) % 512, (i * 53) % 70, 1.5, 1.5); }
-    if (tipo === "sol forte" || tipo === "sol") { cc.fillStyle = dia ? "#ffe27a" : "#f2f2f2"; cc.beginPath(); cc.arc(410, 40, dia ? 22 : 16, 0, 7); cc.fill(); if (dia && tipo === "sol forte") { cc.strokeStyle = "rgba(255,226,122,.6)"; cc.lineWidth = 3; for (let a = 0; a < 6.28; a += 0.52) { cc.beginPath(); cc.moveTo(410 + Math.cos(a) * 28, 40 + Math.sin(a) * 28); cc.lineTo(410 + Math.cos(a) * 40, 40 + Math.sin(a) * 40); cc.stroke(); } } }
+    cc.fillStyle = g; cc.fillRect(0, 0, 1000, 200);
+    if (!dia && !crep) { cc.fillStyle = "rgba(255,255,255,.8)"; for (let i = 0; i < 80; i++) cc.fillRect((i * 97) % 1000, (i * 53) % 90, 1.5, 1.5); }
+    if (tipo === "sol forte" || tipo === "sol") { cc.fillStyle = dia ? "#ffe27a" : "#f2f2f2"; cc.beginPath(); cc.arc(820, 46, dia ? 24 : 17, 0, 7); cc.fill(); if (dia && tipo === "sol forte") { cc.strokeStyle = "rgba(255,226,122,.6)"; cc.lineWidth = 3; for (let a = 0; a < 6.28; a += 0.52) { cc.beginPath(); cc.moveTo(820 + Math.cos(a) * 30, 46 + Math.sin(a) * 30); cc.lineTo(820 + Math.cos(a) * 42, 46 + Math.sin(a) * 42); cc.stroke(); } } }
     const nuvens = { "sol forte": 0, sol: 2, nublado: 5, chuva: 7, tempestade: 9 }[tipo];
-    for (let i = 0; i < nuvens; i++) { const x = ((i * 83 + T * 8) % 600) - 60, y = 18 + (i % 3) * 16; cc.fillStyle = escuro ? "rgba(70,78,92,.95)" : "rgba(255,255,255,.88)"; [0, 18, 36].forEach((d, k) => { cc.beginPath(); cc.arc(x + d, y + (k === 1 ? -6 : 0), 16, 0, 7); cc.fill(); }); }
-    predios.forEach((pr) => { cc.fillStyle = dia ? "#2a3550" : "#0a1022"; cc.fillRect(pr.x, 160 - pr.h, pr.w, pr.h); if (!dia) { cc.fillStyle = "rgba(255,214,120,.85)"; let k = 0; for (let y = 160 - pr.h + 5; y < 156; y += 7) for (let x = pr.x + 3; x < pr.x + pr.w - 3; x += 5) if (pr.luzes[k++ % 40]) cc.fillRect(x, y, 2, 3); } });
-    if (tipo === "chuva" || tipo === "tempestade") { cc.strokeStyle = "rgba(190,215,255,.7)"; cc.lineWidth = 1.2; gotas.forEach((d) => { d.y += d.v * dt; if (d.y > 160) { d.y = -10; d.x = rnd(0, 512); } cc.beginPath(); cc.moveTo(d.x, d.y); cc.lineTo(d.x - 3, d.y + 9); cc.stroke(); }); }
-    if (tipo === "tempestade") { if (relampago <= 0 && Math.random() < dt * 0.25) relampago = 0.25; if (relampago > 0) { relampago -= dt; cc.fillStyle = "rgba(255,255,255,.55)"; cc.fillRect(0, 0, 512, 160); } }
+    for (let i = 0; i < nuvens; i++) { const x = ((i * 137 + T * 8) % 1100) - 60, y = 22 + (i % 3) * 18; cc.fillStyle = escuro ? "rgba(70,78,92,.95)" : "rgba(255,255,255,.88)"; [0, 18, 36].forEach((d, k) => { cc.beginPath(); cc.arc(x + d, y + (k === 1 ? -6 : 0), 16, 0, 7); cc.fill(); }); }
+    predios.forEach((pr) => { cc.fillStyle = dia ? "#2a3550" : "#0a1022"; cc.fillRect(pr.x, 200 - pr.h, pr.w, pr.h); if (!dia) { cc.fillStyle = "rgba(255,214,120,.85)"; let k = 0; for (let y = 200 - pr.h + 5; y < 196; y += 7) for (let x = pr.x + 3; x < pr.x + pr.w - 3; x += 5) if (pr.luzes[k++ % 40]) cc.fillRect(x, y, 2, 3); } });
+    if (tipo === "chuva" || tipo === "tempestade") { cc.strokeStyle = "rgba(190,215,255,.7)"; cc.lineWidth = 1.2; gotas.forEach((d) => { d.y += d.v * dt; if (d.y > 200) { d.y = -10; d.x = rnd(0, 1000); } cc.beginPath(); cc.moveTo(d.x, d.y); cc.lineTo(d.x - 3, d.y + 9); cc.stroke(); }); }
+    if (tipo === "tempestade") { if (relampago <= 0 && Math.random() < dt * 0.25) relampago = 0.25; if (relampago > 0) { relampago -= dt; cc.fillStyle = "rgba(255,255,255,.55)"; cc.fillRect(0, 0, 1000, 200); } }
     ceuTex.needsUpdate = true;
   }
-  [[6.1, 3.2], [14.6, 8]].forEach(([x, w]) => {
-    bloco(w + 0.3, 2.7, 0.12, mat(0x0d0f13), x, 2.9, -LZ + 0.08, S, false);
-    const j = new THREE.Mesh(new THREE.PlaneGeometry(w, 2.4), new THREE.MeshBasicMaterial({ map: ceuTex, toneMapped: false })); j.position.set(x, 2.9, -LZ + 0.16); S.add(j);
-    for (let k = 1; k < Math.round(w / 2); k++) bloco(0.06, 2.4, 0.04, mat(0x0d0f13), x - w / 2 + k * (w / Math.round(w / 2)), 2.9, -LZ + 0.18, S, false);
-  });
+  {   // janela panorâmica (proporção 5:1, igual à imagem do céu)
+    const x = 12.6, w = 13, h = 2.6;
+    bloco(w + 0.3, h + 0.3, 0.12, mat(0x0d0f13), x, 2.9, -LZ + 0.08, S, false);
+    const j = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: ceuTex, toneMapped: false })); j.position.set(x, 2.9, -LZ + 0.16); S.add(j);
+    for (let k = 1; k < 5; k++) bloco(0.06, h, 0.04, mat(0x0d0f13), x - w / 2 + k * (w / 5), 2.9, -LZ + 0.18, S, false);
+  }
 
   // ================= quadros na parede esquerda: recordes e operação do dia =================
-  function quadroParede(z, w, h) { const c = document.createElement("canvas"); c.width = Math.round(w * 160); c.height = Math.round(h * 160); const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; bloco(0.08, h + 0.2, w + 0.2, mat(0x8a6a2c), -LX + 0.1, 2.9, z, S, false); const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: t, toneMapped: false })); m.rotation.y = Math.PI / 2; m.position.set(-LX + 0.16, 2.9, z); S.add(m); return { c, x: c.getContext("2d"), t }; }
-  const qRec = quadroParede(-10.2, 4.2, 2.6), qOp = quadroParede(-6.1, 3.0, 2.6);
+  const QUADROS = [];
+  function quadroParede(z, w, h) { const c = document.createElement("canvas"); c.width = Math.round(w * 160); c.height = Math.round(h * 160); const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; bloco(0.08, h + 0.2, w + 0.2, mat(0x8a6a2c), -LX + 0.1, 2.9, z, S, false); const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: t, toneMapped: false })); m.rotation.y = Math.PI / 2; m.position.set(-LX + 0.16, 2.9, z); S.add(m); const q = { c, x: c.getContext("2d"), t, m }; QUADROS.push(q); return q; }
+  const qRec = quadroParede(-9.9, 4.6, 3.0), qOp = quadroParede(-5.6, 3.4, 3.0);
   let recordeHoje = false, recordeAvisado = false;
   function desenhaQuadros() {
     const M = (D && D.mt4) || {}, cal = (M.calendario || []).filter((c) => c.pct != null);
@@ -551,7 +558,7 @@
     gente.push(p); return p;
   }
   function coroa(p, liga) {
-    if (liga && !p.coroa) { const g = new THREE.Group(); cil(0.2, 0.2, 0.12, brilho(OURO, 0.9), 0, 0, 0, g); for (let i = 0; i < 5; i++) { const a = i / 5 * Math.PI * 2; const pt = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.14, 4), brilho(OURO, 0.9)); pt.position.set(Math.cos(a) * 0.17, 0.12, Math.sin(a) * 0.17); g.add(pt); } g.position.y = 0.36; p.cab.add(g); p.coroa = g; }
+    if (liga && !p.coroa) { const g = new THREE.Group(); cil(0.26, 0.26, 0.16, brilho(OURO, 1.2), 0, 0, 0, g); for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2; const pt = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.22, 4), brilho(OURO, 1.2)); pt.position.set(Math.cos(a) * 0.22, 0.17, Math.sin(a) * 0.22); g.add(pt); esfera(0.035, brilho(0xff3b5c, 1.5), Math.cos(a) * 0.26, 0.02, Math.sin(a) * 0.26, g); } g.position.y = 0.38; p.cab.add(g); p.coroa = g; }
     if (!liga && p.coroa) { p.cab.remove(p.coroa); p.coroa = null; }
   }
   function segura(p, oque) {
@@ -629,7 +636,7 @@
     p.papel = "treino"; p.cadeira = livre; p.tx = livre.x; p.tz = livre.z; p.alvoRot = livre.rot; p.inicioTreino = null; segura(p, null);
   }
   function limita() {
-    const com = gente.filter((p) => p.papel === "livre" && p.resultado).sort((a, b) => a.desde - b.desde);
+    const com = gente.filter((p) => p.papel === "livre" && p.resultado && !p.vip).sort((a, b) => a.desde - b.desde);
     for (let i = 0; i < com.length - LIMITE; i++) sai(com[i]);
   }
   let estavaFechado = !MERC.aberto;
@@ -692,8 +699,10 @@
       });
     }
     if (!primeira && somaF > 0 && (nF >= 2 || somaF >= 3) && !VIDEO) comemora(somaF, nF);
-    const mb = (D.mt4 || {}).melhor_dia;
-    gente.forEach((p) => coroa(p, !!(mb && p.resultado && chave(p.resultado) === chave(mb) && p.resultado.t === mb.t)));
+    const mb = (D.mt4 || {}).melhor_dia, ehMelhor = (p) => !!(mb && p.resultado && chave(p.resultado) === chave(mb) && p.resultado.t === mb.t);
+    // o operador do dia fica sempre no escritório, de coroa
+    if (mb && MERC.aberto && !gente.some((p) => ehMelhor(p) && p.papel !== "saindo")) { const r = chegaComResultado(mb, !primeira); r.vip = true; }
+    gente.forEach((p) => { const sim = ehMelhor(p); p.vip = sim; coroa(p, sim); });
     desenhaQuadros();
     if (recordeHoje && !recordeAvisado && !VIDEO) { recordeAvisado = true; const dia0 = (D.mt4.calendario || []).slice(-1)[0]; comemora(0, 0, "🔥 NOVO RECORDE", pct(dia0.pct), "melhor dia da estratégia até hoje"); }   // cesta/hedge fechou no lucro: festa
     // os jogadores de bilhar e pingue-pongue levam os últimos resultados positivos
@@ -710,7 +719,7 @@
     // faixa de notícias embaixo
     const ult = fechadas.slice().sort((a, b) => (a.t < b.t ? 1 : -1)).slice(0, 8);
     $("ticker").innerHTML = `<b class="ouro">LEGATUS GOLD</b> · RESULTADOS AO VIVO DA CONTA REAL · ` + (dia ? `HOJE <b class="${dia.pct >= 0 ? "pos" : "neg"}">${pct(dia.pct)}</b> · ` : "") + `${abertas.length} OPERAÇÕES ABERTAS · ` +
-      ult.map((f) => `${f.par.replace("XAUUSD", "OURO")} ${f.lado === "buy" ? "C" : "V"} <b class="${f.usd >= 0 ? "pos" : "neg"}">${usd(f.usd)}</b>`).join(" · ") + " · ATUALIZADO A CADA MINUTO · RESULTADO PASSADO NÃO GARANTE RESULTADO FUTURO";
+      ult.map((f) => `${f.par.replace("XAUUSD", "OURO")} ${f.lado === "buy" ? "C" : "V"} <b class="${f.usd >= 0 ? "pos" : "neg"}">${usd(f.usd)}</b>`).join(" · ") + " · ATUALIZADO A CADA MINUTO · DICA: RODINHA DO MOUSE APROXIMA, BOTÃO DIREITO MOVE PELA SALA, CLIQUE NOS QUADROS PARA AMPLIAR · RESULTADO PASSADO NÃO GARANTE RESULTADO FUTURO";
     desenhaTelao();
   }
 
@@ -725,12 +734,25 @@
     Object.assign(cam, { left: -meiaL, right: meiaL, top: meiaA * (1 + desl), bottom: -meiaA * (1 - desl) }); cam.updateProjectionMatrix();
     document.body.classList.toggle("estreito", estreito);
   }
-  R.domElement.addEventListener("pointerdown", (e) => { arrasta = { x: e.clientX, y: e.clientY, g: giro, t: performance.now() }; ultimoToque = performance.now(); });
+  const chao = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), rayC = new THREE.Raycaster(), pC = new THREE.Vector2();
+  function noChao(cx, cy) { pC.set(cx / innerWidth * 2 - 1, -(cy / innerHeight) * 2 + 1); rayC.setFromCamera(pC, cam); const v = new THREE.Vector3(); return rayC.ray.intersectPlane(chao, v) ? v : null; }
+  const limitaAlvo = () => { ALVO.x = Math.max(-LX, Math.min(LX, ALVO.x)); ALVO.z = Math.max(-LZ, Math.min(LZ, ALVO.z)); };
+  R.domElement.addEventListener("contextmenu", (e) => e.preventDefault());
+  R.domElement.addEventListener("pointerdown", (e) => {
+    const move = e.button === 1 || e.button === 2 || e.shiftKey;   // botão do meio, direito ou Shift: move pela sala
+    if (e.button === 1) e.preventDefault();
+    arrasta = { x: e.clientX, y: e.clientY, g: giro, t: performance.now(), move, ant: move ? noChao(e.clientX, e.clientY) : null }; ultimoToque = performance.now();
+  });
   const ray = new THREE.Raycaster(), ptr = new THREE.Vector2();
   R.domElement.addEventListener("click", (e) => {
     if (arrastou) return;
     ptr.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1); ray.setFromCamera(ptr, cam);
-    const hits = ray.intersectObjects(gente.map((p) => p.g), true);
+    const qh = ray.intersectObjects([...QUADROS.map((q) => q.m), telao], false), ph = ray.intersectObjects(gente.map((p) => p.g), true);
+    if (qh.length && (!ph.length || qh[0].distance < ph[0].distance)) {
+      const fonte = qh[0].object === telao ? tc : QUADROS.find((q) => q.m === qh[0].object).c;
+      const z = $("zoomq"); z.querySelector("img").src = fonte.toDataURL(); z.hidden = false; $("cartao").hidden = true; return;
+    }
+    const hits = ph;
     const p = hits.length ? gente.find((q) => { let o = hits[0].object; while (o) { if (o === q.g) return true; o = o.parent; } return false; }) : null;
     const c = $("cartao");
     if (!p) { c.hidden = true; return; }
@@ -744,9 +766,29 @@
     c.querySelector("button").onclick = () => (c.hidden = true);
   });
   let arrastou = false;
-  addEventListener("pointermove", (e) => { if (arrasta) { giro = arrasta.g - (e.clientX - arrasta.x) * 0.006; ultimoToque = performance.now(); } });
+  addEventListener("pointermove", (e) => {
+    if (!arrasta) return; ultimoToque = performance.now();
+    if (arrasta.move) { const agora = noChao(e.clientX, e.clientY); if (agora && arrasta.ant) { ALVO.x -= agora.x - arrasta.ant.x; ALVO.z -= agora.z - arrasta.ant.z; limitaAlvo(); cam.position.set(ALVO.x + Math.sin(giro) * 50, 40, ALVO.z + Math.cos(giro) * 50); cam.lookAt(ALVO); cam.updateMatrixWorld(); arrasta.ant = noChao(e.clientX, e.clientY); } }
+    else giro = arrasta.g - (e.clientX - arrasta.x) * 0.006;
+  });
   addEventListener("pointerup", (e) => { arrastou = !!arrasta && Math.hypot(e.clientX - arrasta.x, e.clientY - arrasta.y) > 6; arrasta = null; });
-  R.domElement.addEventListener("wheel", (e) => { e.preventDefault(); zoom = Math.min(2.2, Math.max(0.8, zoom * (e.deltaY < 0 ? 1.1 : 0.9))); ajusta(); ultimoToque = performance.now(); }, { passive: false });
+  R.domElement.addEventListener("wheel", (e) => {   // aproxima no ponto onde está o mouse
+    e.preventDefault(); const antes = noChao(e.clientX, e.clientY);
+    zoom = Math.min(5, Math.max(0.8, zoom * (e.deltaY < 0 ? 1.15 : 0.87))); ajusta(); cam.updateMatrixWorld();
+    const depois = noChao(e.clientX, e.clientY); if (antes && depois) { ALVO.x += antes.x - depois.x; ALVO.z += antes.z - depois.z; limitaAlvo(); }
+    if (zoom <= 0.81) { ALVO.set(0, 0, 1.8); }   // afastou tudo: volta ao centro
+    ultimoToque = performance.now();
+  }, { passive: false });
+  // celular: dois dedos aproximam e movem
+  let toques = null;
+  R.domElement.addEventListener("touchstart", (e) => { if (e.touches.length === 2) { const [a, b] = e.touches; toques = { d: Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY), z: zoom, c: noChao((a.clientX + b.clientX) / 2, (a.clientY + b.clientY) / 2) }; arrasta = null; } }, { passive: true });
+  R.domElement.addEventListener("touchmove", (e) => {
+    if (!toques || e.touches.length !== 2) return; e.preventDefault(); const [a, b] = e.touches;
+    zoom = Math.min(5, Math.max(0.8, toques.z * Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY) / toques.d)); ajusta(); cam.updateMatrixWorld();
+    const c = noChao((a.clientX + b.clientX) / 2, (a.clientY + b.clientY) / 2); if (c && toques.c) { ALVO.x += toques.c.x - c.x; ALVO.z += toques.c.z - c.z; limitaAlvo(); }
+    ultimoToque = performance.now();
+  }, { passive: false });
+  R.domElement.addEventListener("touchend", (e) => { if (e.touches.length < 2) toques = null; });
 
   // ================= animação =================
   let tAnt = performance.now(), T = 0, tMon = 0, tCeu = 0, proxFala = 4, VT = 0;
@@ -809,7 +851,7 @@
     p.pE.rotation.x = pernas[0]; p.pD.rotation.x = pernas[1]; p.bE.rotation.x = bracos[0]; p.bD.rotation.x = bracos[1]; p.bE.rotation.z = ab[0]; p.bD.rotation.z = ab[1];
     p.cab.rotation.set(cx, cy, 0); p.g.position.y = y; p.g.rotation.x = incl;
     if (p.papel === "livre" && !anda && p.espera <= 0) {
-      if (p.resultado && T - p.desde > LAZER_S && mesas.filter((m) => m.livre).length > 2) { vaiAnalisar(p); return; }
+      if (p.resultado && !p.vip && T - p.desde > LAZER_S && mesas.filter((m) => m.livre).length > 2) { vaiAnalisar(p); return; }
       if (!p.ate) p.ate = T + rnd(8, 18); if (T > p.ate) { p.ate = 0; proximoPonto(p); }
     }
     if (p.papel === "saindo" && Math.hypot(p.tx - p.x, p.tz - p.z) < 0.3) { S.remove(p.g); if (p.el) p.el.remove(); p.removido = true; }
@@ -851,7 +893,7 @@
     const luz = MERC.aberto ? 1 : 0.35; ceuL.intensity += (0.62 * luz - ceuL.intensity) * dt; sol.intensity += (0.75 * luz - sol.intensity) * dt;
     if (VIDEO) cameraVideo(VT);
     else {
-      if (!arrasta && performance.now() - ultimoToque > 8000) giro += (Math.PI / 4 + Math.sin(T * 0.07) * 0.14 - giro) * dt * 0.4;
+      if (!arrasta && zoom < 1.05 && performance.now() - ultimoToque > 8000) giro += (Math.PI / 4 + Math.sin(T * 0.07) * 0.14 - giro) * dt * 0.4;
       cam.position.set(ALVO.x + Math.sin(giro) * 50, 40, ALVO.z + Math.cos(giro) * 50); cam.lookAt(ALVO);
     }
     // bilhar
@@ -893,8 +935,8 @@
       }
       const aberta = !!p.op, a = p.op || p.resultado, v = aberta ? a.lucro : a.usd, ok = (v || 0) >= 0, nome = a.par.replace("XAUUSD", "OURO");
       const tipo = a.tipo || (a.par.startsWith("XAU") ? "robo" : "swing");
-      el.className = "rot" + (ok ? "" : " neg") + (tipo === "swing" ? " swing" : "") + (aberta ? "" : " fechou");
-      const html = `${v == null ? "—" : usd(v)}<small>${aberta ? `<i></i>${estreito ? nome.replace("USD", "") : nome} ${a.lado === "buy" ? "C" : "V"} ${String(a.lote).replace(".", ",")}` : (ok ? "🏆 META BATIDA" : "FECHOU")}</small>`;
+      el.className = "rot" + (ok ? "" : " neg") + (tipo === "swing" ? " swing" : "") + (aberta ? "" : " fechou") + (p.vip ? " vip" : "");
+      const html = `${v == null ? "—" : usd(v)}<small>${aberta ? `<i></i>${estreito ? nome.replace("USD", "") : nome} ${a.lado === "buy" ? "C" : "V"} ${String(a.lote).replace(".", ",")}` : p.vip ? "👑 OPERADOR DO DIA" : (ok ? "🏆 META BATIDA" : "FECHOU")}</small>`;
       if (el.__h !== html) { el.innerHTML = html; el.__h = html; }
       const [sx, sy] = tela(p.x, p.op ? 3.0 : 2.75, p.z - 0.2); el.style.left = sx + "px"; el.style.top = sy + "px";
     });
@@ -958,6 +1000,7 @@
     requestAnimationFrame(quadro);
     busca(); setInterval(busca, 60000);
   }
+  $("zoomq").addEventListener("click", () => ($("zoomq").hidden = true));
   window.__escritorio = { aplica, gente, comemora };
 })();
 </script>
