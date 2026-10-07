@@ -43,6 +43,8 @@
   a.btn { padding: 7px 13px; border-radius: 8px; border: 1px solid #22314a; color: var(--fg); text-decoration: none; font-size: 13px; font-weight: 600; background: rgba(8,12,20,.7); }
   a.btn.ouro { background: var(--gold); color: #120d03; border-color: var(--gold); }
   .rodape { position: fixed; left: 16px; right: 16px; bottom: 10px; font-size: 11px; color: var(--muted); pointer-events: none; text-align: center; }
+  body.estreito .rot { padding: 2px 4px 3px; font-size: 8px; border-radius: 4px; } body.estreito .rot b { font-size: 7px; } body.estreito .rot b i { width: 4px; height: 4px; margin-right: 2px; }
+  body.estreito .balao { font-size: 11px; padding: 4px 7px; }
   @media (max-width: 640px) { .total .v { font-size: 28px; } .acoes { width: 100%; justify-content: flex-start; } }
 </style>
 </head>
@@ -264,13 +266,15 @@
   // ---------- câmera isométrica ----------
   function ajusta() {
     const w = innerWidth, h = innerHeight; R.setSize(w, h);
-    const asp = w / h, alvoLarg = asp < 0.8 ? 40 : 46;   // largura do mundo visível
-    const meiaL = alvoLarg / 2, meiaA = meiaL / asp;
-    Object.assign(cam, { left: -meiaL, right: meiaL, top: meiaA, bottom: -meiaA }); cam.updateProjectionMatrix();
+    const asp = w / h; estreito = asp < 0.8;
+    const alvoLarg = estreito ? 27 : 46;   // largura do mundo visível (no celular a câmera chega mais perto)
+    const meiaL = alvoLarg / 2, meiaA = meiaL / asp, desl = estreito ? 0.22 : 0;   // no celular a cena desce, abaixo do placar
+    Object.assign(cam, { left: -meiaL, right: meiaL, top: meiaA * (1 + desl), bottom: -meiaA * (1 - desl) }); cam.updateProjectionMatrix();
+    document.body.classList.toggle("estreito", estreito);
   }
 
   // ---------- laço ----------
-  let tAnt = performance.now(), T = 0;
+  let tAnt = performance.now(), T = 0, estreito = false;
   function quadro(agora) {
     const dt = Math.min(0.05, (agora - tAnt) / 1000); tAnt = agora; T += dt;
     const ang = Math.PI / 4 + Math.sin(T * 0.08) * 0.12;   // câmera balança devagar
@@ -301,7 +305,9 @@
       usados.add(el);
       const a = o.op, ok = (a.lucro || 0) >= 0, nome = a.par.replace("XAUUSD", "OURO");
       el.className = "rot" + (a.tipo === "swing" ? " swing" : "");
-      const html = `<b><i></i>${nome} · ${a.lado === "buy" ? "COMPRA" : "VENDA"} ${String(a.lote).replace(".", ",")}</b><span class="${ok ? "pos" : "neg"}">${a.lucro == null ? "" : usd(a.lucro)}</span>`;
+      const html = estreito
+        ? `<b><i></i>${nome.replace("USD", "")} ${a.lado === "buy" ? "C" : "V"}</b><span class="${ok ? "pos" : "neg"}">${a.lucro == null ? "" : (a.lucro >= 0 ? "+" : "−") + nf(a.lucro)}</span>`
+        : `<b><i></i>${nome} · ${a.lado === "buy" ? "COMPRA" : "VENDA"} ${String(a.lote).replace(".", ",")}</b><span class="${ok ? "pos" : "neg"}">${a.lucro == null ? "" : usd(a.lucro)}</span>`;
       if (el.__h !== html) { el.innerHTML = html; el.__h = html; }
       const [sx, sy] = tela(o.x, 3.1, o.z - 0.6); el.style.left = sx + "px"; el.style.top = sy + "px";
     });
