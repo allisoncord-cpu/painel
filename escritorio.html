@@ -22,6 +22,10 @@
   .rot small i { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 3px; background: var(--gold); }
   .rot.swing small i { background: #5aa0e6; }
   .rot.fechou { border-style: dashed; }
+  .rot.treino { border-color: #f0a43a; color: #ffc46b; background: rgba(24,16,4,.9); box-shadow: 0 0 12px rgba(240,164,58,.3); }
+  .rot.treino small { color: #ffd9a0; }
+  .rot .barra { width: 74px; height: 5px; margin: 3px auto 1px; border-radius: 3px; background: rgba(255,255,255,.15); overflow: hidden; }
+  .rot .barra i { display: block; height: 100%; background: linear-gradient(90deg, #f0a43a, #ffd27a); }
   .rot.fechou small { color: #a8f5c6; }
   .balao { position: absolute; transform: translate(-50%, -100%); display: grid; place-items: center; width: 46px; height: 46px; border-radius: 50%; border: 3px solid #2fbf73;
            background: rgba(6,18,10,.92); color: #6dffa8; font: 700 13px "IBM Plex Mono"; box-shadow: 0 0 20px rgba(47,191,115,.6); }
@@ -220,8 +224,16 @@
   // ================= sala de reunião (vidro) =================
   const RX = 9.3, RZ = -6.5;
   const vidro = new THREE.MeshStandardMaterial({ color: 0xbfe6ff, transparent: true, opacity: 0.16, roughness: 0.05, metalness: 0.3 });
-  bloco(11.4, 2.8, 0.06, vidro, RX + 0.3, 1.4, -2.9, S, false); bloco(0.06, 2.8, 7.1, vidro, 3.6, 1.4, -6.45, S, false);
-  bloco(11.4, 0.08, 0.1, mat(0x9aa0aa), RX + 0.3, 2.8, -2.9, S, false); bloco(0.1, 0.08, 7.1, mat(0x9aa0aa), 3.6, 2.8, -6.45, S, false);
+  // parede de vidro da frente com uma porta (vão entre x 3.6 e 5.4)
+  bloco(9.9, 2.8, 0.06, vidro, 10.35, 1.4, -2.9, S, false); bloco(0.06, 2.8, 7.1, vidro, 3.6, 1.4, -6.45, S, false);
+  bloco(11.4, 0.08, 0.1, mat(0x9aa0aa), RX + 0.3, 2.8, -2.9, S, false); bloco(0.1, 2.8, 0.1, mat(0x9aa0aa), 5.4, 1.4, -2.9, S, false);
+  // placa "SALA DE TREINAMENTO"
+  const pl = document.createElement("canvas"); pl.width = 512; pl.height = 96; const plx = pl.getContext("2d");
+  plx.fillStyle = "#14161b"; plx.fillRect(0, 0, 512, 96); plx.fillStyle = "#f0a43a"; plx.fillRect(0, 88, 512, 8);
+  plx.font = "700 46px Jost, sans-serif"; plx.fillStyle = "#ffd27a"; plx.textAlign = "center"; plx.fillText("SALA DE TREINAMENTO", 256, 62);
+  const plTex = new THREE.CanvasTexture(pl); plTex.encoding = THREE.sRGBEncoding;
+  const placa = new THREE.Mesh(new THREE.PlaneGeometry(4.4, 0.82), new THREE.MeshBasicMaterial({ map: plTex, toneMapped: false })); placa.position.set(9.5, 3.35, -2.85); S.add(placa);
+  document.fonts.ready.then(() => { plx.fillStyle = "#14161b"; plx.fillRect(0, 0, 512, 88); plx.fillStyle = "#ffd27a"; plx.font = "700 46px Jost, sans-serif"; plx.fillText("SALA DE TREINAMENTO", 256, 62); plTex.needsUpdate = true; }); bloco(0.1, 0.08, 7.1, mat(0x9aa0aa), 3.6, 2.8, -6.45, S, false);
   bloco(5.4, 0.12, 2.2, mat(0x3b2c22), RX, 1.0, RZ); cil(0.15, 0.25, 1, mat(0x555555), RX - 1.8, 0.5, RZ); cil(0.15, 0.25, 1, mat(0x555555), RX + 1.8, 0.5, RZ);
   bloco(0.5, 0.04, 0.35, mat(0xffffff), RX - 1, 1.08, RZ - 0.3); bloco(0.35, 0.03, 0.25, mat(0xd9d9d9), RX + 1.2, 1.08, RZ + 0.4);   // papéis, notebook
   const cadeirasReuniao = [];
@@ -268,8 +280,57 @@
     { x: 5.5, z: 1.6, rot: Math.PI / 2, acao: "banqueta" }, { x: 7.5, z: 1.6, rot: -Math.PI / 2, acao: "banqueta" }, { x: 6.5, z: 2.7, rot: Math.PI, acao: "conversa" },
     { x: 10.8, z: 3.5, rot: Math.PI, acao: "sofa" }, { x: 12.2, z: 3.5, rot: Math.PI, acao: "sofa" }, { x: 13.8, z: 1.8, rot: -Math.PI / 2, acao: "sofa" },
     { x: 8.2, z: 5.6, rot: 2.6, acao: "torcida" }, { x: 12.4, z: 9.4, rot: -2.4, acao: "torcida" }, { x: 3.3, z: 5.6, rot: 0, acao: "torcida" }, { x: 5.8, z: 9.3, rot: -2.2, acao: "torcida" },
+    { x: 7.4, z: 7.0, rot: 1.6, acao: "torcida" }, { x: 1.0, z: 5.9, rot: 0.6, acao: "torcida" }, { x: 9.8, z: 1.0, rot: 0, acao: "conversa" }, { x: 10.6, z: 1.4, rot: -2.6, acao: "conversa" },
     { x: 0.4, z: 8.6, rot: 0.6, acao: "conversa" }, { x: 1.3, z: 9.0, rot: -2.4, acao: "conversa" }, { x: -4, z: -8.6, rot: Math.PI, acao: "telao" }, { x: -1.5, z: -8.6, rot: Math.PI, acao: "telao" },
   ];
+
+  // ================= navegação (ninguém atravessa mesa, parede ou outra pessoa) =================
+  const CEL = 0.5, GX0 = -LX, GZ0 = -LZ, NX = Math.round(LX * 2 / CEL), NZ = Math.round(LZ * 2 / CEL);
+  const bloqueado = new Uint8Array(NX * NZ);
+  function obst(x0, z0, x1, z1, folga = 0.32) {
+    for (let i = 0; i < NX; i++) for (let j = 0; j < NZ; j++) {
+      const cx = GX0 + (i + 0.5) * CEL, cz = GZ0 + (j + 0.5) * CEL;
+      if (cx > x0 - folga && cx < x1 + folga && cz > z0 - folga && cz < z1 + folga) bloqueado[i + j * NX] = 1;
+    }
+  }
+  for (let i = 0; i < NX; i++) for (let j = 0; j < NZ; j++) { const cx = GX0 + (i + 0.5) * CEL, cz = GZ0 + (j + 0.5) * CEL; if (cx < -LX + 0.6 || cx > LX - 0.6 || cz < -LZ + 0.6 || cz > LZ - 0.6) bloqueado[i + j * NX] = 1; }
+  mesas.forEach((m) => { obst(m.x - 2.0, m.z - 0.75, m.x + 2.0, m.z + 0.72); });
+  obst(3.55, -2.95, 3.65, -10); obst(5.35, -2.95, 15.3, -2.85);                 // vidro da sala de treino (vão da porta livre)
+  obst(RX - 2.7, RZ - 0.55, RX + 2.7, RZ + 0.55, 0.15);                          // mesa do treino (cadeiras ficam livres)
+  obst(8.8, -2.3, 14.3, -1.3); obst(13.75, -2.05, 14.25, -1.55);                // copa e bebedouro
+  obst(5.8, 0.9, 7.2, 2.3, 0.1);                                                  // mesa alta
+  obst(9.4, 3.0, 13.6, 4.4); obst(13.3, 1.0, 14.6, 3.6); obst(10.6, 1.7, 12.4, 2.7); // sofá e mesinha
+  obst(BX - 2.3, BZ - 1.3, BX + 2.3, BZ + 1.3);                                   // bilhar
+  obst(PX - 1.9, PZ - 1.05, PX + 1.9, PZ + 1.05);                                 // pingue-pongue
+  [[-13.9, 9], [14, 9], [14, -3.4], [5.6, -2.3], [-13.9, -8.6]].forEach(([x, z]) => obst(x - 0.35, z - 0.35, x + 0.35, z + 0.35));
+  const celula = (x, z) => [Math.max(0, Math.min(NX - 1, Math.floor((x - GX0) / CEL))), Math.max(0, Math.min(NZ - 1, Math.floor((z - GZ0) / CEL)))];
+  function livreMaisPerto(i, j) {
+    if (!bloqueado[i + j * NX]) return [i, j];
+    for (let r = 1; r < 8; r++) for (let a = -r; a <= r; a++) for (const [di, dj] of [[a, -r], [a, r], [-r, a], [r, a]]) { const ii = i + di, jj = j + dj; if (ii >= 0 && jj >= 0 && ii < NX && jj < NZ && !bloqueado[ii + jj * NX]) return [ii, jj]; }
+    return [i, j];
+  }
+  function caminho(x0, z0, x1, z1) {
+    const [si, sj] = livreMaisPerto(...celula(x0, z0)), [gi, gj] = livreMaisPerto(...celula(x1, z1));
+    const N = NX * NZ, g = new Float32Array(N).fill(1e9), de = new Int32Array(N).fill(-1), fechado = new Uint8Array(N);
+    const ini = si + sj * NX, fim = gi + gj * NX, h = (k) => Math.hypot((k % NX) - gi, Math.floor(k / NX) - gj);
+    const aberto = [ini]; g[ini] = 0;
+    while (aberto.length) {
+      let bi = 0; for (let k = 1; k < aberto.length; k++) if (g[aberto[k]] + h(aberto[k]) < g[aberto[bi]] + h(aberto[bi])) bi = k;
+      const c = aberto.splice(bi, 1)[0]; if (c === fim) break; fechado[c] = 1;
+      const ci = c % NX, cj = Math.floor(c / NX);
+      for (let di = -1; di <= 1; di++) for (let dj = -1; dj <= 1; dj++) {
+        if (!di && !dj) continue; const ni = ci + di, nj = cj + dj; if (ni < 0 || nj < 0 || ni >= NX || nj >= NZ) continue;
+        const n = ni + nj * NX; if (bloqueado[n] || fechado[n]) continue;
+        if (di && dj && (bloqueado[ci + di + cj * NX] || bloqueado[ci + (cj + dj) * NX])) continue;   // não corta quina
+        const ng = g[c] + (di && dj ? 1.414 : 1); if (ng < g[n]) { g[n] = ng; de[n] = c; if (!aberto.includes(n)) aberto.push(n); }
+      }
+    }
+    const pts = []; let k = fim; if (de[k] === -1 && k !== ini) return [[x1, z1]];
+    while (k !== -1 && k !== ini) { pts.push([GX0 + (k % NX + 0.5) * CEL, GZ0 + (Math.floor(k / NX) + 0.5) * CEL]); k = de[k]; }
+    pts.reverse(); pts.push([x1, z1]);
+    // tira pontos intermediários em linha reta
+    return pts.filter((q, i) => { if (i === 0 || i === pts.length - 1) return true; const a = pts[i - 1], b = pts[i + 1]; return Math.abs((q[0] - a[0]) * (b[1] - q[1]) - (q[1] - a[1]) * (b[0] - q[0])) > 1e-3; });
+  }
 
   // ================= pessoas (estilo arredondado das referências) =================
   const CAMISAS = [0x2d6cdf, 0xd9524a, 0x6cd26c, 0xffffff, 0x8b5bd6, 0xe2a23a, 0x3fb6c9, 0xd06aa0, 0xffffff, 0x1f2a44];
@@ -313,8 +374,8 @@
   const coloca = (p, x, z, r) => { p.x = p.tx = x; p.z = p.tz = z; p.alvoRot = p.rot = r; };
   const jogBilhar = [novaPessoa("bilhar"), novaPessoa("bilhar")]; coloca(jogBilhar[0], BX - 2.9, BZ, Math.PI / 2); coloca(jogBilhar[1], BX + 1.2, BZ - 1.9, 0.3); jogBilhar.forEach((j) => segura(j, "taco"));
   const jogPing = [novaPessoa("ping"), novaPessoa("ping")]; coloca(jogPing[0], PX - 2.5, PZ, Math.PI / 2); coloca(jogPing[1], PX + 2.5, PZ, -Math.PI / 2); jogPing.forEach((j) => segura(j, "raquete"));
-  [0, 2, 3].forEach((i) => { const p = novaPessoa("reuniao"); const c = cadeirasReuniao[i]; coloca(p, c.x, c.z, c.rot); });
-  const apres = novaPessoa("apresenta"); coloca(apres, RX - 3.6, RZ, Math.PI / 2);
+  const apres = novaPessoa("apresenta"); coloca(apres, RX - 3.6, RZ, Math.PI / 2);   // instrutor
+  const TREINO_S = 75;   // segundos de treino até sair pela porta
   let vezB = 0, tacada = 0;
 
   // ================= rótulos e balões =================
@@ -338,11 +399,17 @@
   }
   let LIMITE = 10; const vistas = new Set();
   const chaveF = (f) => chave(f) + "|" + f.t;
-  function sai(p) { if (p.ponto) ocupados.delete(p.ponto); p.ponto = null; p.papel = "saindo"; p.tx = PORTA.x; p.tz = PORTA.z; p.alvoRot = null; p.espera = 0; }
+  function sai(p) { if (p.ponto) ocupados.delete(p.ponto); p.ponto = null; p.cadeira = null; p.papel = "saindo"; p.tx = PORTA.x; p.tz = PORTA.z; p.alvoRot = null; p.espera = 0; }
   function chegaComResultado(f, entraPelaPorta) {
     const p = novaPessoa("livre"); p.resultado = f; p.desde = T;
     if (entraPelaPorta) { p.x = PORTA.x; p.z = PORTA.z; } proximoPonto(p); if (!entraPelaPorta) { p.x = p.tx; p.z = p.tz; }
     return p;
+  }
+  function treina(p) {
+    const livre = cadeirasReuniao.find((c) => !gente.some((g) => g.cadeira === c));
+    if (!livre) { sai(p); return; }
+    if (p.ponto) ocupados.delete(p.ponto); p.ponto = null;
+    p.papel = "treino"; p.cadeira = livre; p.tx = livre.x; p.tz = livre.z; p.alvoRot = livre.rot; p.inicioTreino = null; segura(p, null);
   }
   function limita() {
     const com = gente.filter((p) => p.papel === "livre" && p.resultado).sort((a, b) => a.desde - b.desde);
@@ -363,7 +430,7 @@
         p.resultado = f || { ...p.op, usd: p.op.lucro }; p.desde = T; if (f) vistas.add(chaveF(f));
         p.op = null; p.mesa = null; p.espera = 3; p.papel = "livre";
         if ((p.resultado.usd || 0) >= 0) { p.comemora = 2.5; proximoPonto(p); }   // positivo: vai para o lazer
-        else sai(p);                                                               // negativo: mostra o balão e vai embora
+        else treina(p);                                                            // negativo: vai para o treinamento
       }
     });
     abertas.forEach((a) => {
@@ -385,7 +452,7 @@
       recentes.filter((f) => !vistas.has(chaveF(f))).slice(0, 6).reverse().forEach((f) => {
         vistas.add(chaveF(f));
         if (f.usd > 0) chegaComResultado(f, true);
-        else balao(PORTA.x + 1.5, PORTA.z, f.usd);   // fechou no negativo entre uma leitura e outra: só o balão na porta
+        else { const p = novaPessoa("livre"); p.resultado = f; p.desde = T; p.x = PORTA.x; p.z = PORTA.z; treina(p); }
       });
     }
     // os jogadores de bilhar e pingue-pongue levam os últimos resultados positivos
@@ -424,17 +491,27 @@
   let tAnt = performance.now(), T = 0, tMon = 0, proxFala = 4;
   function anima(p, dt) {
     p.espera = Math.max(0, p.espera - dt); p.comemora = Math.max(0, (p.comemora || 0) - dt);
-    const dx = p.tx - p.x, dz = p.tz - p.z, d = Math.hypot(dx, dz);
+    if (p.alvoK !== p.tx + "," + p.tz) { p.alvoK = p.tx + "," + p.tz; p.rota = caminho(p.x, p.z, p.tx, p.tz); }
+    const prox = p.rota && p.rota.length ? p.rota[0] : [p.tx, p.tz];
+    let dx = prox[0] - p.x, dz = prox[1] - p.z, d = Math.hypot(dx, dz);
+    if (d < 0.08 && p.rota && p.rota.length > 1) { p.rota.shift(); dx = p.rota[0][0] - p.x; dz = p.rota[0][1] - p.z; d = Math.hypot(dx, dz); }
     const anda = p.espera <= 0 && d > 0.05;
-    if (anda) { const k = Math.min(1, 2.4 * dt / d); p.x += dx * k; p.z += dz * k; let a = Math.atan2(dx, dz) - p.rot; a = Math.atan2(Math.sin(a), Math.cos(a)); p.rot += a * Math.min(1, dt * 10); }
+    if (anda) {
+      const k = Math.min(1, 2.4 * dt / d); let mx = dx * k, mz = dz * k;
+      // desvia de quem está perto (sem atravessar)
+      gente.forEach((o) => { if (o === p) return; const ox = p.x - o.x, oz = p.z - o.z, od = Math.hypot(ox, oz); if (od < 0.55 && od > 0.001) { mx += ox / od * (0.55 - od) * 0.5; mz += oz / od * (0.55 - od) * 0.5; } });
+      const [ci, cj] = celula(p.x + mx, p.z + mz); if (!bloqueado[ci + cj * NX] || d < 1.2) { p.x += mx; p.z += mz; } else { p.x += dx * k; p.z += dz * k; }
+      let a = Math.atan2(dx, dz) - p.rot; a = Math.atan2(Math.sin(a), Math.cos(a)); p.rot += a * Math.min(1, dt * 10);
+    }
     else if (p.alvoRot != null) { let a = p.alvoRot - p.rot; a = Math.atan2(Math.sin(a), Math.cos(a)); p.rot += a * Math.min(1, dt * 6); }
     p.g.position.set(p.x, 0, p.z); p.g.rotation.y = p.rot;
     const s = anda ? Math.sin(T * 9 + p.fase) * 0.6 : 0;
     let senta = false, pernas = [s, -s], bracos = [-s * 0.7, s * 0.7], ab = [0, 0], cx = 0, cy = 0, y = anda ? Math.abs(Math.sin(T * 9 + p.fase)) * 0.04 : 0, incl = 0;
     if (!anda) {
       const ac = p.ponto && p.ponto.acao;
-      if (p.papel === "trabalha" || p.papel === "reuniao" || ac === "sofa" || ac === "banqueta") senta = true;
+      if (p.papel === "trabalha" || p.papel === "reuniao" || p.papel === "treino" || ac === "sofa" || ac === "banqueta") senta = true;
       if (p.papel === "trabalha") { bracos = [-1.15 + Math.sin(T * 16 + p.fase) * 0.06, -1.15 + Math.cos(T * 15 + p.fase) * 0.06]; ab = [0.25, -0.25]; cy = Math.sin(T * 0.5 + p.fase) * 0.25; }
+      if (p.papel === "treino") { if (p.inicioTreino == null) p.inicioTreino = T; cy = Math.sin(T * 0.5 + p.fase) * 0.3; bracos = [-0.9, -0.9 + Math.sin(T * 9 + p.fase) * 0.08]; if (T - p.inicioTreino > TREINO_S) sai(p); }
       if (p.papel === "reuniao") { cy = Math.sin(T * 0.6 + p.fase) * 0.5; bracos = [-0.7, -0.7 + Math.max(0, Math.sin(T * 1.3 + p.fase)) * 0.5]; }
       if (p.papel === "apresenta") { bracos = [0, -1.5 + Math.sin(T * 2) * 0.5]; cy = Math.sin(T * 0.7) * 0.6; }
       if (ac === "cafe" || ac === "conversa" || ac === "banqueta") { if (!p.item.children.length && ac !== "conversa") segura(p, "caneca"); bracos = [0, -1.0 - Math.max(0, Math.sin(T * 0.8 + p.fase)) * 0.6]; cy = Math.sin(T * 0.9 + p.fase) * 0.35; }
@@ -452,7 +529,7 @@
     p.pE.rotation.x = pernas[0]; p.pD.rotation.x = pernas[1]; p.bE.rotation.x = bracos[0]; p.bD.rotation.x = bracos[1]; p.bE.rotation.z = ab[0]; p.bD.rotation.z = ab[1];
     p.cab.rotation.set(cx, cy, 0); p.g.position.y = y; p.g.rotation.x = incl;
     if (p.papel === "livre" && !anda && p.espera <= 0) { if (!p.ate) p.ate = T + rnd(8, 18); if (T > p.ate) { p.ate = 0; proximoPonto(p); } }
-    if (p.papel === "saindo" && d < 0.2) { S.remove(p.g); if (p.el) p.el.remove(); p.removido = true; }
+    if (p.papel === "saindo" && Math.hypot(p.tx - p.x, p.tz - p.z) < 0.3) { S.remove(p.g); if (p.el) p.el.remove(); p.removido = true; }
   }
   function quadro(agora) {
     const dt = Math.min(0.05, (agora - tAnt) / 1000); tAnt = agora; T += dt;
@@ -481,6 +558,13 @@
       if (!p.op && !p.resultado) return;
       let el = p.el; if (!el) { el = p.el = document.createElement("div"); camada.appendChild(el); }
       usados.add(el);
+      if (p.papel === "treino") {
+        const prog = p.inicioTreino == null ? 0 : Math.min(100, (T - p.inicioTreino) / TREINO_S * 100), r = p.resultado;
+        el.className = "rot treino";
+        const h2 = `${usd(r.usd || 0)}<small>TREINANDO…</small><div class="barra"><i style="width:${prog.toFixed(0)}%"></i></div>`;
+        if (el.__h !== h2) { el.innerHTML = h2; el.__h = h2; }
+        const [sx, sy] = tela(p.x, 2.6, p.z); el.style.left = sx + "px"; el.style.top = sy + "px"; return;
+      }
       const aberta = !!p.op, a = p.op || p.resultado, v = aberta ? a.lucro : a.usd, ok = (v || 0) >= 0, nome = a.par.replace("XAUUSD", "OURO");
       const tipo = a.tipo || (a.par.startsWith("XAU") ? "robo" : "swing");
       el.className = "rot" + (ok ? "" : " neg") + (tipo === "swing" ? " swing" : "") + (aberta ? "" : " fechou");
