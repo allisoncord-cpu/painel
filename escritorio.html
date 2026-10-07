@@ -22,6 +22,8 @@
   .rot small i { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 3px; background: var(--gold); }
   .rot.swing small i { background: #5aa0e6; }
   .rot.fechou { border-style: dashed; }
+  .rot.analisa { border-color: #5a6b85; color: #cfd8e6; background: rgba(10,14,22,.85); box-shadow: none; font-size: 10px; padding: 1px 6px 2px; }
+  .rot.analisa small { color: #8ea1bd; }
   .rot.treino { border-color: #f0a43a; color: #ffc46b; background: rgba(24,16,4,.9); box-shadow: 0 0 12px rgba(240,164,58,.3); }
   .rot.treino small { color: #ffd9a0; }
   .rot .barra { width: 74px; height: 5px; margin: 3px auto 1px; border-radius: 3px; background: rgba(255,255,255,.15); overflow: hidden; }
@@ -177,8 +179,8 @@
   // ================= bancadas de operação (12 lugares, 2 monitores cada) =================
   const mesas = [];
   function telaCanvas(w, h) { const c = document.createElement("canvas"); c.width = w; c.height = h; const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; return { c, t }; }
-  for (let r = 0; r < 4; r++) for (let c = 0; c < 3; c++) {
-    const x = -11.6 + c * 4.6, z = -4.8 + r * 3.7, g = new THREE.Group(); g.position.set(x, 0, z); S.add(g);
+  for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++) {
+    const x = -12.3 + c * 4.25, z = -4.8 + r * 3.7, g = new THREE.Group(); g.position.set(x, 0, z); S.add(g);
     bloco(3.9, 0.1, 1.4, mat(0xe8e8ea), 0, 1.0, 0, g); bloco(3.9, 0.06, 0.12, mat(0x9a9ca2), 0, 0.93, 0.66, g);
     bloco(0.08, 0.95, 1.2, mat(0x6d7078), -1.85, 0.48, 0, g); bloco(0.08, 0.95, 1.2, mat(0x6d7078), 1.85, 0.48, 0, g);
     const a = telaCanvas(256, 160), b = telaCanvas(256, 160);
@@ -196,6 +198,18 @@
   function desenhaMonitores(m, t) {
     const c = m.a.c.getContext("2d"), d = m.b.c.getContext("2d"), op = m.op;
     c.fillStyle = "#070b10"; c.fillRect(0, 0, 256, 160); d.fillStyle = "#070b10"; d.fillRect(0, 0, 256, 160);
+    if (!op && m.analisa) {
+      if (!m.serie.length) { let p = 100; for (let i = 0; i < 40; i++) { const o = p; p += rnd(-1, 1); m.serie.push([o, p, Math.max(o, p) + rnd(0, .6), Math.min(o, p) - rnd(0, .6)]); } m.parV = escolhe(["XAUUSD", "EURUSD", "GBPUSD", "XAUUSD", "USDCAD", "AUDUSD"]); }
+      const ul = m.serie[m.serie.length - 1]; ul[1] += rnd(-0.25, 0.25); ul[2] = Math.max(ul[2], ul[1]); ul[3] = Math.min(ul[3], ul[1]);
+      if (Math.random() < 0.08) { const p = ul[1]; m.serie.push([p, p, p, p]); if (m.serie.length > 40) m.serie.shift(); }
+      const hi = Math.max(...m.serie.map((v) => v[2])), lo = Math.min(...m.serie.map((v) => v[3])), Y = (v) => 28 + (hi - v) / (hi - lo || 1) * 96;
+      m.serie.forEach((v, i) => { const x = 6 + i * 6, up = v[1] >= v[0]; c.fillStyle = up ? "#2fbf73" : "#e0544a"; c.fillRect(x + 2, Y(v[2]), 1, Y(v[3]) - Y(v[2]) + 1); c.fillRect(x, Y(Math.max(v[0], v[1])), 5, Math.max(1, Math.abs(Y(v[0]) - Y(v[1])))); });
+      c.fillStyle = "#0d1424"; c.fillRect(0, 0, 256, 22); c.fillStyle = "#cfd8e6"; c.font = "600 13px 'IBM Plex Mono'"; c.fillText(`${m.parV} M1`, 6, 16);
+      if (Math.sin(t * 4) > 0) { c.fillStyle = "#e2b85c"; c.font = "700 14px 'IBM Plex Mono'"; c.fillText("PROCURANDO SINAL…", 6, 150); }
+      d.fillStyle = "#0d1424"; d.fillRect(0, 0, 256, 22); d.fillStyle = "#cfd8e6"; d.font = "600 12px 'IBM Plex Mono'"; d.fillText("SCANNER · 5 TEMPOS", 6, 15);
+      ["M1", "M5", "M15", "M30", "H1"].forEach((tf, i) => { d.fillStyle = "#8ea1bd"; d.fillText(tf, 8, 42 + i * 22); const ok = Math.sin(t * 0.7 + i * 1.7 + m.semente) > 0.3; d.fillStyle = ok ? "#4fd18f" : "#3a4558"; d.fillRect(50, 33 + i * 22, 150 * (0.3 + 0.7 * Math.abs(Math.sin(t * 0.5 + i + m.semente))), 10); });
+      m.a.t.needsUpdate = m.b.t.needsUpdate = true; return;
+    }
     if (!op) { c.fillStyle = "#e2b85c"; c.font = "600 20px Jost"; c.textAlign = "center"; c.fillText("LEGATUS", 128, 85 + Math.sin(t + m.semente) * 6); c.textAlign = "left"; d.fillStyle = "#1b2433"; d.fillRect(20, 60, 216, 40); m.a.t.needsUpdate = m.b.t.needsUpdate = true; return; }
     // monitor 1: gráfico de velas
     if (!m.serie.length) { let p = 100; for (let i = 0; i < 40; i++) { const o = p; p += rnd(-1, 1) + ((op.lucro || 0) >= 0 ? 0.08 : -0.08) * (op.lado === "buy" ? 1 : -1); m.serie.push([o, p, Math.max(o, p) + rnd(0, .6), Math.min(o, p) - rnd(0, .6)]); } }
@@ -217,6 +231,7 @@
   }
   function pintaMesa(m, op) {
     if (!op || !m.op || m.op.k !== op.k) m.serie = [];
+    if (op) m.analisa = false;
     m.op = op || null;
     m.faixa.material.emissive.set(op ? (op.tipo === "swing" ? AZUL : OURO) : 0x222830); m.faixa.material.emissiveIntensity = op ? 0.7 : 0.2;
   }
@@ -259,7 +274,7 @@
   const bolas = [0xffffff, OURO, 0xe0544a, 0x5aa0e6, 0x2b2b2b, 0x8b5bd6, 0xff9f43].map((c, i) => { const b = esfera(0.1, mat(c, { roughness: 0.2 }), BX + 0.6 + (i % 3) * 0.22, 1.2, BZ - 0.3 + Math.floor(i / 3) * 0.25); return { m: b, vx: 0, vz: 0 }; });
   bolas[0].m.position.set(BX - 1.3, 1.2, BZ);
   // pingue-pongue
-  const PX = 3.3, PZ = 7.6;
+  const PX = 4.9, PZ = 7.6;
   bloco(3.8, 0.08, 2.1, mat(0x3b7bd6), PX, 1.0, PZ); bloco(3.8, 0.02, 0.04, mat(0xffffff), PX, 1.05, PZ); bloco(0.04, 0.3, 2.2, mat(0x222222, { transparent: true, opacity: 0.7 }), PX, 1.18, PZ);
   [[-1.7, -0.9], [1.7, -0.9], [-1.7, 0.9], [1.7, 0.9]].forEach(([a, b]) => cil(0.04, 0.04, 1, mat(0x9a9ca2), PX + a, 0.5, PZ + b));
   const bolinha = esfera(0.06, mat(0xffffff), PX, 1.3, PZ);
@@ -279,9 +294,9 @@
     { x: 9.3, z: -1.0, rot: Math.PI, acao: "cafe" }, { x: 10.6, z: -1.0, rot: Math.PI, acao: "cafe" }, { x: 14, z: -1.0, rot: Math.PI, acao: "agua" },
     { x: 5.5, z: 1.6, rot: Math.PI / 2, acao: "banqueta" }, { x: 7.5, z: 1.6, rot: -Math.PI / 2, acao: "banqueta" }, { x: 6.5, z: 2.7, rot: Math.PI, acao: "conversa" },
     { x: 10.8, z: 3.5, rot: Math.PI, acao: "sofa" }, { x: 12.2, z: 3.5, rot: Math.PI, acao: "sofa" }, { x: 13.8, z: 1.8, rot: -Math.PI / 2, acao: "sofa" },
-    { x: 8.2, z: 5.6, rot: 2.6, acao: "torcida" }, { x: 12.4, z: 9.4, rot: -2.4, acao: "torcida" }, { x: 3.3, z: 5.6, rot: 0, acao: "torcida" }, { x: 5.8, z: 9.3, rot: -2.2, acao: "torcida" },
-    { x: 7.4, z: 7.0, rot: 1.6, acao: "torcida" }, { x: 1.0, z: 5.9, rot: 0.6, acao: "torcida" }, { x: 9.8, z: 1.0, rot: 0, acao: "conversa" }, { x: 10.6, z: 1.4, rot: -2.6, acao: "conversa" },
-    { x: 0.4, z: 8.6, rot: 0.6, acao: "conversa" }, { x: 1.3, z: 9.0, rot: -2.4, acao: "conversa" }, { x: -4, z: -8.6, rot: Math.PI, acao: "telao" }, { x: -1.5, z: -8.6, rot: Math.PI, acao: "telao" },
+    { x: 8.2, z: 5.6, rot: 2.6, acao: "torcida" }, { x: 12.4, z: 9.4, rot: -2.4, acao: "torcida" }, { x: 4.9, z: 5.6, rot: 0, acao: "torcida" }, { x: 7.2, z: 9.3, rot: -2.2, acao: "torcida" },
+    { x: 7.6, z: 6.6, rot: 1.6, acao: "torcida" }, { x: 3.0, z: 9.3, rot: 0.6, acao: "torcida" }, { x: 9.8, z: 1.0, rot: 0, acao: "conversa" }, { x: 10.6, z: 1.4, rot: -2.6, acao: "conversa" },
+    { x: 3.2, z: 4.4, rot: 0.6, acao: "conversa" }, { x: 4.1, z: 4.8, rot: -2.4, acao: "conversa" }, { x: -4, z: -8.6, rot: Math.PI, acao: "telao" }, { x: -1.5, z: -8.6, rot: Math.PI, acao: "telao" },
   ];
 
   // ================= navegação (ninguém atravessa mesa, parede ou outra pessoa) =================
@@ -397,13 +412,21 @@
     if (!txt) { try { txt = await (await fetch("data.js?" + Date.now(), { cache: "no-store" })).text(); } catch (e) { return; } }
     try { aplica(JSON.parse(txt.slice(txt.indexOf("{"), txt.lastIndexOf("}") + 1))); } catch (e) {}
   }
-  let LIMITE = 10; const vistas = new Set();
+  let LIMITE = 10, filaExtra = 0; const vistas = new Set();
   const chaveF = (f) => chave(f) + "|" + f.t;
-  function sai(p) { if (p.ponto) ocupados.delete(p.ponto); p.ponto = null; p.cadeira = null; p.papel = "saindo"; p.tx = PORTA.x; p.tz = PORTA.z; p.alvoRot = null; p.espera = 0; }
+  function sai(p) { if (p.mesa != null && !p.op) { mesas[p.mesa].livre = true; mesas[p.mesa].analisa = false; mesas[p.mesa].serie = []; p.mesa = null; } if (p.ponto) ocupados.delete(p.ponto); p.ponto = null; p.cadeira = null; p.papel = "saindo"; p.tx = PORTA.x; p.tz = PORTA.z; p.alvoRot = null; p.espera = 0; }
   function chegaComResultado(f, entraPelaPorta) {
     const p = novaPessoa("livre"); p.resultado = f; p.desde = T;
     if (entraPelaPorta) { p.x = PORTA.x; p.z = PORTA.z; } proximoPonto(p); if (!entraPelaPorta) { p.x = p.tx; p.z = p.tz; }
     return p;
+  }
+  const LAZER_S = 240;   // quem fechou positivo descansa ~4 min e depois volta a analisar
+  function vaiAnalisar(p) {
+    const mi = mesas.findIndex((m) => m.livre);
+    if (mi < 0) { sai(p); return; }
+    if (p.ponto) ocupados.delete(p.ponto); p.ponto = null; p.cadeira = null; p.resultado = null;
+    const m = mesas[mi]; m.livre = false; m.analisa = true; m.serie = [];
+    p.papel = "analisa"; p.mesa = mi; p.tx = m.x; p.tz = m.z + 1.0; p.alvoRot = Math.PI; segura(p, null);
   }
   function treina(p) {
     const livre = cadeirasReuniao.find((c) => !gente.some((g) => g.cadeira === c));
@@ -420,12 +443,12 @@
     const M = D.mt4 || {};
     const abertas = (M.abertas || []).map((o) => ({ ...o, k: chave(o) }));
     const fechadas = [...((M.por_tipo && M.por_tipo.robo && M.por_tipo.robo.ultimas) || []), ...((M.por_tipo && M.por_tipo.swing && M.por_tipo.swing.ultimas) || [])];
-    const ks = new Set(abertas.map((o) => o.k));
+    const ks = new Set(abertas.map((o) => o.k)); filaExtra = 0;
     gente.forEach((p) => {
       if (p.op && !ks.has(p.op.k)) {
         const f = fechadas.find((x) => chave(x) === p.op.k);
         if (!primeira) balao(p.x, p.z, f ? f.usd : p.op.lucro);
-        pintaMesa(mesas[p.mesa], null); mesas[p.mesa].livre = true;
+        pintaMesa(mesas[p.mesa], null); mesas[p.mesa].livre = true; mesas[p.mesa].analisa = false;
         // fechou: vai para o lazer levando a plaquinha com o resultado
         p.resultado = f || { ...p.op, usd: p.op.lucro }; p.desde = T; if (f) vistas.add(chaveF(f));
         p.op = null; p.mesa = null; p.espera = 3; p.papel = "livre";
@@ -436,8 +459,10 @@
     abertas.forEach((a) => {
       const p = gente.find((x) => x.op && x.op.k === a.k);
       if (p) { p.op = a; mesas[p.mesa].op = a; return; }
-      const mi = mesas.findIndex((m) => m.livre); if (mi < 0) return;
-      const q = gente.find((x) => x.papel === "livre" && x.espera <= 0) || novaPessoa("livre");
+      const an = gente.find((x) => x.papel === "analisa");
+      if (an) { an.papel = "trabalha"; an.op = a; pintaMesa(mesas[an.mesa], a); mesas[an.mesa].op = a; return; }   // achou o sinal: já opera daqui
+      const mi = mesas.findIndex((m) => m.livre); if (mi < 0) { filaExtra++; return; }
+      const q = gente.find((x) => x.papel === "livre" && x.espera <= 0 && !x.resultado) || gente.find((x) => x.papel === "livre" && x.espera <= 0) || novaPessoa("livre");
       if (q.ponto) { ocupados.delete(q.ponto); q.ponto = null; }
       q.papel = "trabalha"; q.op = a; q.mesa = mi; mesas[mi].livre = false; pintaMesa(mesas[mi], a); segura(q, null);
       q.tx = mesas[mi].x; q.tz = mesas[mi].z + 1.0; q.alvoRot = Math.PI;
@@ -464,7 +489,7 @@
     primeira = false;
     const cal = M.calendario || [], hoje = (M.agora_srv || "").slice(0, 10), dia = cal.find((x) => x.dia === hoje);
     $("t-dia").textContent = dia && dia.pct != null ? pct(dia.pct) : "—"; $("t-dia").style.color = dia && dia.pct < 0 ? "var(--verm)" : "var(--verde)";
-    $("t-sub").innerHTML = `${abertas.length} em operação · ${gente.filter((p) => p.resultado && p.papel !== "saindo").length} já fecharam` + (M.flutuante != null ? ` · em aberto <b style="color:${M.flutuante >= 0 ? "var(--verde)" : "var(--verm)"}">${usd(M.flutuante)}</b>` : "");
+    $("t-sub").innerHTML = `${abertas.length} em operação · ${gente.filter((p) => p.resultado && p.papel === "livre").length} no lazer · ${gente.filter((p) => p.papel === "treino").length} em treino` + (filaExtra ? ` · +${filaExtra} sem mesa` : "") + (M.flutuante != null ? ` · em aberto <b style="color:${M.flutuante >= 0 ? "var(--verde)" : "var(--verm)"}">${usd(M.flutuante)}</b>` : "");
     // faixa de notícias embaixo
     const ult = fechadas.slice().sort((a, b) => (a.t < b.t ? 1 : -1)).slice(0, 8);
     $("ticker").innerHTML = `<b class="ouro">LEGATUS GOLD</b> · RESULTADOS AO VIVO DA CONTA REAL · ` + (dia ? `HOJE <b class="${dia.pct >= 0 ? "pos" : "neg"}">${pct(dia.pct)}</b> · ` : "") + `${abertas.length} OPERAÇÕES ABERTAS · ` +
@@ -509,9 +534,10 @@
     let senta = false, pernas = [s, -s], bracos = [-s * 0.7, s * 0.7], ab = [0, 0], cx = 0, cy = 0, y = anda ? Math.abs(Math.sin(T * 9 + p.fase)) * 0.04 : 0, incl = 0;
     if (!anda) {
       const ac = p.ponto && p.ponto.acao;
-      if (p.papel === "trabalha" || p.papel === "reuniao" || p.papel === "treino" || ac === "sofa" || ac === "banqueta") senta = true;
+      if (p.papel === "analisa") { bracos = [-1.0 + Math.sin(T * 3 + p.fase) * 0.05, -1.1 + Math.max(0, Math.sin(T * 1.3 + p.fase)) * 0.15]; cy = Math.sin(T * 0.4 + p.fase) * 0.35; cx = -0.1; }
+      if (p.papel === "trabalha" || p.papel === "analisa" || p.papel === "reuniao" || p.papel === "treino" || ac === "sofa" || ac === "banqueta") senta = true;
       if (p.papel === "trabalha") { bracos = [-1.15 + Math.sin(T * 16 + p.fase) * 0.06, -1.15 + Math.cos(T * 15 + p.fase) * 0.06]; ab = [0.25, -0.25]; cy = Math.sin(T * 0.5 + p.fase) * 0.25; }
-      if (p.papel === "treino") { if (p.inicioTreino == null) p.inicioTreino = T; cy = Math.sin(T * 0.5 + p.fase) * 0.3; bracos = [-0.9, -0.9 + Math.sin(T * 9 + p.fase) * 0.08]; if (T - p.inicioTreino > TREINO_S) sai(p); }
+      if (p.papel === "treino") { if (p.inicioTreino == null) p.inicioTreino = T; cy = Math.sin(T * 0.5 + p.fase) * 0.3; bracos = [-0.9, -0.9 + Math.sin(T * 9 + p.fase) * 0.08]; if (T - p.inicioTreino > TREINO_S) vaiAnalisar(p); }
       if (p.papel === "reuniao") { cy = Math.sin(T * 0.6 + p.fase) * 0.5; bracos = [-0.7, -0.7 + Math.max(0, Math.sin(T * 1.3 + p.fase)) * 0.5]; }
       if (p.papel === "apresenta") { bracos = [0, -1.5 + Math.sin(T * 2) * 0.5]; cy = Math.sin(T * 0.7) * 0.6; }
       if (ac === "cafe" || ac === "conversa" || ac === "banqueta") { if (!p.item.children.length && ac !== "conversa") segura(p, "caneca"); bracos = [0, -1.0 - Math.max(0, Math.sin(T * 0.8 + p.fase)) * 0.6]; cy = Math.sin(T * 0.9 + p.fase) * 0.35; }
@@ -528,7 +554,10 @@
     if (senta) { pernas = [-1.5, -1.5]; y = p.ponto && p.ponto.acao === "sofa" ? -0.35 : -0.15; incl = 0; }
     p.pE.rotation.x = pernas[0]; p.pD.rotation.x = pernas[1]; p.bE.rotation.x = bracos[0]; p.bD.rotation.x = bracos[1]; p.bE.rotation.z = ab[0]; p.bD.rotation.z = ab[1];
     p.cab.rotation.set(cx, cy, 0); p.g.position.y = y; p.g.rotation.x = incl;
-    if (p.papel === "livre" && !anda && p.espera <= 0) { if (!p.ate) p.ate = T + rnd(8, 18); if (T > p.ate) { p.ate = 0; proximoPonto(p); } }
+    if (p.papel === "livre" && !anda && p.espera <= 0) {
+      if (p.resultado && T - p.desde > LAZER_S && mesas.filter((m) => m.livre).length > 2) { vaiAnalisar(p); return; }
+      if (!p.ate) p.ate = T + rnd(8, 18); if (T > p.ate) { p.ate = 0; proximoPonto(p); }
+    }
     if (p.papel === "saindo" && Math.hypot(p.tx - p.x, p.tz - p.z) < 0.3) { S.remove(p.g); if (p.el) p.el.remove(); p.removido = true; }
   }
   function quadro(agora) {
@@ -555,9 +584,14 @@
     // rótulos verdes/vermelhos sobre quem está operando
     const usados = new Set();
     gente.forEach((p) => {
-      if (!p.op && !p.resultado) return;
+      if (!p.op && !p.resultado && p.papel !== "analisa") return;
       let el = p.el; if (!el) { el = p.el = document.createElement("div"); camada.appendChild(el); }
       usados.add(el);
+      if (p.papel === "analisa") {
+        el.className = "rot analisa"; const h3 = `🔎 analisando`;
+        if (el.__h !== h3) { el.innerHTML = h3; el.__h = h3; }
+        const [sx, sy] = tela(p.x, 2.7, p.z - 0.2); el.style.left = sx + "px"; el.style.top = sy + "px"; return;
+      }
       if (p.papel === "treino") {
         const prog = p.inicioTreino == null ? 0 : Math.min(100, (T - p.inicioTreino) / TREINO_S * 100), r = p.resultado;
         el.className = "rot treino";
