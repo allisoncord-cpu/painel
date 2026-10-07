@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Escritório Legatus</title>
+<meta name="description" content="O escritório dos robôs da Legatus Group, ao vivo: cada operação aberta é um operador trabalhando.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Jost:wght@500;600&display=swap">
+<style>
+  :root { --bg: #07101f; --fg: #e9eef6; --muted: #8ea1bd; --gold: #d6ad55; --line: #1f3456; color-scheme: dark; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--fg); font-family: "Jost", system-ui, sans-serif; min-height: 100%; }
+  .topo { max-width: 1200px; margin: 0 auto; padding: 14px 16px 10px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+  .marca { display: flex; align-items: center; gap: 10px; }
+  .marca svg { width: 30px; height: 36px; }
+  .marca h1 { margin: 0; font-weight: 500; font-size: 17px; letter-spacing: .3em; }
+  .marca h1 span { color: var(--gold); }
+  .marca p { margin: 2px 0 0; font-size: 12px; color: var(--muted); }
+  .acoes { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .pill { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px; font-size: 12px; color: var(--muted); }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: #4fc38a; }
+  .dot.velho { background: #f0a43a; }
+  a.btn { padding: 7px 14px; border-radius: 8px; border: 1px solid var(--line); color: var(--fg); text-decoration: none; font-size: 13px; font-weight: 600; }
+  a.btn.ouro { background: var(--gold); color: var(--bg); border-color: var(--gold); }
+  .palco { max-width: 1200px; margin: 0 auto; padding: 0 16px 16px; }
+  canvas { display: block; width: 100%; height: auto; image-rendering: pixelated; image-rendering: crisp-edges; border-radius: 10px; border: 1px solid var(--line); background: #0b1526; }
+  .nota { max-width: 1200px; margin: 0 auto; padding: 0 16px 24px; font-size: 12px; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="topo">
+  <div class="marca">
+    <svg viewBox="440 295 390 475" aria-hidden="true"><path fill="#d6ad55" d="M447 548 L502 505 L502 763 L447 763 Z"/><path fill="#d6ad55" d="M532 437 L584 394 L584 711 L612 711 L612 348 L665 303 L665 711 L773 711 L773 624 L712 585 L712 531 L823 599 L823 763 L532 763 Z"/></svg>
+    <div><h1>LEGATUS <span>GROUP</span></h1><p>Escritório dos robôs · ao vivo</p></div>
+  </div>
+  <div class="acoes">
+    <span class="pill"><span class="dot" id="dot"></span><span id="idade">carregando…</span></span>
+    <a class="btn" href="./">← Painel</a>
+    <a class="btn ouro" id="copiar" target="_blank" rel="noopener" href="https://roboforex.com/copy-trading/rating/aaao/46163199/">Copiar a estratégia ↗</a>
+  </div>
+</div>
+<div class="palco"><canvas id="tela" aria-label="Escritório dos robôs: cada operação aberta é um robô trabalhando"></canvas></div>
+<p class="nota">Cada robô sentado é uma operação aberta agora na conta 46163199 (dourado = robô do ouro, azul = swing trade), com o resultado em aberto em cima. Quando uma operação fecha, aparece o balão com o resultado e o robô vai descansar. Dados reais do MetaTrader, atualizados a cada minuto. Resultados passados não garantem resultados futuros.</p>
+
+<script>
+(() => {
+  const cv = document.getElementById("tela"), ctx = cv.getContext("2d");
+  const FONTE = '"Press Start 2P", monospace';
+  const nf = (v, c = 2) => Math.abs(v).toLocaleString("pt-BR", { minimumFractionDigits: c, maximumFractionDigits: c });
+  const usd = (v) => (v >= 0 ? "+" : "-") + "US$ " + nf(v);   // a fonte de pixel não tem o sinal "−"
+  const pct = (v) => (v >= 0 ? "+" : "-") + nf(v) + "%";
+
+  // ---------- mundo: dois layouts (largo no computador, alto no celular) ----------
+  let W, H, L, deitado;
+  function layout() {
+    deitado = cv.clientWidth >= 700 || window.innerWidth >= 700;
+    if (deitado) {
+      W = 480; H = 270;
+      L = { telao: { x: 120, y: 8, w: 170, h: 54 }, sala: { x: 8, y: 70, w: 312, h: 192 }, cafe: { x: 328, y: 8, w: 144, h: 122 }, bilhar: { x: 328, y: 138, w: 144, h: 124 }, cols: 4, mesaW: 72, mesaH: 46 };
+    } else {
+      W = 270; H = 470;
+      L = { telao: { x: 50, y: 8, w: 170, h: 54 }, sala: { x: 8, y: 70, w: 254, h: 250 }, cafe: { x: 8, y: 328, w: 125, h: 134 }, bilhar: { x: 137, y: 328, w: 125, h: 134 }, cols: 3, mesaW: 78, mesaH: 46 };
+    }
+    const esc = Math.max(1, Math.floor(Math.min(cv.clientWidth, 1168) * (window.devicePixelRatio || 1) / W));
+    cv.width = W * esc; cv.height = H * esc; ctx.setTransform(esc, 0, 0, esc, 0, 0); ctx.imageSmoothingEnabled = false;
+    cv.style.aspectRatio = W + " / " + H;
+    mesas = [];
+    const s = L.sala, linhas = Math.floor((s.h - 30) / L.mesaH);
+    for (let r = 0; r < linhas; r++) for (let c = 0; c < L.cols; c++) mesas.push({ x: s.x + 6 + c * ((s.w - 12) / L.cols), y: s.y + 28 + r * L.mesaH });
+    robos.forEach((r) => { if (r.mesa != null && r.mesa >= mesas.length) r.mesa = null; posAlvo(r, true); });
+  }
+  let mesas = [];
+
+  // ---------- dados ----------
+  let D = null, abertasAnt = null, fechadasVistas = new Set();
+  const chave = (o) => [o.par, o.lado, o.lote, o.abre].join("|");
+  async function busca() {
+    let txt = null;
+    if (/github\.io$/.test(location.hostname)) {
+      try { const r = await fetch("https://api.github.com/repos/allisoncord-cpu/painel/contents/data.js", { headers: { Accept: "application/vnd.github.raw" }, cache: "no-store" }); if (r.ok) txt = await r.text(); } catch (e) {}
+    }
+    if (!txt) { try { txt = await (await fetch("data.js?" + Date.now(), { cache: "no-store" })).text(); } catch (e) { return; } }
+    try { aplica(JSON.parse(txt.slice(txt.indexOf("{"), txt.lastIndexOf("}") + 1))); } catch (e) {}
+  }
+
+  function aplica(novo) {
+    D = novo;
+    const M = D.mt4 || {};
+    const abertas = (M.abertas || []).map((o) => ({ ...o, k: chave(o) }));
+    const fechadas = [...((M.por_tipo && M.por_tipo.robo && M.por_tipo.robo.ultimas) || []), ...((M.por_tipo && M.por_tipo.swing && M.por_tipo.swing.ultimas) || [])];
+    const primeira = abertasAnt == null;
+    // operações que fecharam desde a última leitura: balão com o resultado e o robô vai descansar
+    const agoraK = new Set(abertas.map((o) => o.k));
+    robos.forEach((r) => {
+      if (r.op && !agoraK.has(r.op.k)) {
+        const f = fechadas.find((x) => chave(x) === r.op.k);
+        if (!primeira) balao(r, f ? f.usd : r.op.lucro);
+        r.op = null; r.mesa = null; r.espera = 2.2; posAlvo(r);
+      }
+    });
+    // operações novas: um robô livre levanta e vai para uma mesa
+    abertas.forEach((o) => {
+      const r = robos.find((x) => x.op && x.op.k === o.k);
+      if (r) { r.op = o; return; }
+      const livres = mesas.map((_, i) => i).filter((i) => !robos.some((x) => x.mesa === i));
+      if (!livres.length) return;
+      const rb = robos.find((x) => !x.op && x.espera <= 0) || novoRobo();
+      rb.op = o; rb.mesa = livres[0]; posAlvo(rb, primeira);
+    });
+    // equipe mínima para sempre ter alguém no café e no bilhar
+    while (robos.filter((r) => !r.op).length < 4) novoRobo(true);
+    fechadas.forEach((f) => fechadasVistas.add(chave(f) + f.t));
+    abertasAnt = abertas;
+    extra = Math.max(0, abertas.length - mesas.length);
+  }
+  let extra = 0;
+
+  // ---------- robôs ----------
+  const robos = []; let nId = 0;
+  function novoRobo(direto) {
+    const r = { id: nId++, x: 0, y: 0, tx: 0, ty: 0, op: null, mesa: null, espera: 0, fase: Math.random() * 6, lazer: nId % 2 ? "cafe" : "bilhar", vaga: nId };
+    robos.push(r); posAlvo(r, true); return r;
+  }
+  function posAlvo(r, teleporta) {
+    if (r.mesa != null && mesas[r.mesa]) { const m = mesas[r.mesa]; r.tx = m.x + 18; r.ty = m.y + 14; }
+    else {
+      const sala = L[r.lazer], livres = robos.filter((x) => !x.op && x.lazer === r.lazer), i = Math.max(0, livres.indexOf(r));
+      if (r.lazer === "cafe") { r.tx = sala.x + 22 + (i % 4) * 28; r.ty = sala.y + 62 + Math.floor(i / 4) * 26; }
+      else { const ang = i * 1.7; r.tx = sala.x + sala.w / 2 + Math.cos(ang) * 44; r.ty = sala.y + 70 + Math.sin(ang) * 30; }
+    }
+    if (teleporta) { r.x = r.tx; r.y = r.ty; }
+  }
+  const baloes = [];
+  function balao(r, v) { baloes.push({ x: r.x, y: r.y - 16, v, t: 0 }); }
+
+  // ---------- desenho ----------
+  const C = { piso: "#13233d", piso2: "#162a48", parede: "#0b1730", madeira: "#6b4a2b", madeira2: "#835c36", mesa: "#3b2a1c", ouro: "#d6ad55", azul: "#5aa0e6", verde: "#4fc38a", verm: "#ef6f5f", tela: "#071022", branco: "#e9eef6", cinza: "#8ea1bd" };
+  const rect = (x, y, w, h, c) => { ctx.fillStyle = c; ctx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h)); };
+  function texto(t, x, y, c, tam = 6, al = "left") { ctx.font = `${tam}px ${FONTE}`; ctx.fillStyle = c; ctx.textAlign = al; ctx.textBaseline = "top"; ctx.fillText(t, Math.round(x), Math.round(y)); }
+
+  function sala(s, nome, cor) {
+    rect(s.x, s.y, s.w, s.h, C.parede);
+    for (let y = s.y + 14; y < s.y + s.h; y += 8) for (let x = s.x; x < s.x + s.w; x += 8) rect(x, y, 8, 8, ((x + y) / 8) % 2 ? C.piso : C.piso2);
+    rect(s.x, s.y, s.w, 2, cor); texto(nome, s.x + 4, s.y + 4, cor, 5);
+  }
+
+  function robo(x, y, tipo, sentado, t, ocioso) {
+    const corpo = tipo === "swing" ? C.azul : C.ouro, escuro = tipo === "swing" ? "#3b6fa8" : "#a8823a";
+    const bob = sentado ? 0 : Math.round(Math.sin(t * 6) * 0.6);
+    // pernas
+    if (!sentado) { const p = Math.sin(t * 10) > 0 && !ocioso; rect(x - 3, y + 6, 2, p ? 4 : 3, "#2a3550"); rect(x + 1, y + 6, 2, p ? 3 : 4, "#2a3550"); }
+    rect(x - 4, y - 2 + bob, 8, 8, corpo); rect(x - 4, y + 4 + bob, 8, 2, escuro);           // corpo
+    rect(x - 4, y - 10 + bob, 8, 7, "#c9d3e3"); rect(x - 3, y - 8 + bob, 6, 3, "#122038");  // cabeça e visor
+    const pisca = (Math.floor(t * 0.7 + x) % 5) === 0 && (t * 10 % 7) < 1;
+    if (!pisca) { rect(x - 2, y - 7 + bob, 1, 1, "#5fe8ff"); rect(x + 1, y - 7 + bob, 1, 1, "#5fe8ff"); }
+    rect(x, y - 13 + bob, 1, 3, "#c9d3e3"); rect(x - 1, y - 14 + bob, 3, 2, Math.sin(t * 4 + x) > 0 ? C.verm : "#7a2c26"); // antena
+  }
+
+  function mesa(m, r, t) {
+    rect(m.x + 4, m.y + 18, 46, 6, C.mesa); rect(m.x + 6, m.y + 24, 2, 8, C.mesa); rect(m.x + 46, m.y + 24, 2, 8, C.mesa);
+    rect(m.x + 26, m.y + 4, 22, 14, "#2a3550"); rect(m.x + 27, m.y + 5, 20, 11, C.tela); rect(m.x + 35, m.y + 18, 4, 2, "#2a3550");
+    if (r && r.op) {
+      const ok = (r.op.lucro || 0) >= 0, cor = ok ? C.verde : C.verm;
+      // mini gráfico no monitor
+      let py = m.y + 11;
+      for (let i = 0; i < 18; i += 2) { const ny = m.y + 7 + ((Math.sin((i + t * 3 + m.x) * 0.9) + 1) * 3.5) | 0; rect(m.x + 28 + i, Math.min(py, ny), 2, Math.abs(ny - py) + 1, cor); py = ny; }
+    }
+  }
+
+  function etiqueta(r) {
+    const o = r.op, ok = (o.lucro || 0) >= 0;
+    const t1 = `${o.par.replace("USD", "").replace("XAU", "OURO") || o.par} ${o.lado === "buy" ? "C" : "V"}`;
+    const t2 = o.lucro == null ? "" : usd(o.lucro);
+    ctx.font = `5px ${FONTE}`; const w = Math.max(ctx.measureText(t1).width, ctx.measureText(t2).width) + 6;
+    const x = r.x - w / 2 + 12, y = r.y - 30;
+    rect(x, y, w, 15, "rgba(4,10,22,.85)"); rect(x, y + 15, w, 1, ok ? C.verde : C.verm);
+    texto(t1, x + 3, y + 2, C.branco, 5); texto(t2, x + 3, y + 9, ok ? C.verde : C.verm, 5);
+  }
+
+  function telao(t) {
+    const s = L.telao, M = (D && D.mt4) || {}, cal = M.calendario || [];
+    const hoje = (M.agora_srv || "").slice(0, 10), dia = cal.find((x) => x.dia === hoje);
+    rect(s.x - 3, s.y - 3, s.w + 6, s.h + 6, "#2a3550"); rect(s.x, s.y, s.w, s.h, C.tela);
+    for (let y = s.y; y < s.y + s.h; y += 2) rect(s.x, y, s.w, 1, "rgba(255,255,255,.025)");
+    texto("RESULTADO DO DIA", s.x + 6, s.y + 5, C.cinza, 5);
+    const p = dia && dia.pct != null ? dia.pct : 0;
+    texto(dia ? pct(p) : "—", s.x + 6, s.y + 14, p >= 0 ? C.verde : C.verm, 12);
+    texto(dia ? `${dia.ops} OPS · ${dia.venc} NO VERDE` : "", s.x + 6, s.y + 30, C.branco, 5);
+    const fl = M.flutuante;
+    texto(fl != null ? "EM ABERTO " + usd(fl) : "", s.x + 6, s.y + 40, fl >= 0 ? C.verde : C.verm, 5);
+    const piscar = Math.sin(t * 3) > 0;
+    rect(s.x + s.w - 30, s.y + 5, 3, 3, piscar ? C.verm : "#4a1c18"); texto("LIVE", s.x + s.w - 25, s.y + 5, C.branco, 5);
+  }
+
+  function cafe(s, t) {
+    rect(s.x + 8, s.y + 18, 40, 12, C.madeira); rect(s.x + 8, s.y + 30, 40, 2, C.madeira2);         // balcão
+    rect(s.x + 12, s.y + 8, 10, 10, "#39404f"); rect(s.x + 14, s.y + 11, 6, 3, "#5fe8ff");             // máquina de café
+    for (let i = 0; i < 3; i++) rect(s.x + 16 + Math.sin(t * 2 + i) * 1.5, s.y + 5 - i * 2 - (t * 4 % 2), 1, 1, "rgba(255,255,255,.5)");
+    rect(s.x + s.w - 26, s.y + 18, 18, 10, "#2f6b3a"); rect(s.x + s.w - 22, s.y + 14, 10, 5, "#3e8c4c"); // planta e sofá
+    rect(s.x + s.w - 54, s.y + s.h - 22, 40, 10, "#7a2c4a"); rect(s.x + s.w - 54, s.y + s.h - 28, 40, 6, "#8f3a5a");
+  }
+  function bilhar(s, t) {
+    const cx = s.x + s.w / 2, cy = s.y + 70;
+    rect(cx - 34, cy - 18, 68, 36, "#5a3a22"); rect(cx - 30, cy - 14, 60, 28, "#1f7a4a");
+    [[-29, -13], [0, -14], [28, -13], [-29, 12], [0, 13], [28, 12]].forEach(([a, b]) => rect(cx + a, cy + b, 2, 2, "#0b1a10"));
+    const bx = cx + Math.sin(t * 0.8) * 18, by = cy + Math.cos(t * 1.1) * 8;
+    rect(bx, by, 2, 2, "#fff"); rect(cx + 10, cy - 4, 2, 2, C.ouro); rect(cx + 13, cy + 1, 2, 2, C.verm); rect(cx + 8, cy + 4, 2, 2, C.azul);
+    rect(s.x + 6, s.y + 18, 3, 30, C.madeira2);   // taco na parede
+  }
+
+  // ---------- laço de animação ----------
+  let tAnt = performance.now(), T = 0;
+  function quadro(agora) {
+    const dt = Math.min(0.1, (agora - tAnt) / 1000); tAnt = agora; T += dt;
+    ctx.clearRect(0, 0, W, H); rect(0, 0, W, H, "#0b1526");
+    sala(L.sala, "SALA DE OPERACOES", C.ouro); sala(L.cafe, "CAFE", "#c9a27a"); sala(L.bilhar, "BILHAR", "#4fc38a");
+    cafe(L.cafe, T); bilhar(L.bilhar, T); telao(T);
+    // movimento
+    robos.forEach((r) => {
+      r.espera = Math.max(0, r.espera - dt);
+      if (r.espera > 0) return;
+      if (!r.op && Math.random() < dt * 0.05) posAlvo(r);   // de vez em quando muda de lugar no lazer
+      const dx = r.tx - r.x, dy = r.ty - r.y, d = Math.hypot(dx, dy), v = 40 * dt;
+      if (d > v) { r.x += dx / d * v; r.y += dy / d * v; r.anda = true; } else { r.x = r.tx; r.y = r.ty; r.anda = false; }
+    });
+    // mesas (atrás), robôs, etiquetas (na frente)
+    mesas.forEach((m, i) => mesa(m, robos.find((r) => r.mesa === i && r.op && !r.anda), T));
+    robos.slice().sort((a, b) => a.y - b.y).forEach((r) => {
+      const sentado = r.op && !r.anda;
+      robo(r.x, r.y, r.op ? r.op.tipo : (r.id % 3 === 0 ? "swing" : "robo"), sentado, T + r.fase, !r.anda);
+      if (!r.op && !r.anda && r.lazer === "cafe") rect(r.x + 4, r.y - 1, 3, 3, "#f3f3f3");   // xícara
+      if (!r.op && !r.anda && r.lazer === "bilhar") rect(r.x + 4, r.y - 12, 1, 16, C.madeira2);   // taco
+    });
+    robos.forEach((r) => { if (r.op && !r.anda) etiqueta(r); });
+    if (extra) texto(`+${extra} OPERACOES`, L.sala.x + L.sala.w - 4, L.sala.y + 4, C.cinza, 5, "right");
+    if (D && !(D.mt4 && D.mt4.abertas && D.mt4.abertas.length)) texto("NENHUMA OPERACAO ABERTA", L.sala.x + L.sala.w / 2, L.sala.y + L.sala.h / 2, C.cinza, 6, "center");
+    // balões de operação fechada
+    for (let i = baloes.length - 1; i >= 0; i--) {
+      const b = baloes[i]; b.t += dt; if (b.t > 5) { baloes.splice(i, 1); continue; }
+      const y = b.y - b.t * 6, ok = b.v >= 0, s = usd(b.v || 0);
+      ctx.globalAlpha = Math.min(1, (5 - b.t) / 1.2);
+      ctx.font = `6px ${FONTE}`; const w = ctx.measureText(s).width + 8;
+      rect(b.x - w / 2, y - 12, w, 11, "#fff"); rect(b.x - 2, y - 1, 4, 3, "#fff");
+      texto(s, b.x, y - 9, ok ? "#1e8a52" : "#c0392b", 6, "center");
+      ctx.globalAlpha = 1;
+    }
+    requestAnimationFrame(quadro);
+  }
+
+  // ---------- "atualizado há" ----------
+  setInterval(() => {
+    if (!D) return;
+    const s = Math.max(0, Math.round((Date.now() - new Date(D.atualizado).getTime()) / 1000));
+    document.getElementById("idade").textContent = s > 600 ? `Sem atualização há ${Math.round(s / 60)} min` : `Atualizado há ${s < 60 ? s + " s" : Math.round(s / 60) + " min"}`;
+    document.getElementById("dot").className = "dot" + (s > 600 ? " velho" : "");
+  }, 1000);
+
+  window.addEventListener("resize", layout);
+  layout();
+  for (let i = 0; i < 4; i++) novoRobo(true);
+  document.fonts.ready.then(() => requestAnimationFrame(quadro));
+  busca(); setInterval(busca, 60000);
+  window.__escritorio = { aplica, robos };   // para testes
+})();
+</script>
+</body>
+</html>
