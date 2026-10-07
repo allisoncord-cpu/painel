@@ -4,26 +4,28 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Escritório Legatus</title>
-<meta name="description" content="O escritório dos robôs da Legatus Group, ao vivo: cada operação aberta é um operador trabalhando.">
+<meta name="description" content="O trading floor da Legatus Group, ao vivo: cada operação aberta é um operador trabalhando.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
 <style>
-  :root { --bg: #05080f; --fg: #e9eef6; --muted: #8ea1bd; --gold: #e2b85c; --verde: #4fd18f; --verm: #ff6f61; color-scheme: dark; }
+  :root { --bg: #07090d; --fg: #e9eef6; --muted: #8ea1bd; --gold: #e2b85c; --verde: #4fd18f; --verm: #ff6f61; color-scheme: dark; }
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg); font-family: "Jost", system-ui, sans-serif; overflow: hidden; }
   #cena { position: fixed; inset: 0; }
-  #cena canvas { display: block; width: 100%; height: 100%; }
+  #cena canvas { display: block; width: 100%; height: 100%; touch-action: none; }
   #rotulos { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
-  .rot { position: absolute; transform: translate(-50%, -100%); padding: 3px 7px 4px; border-radius: 5px; background: rgba(8, 12, 20, .88);
-         border: 1px solid var(--gold); font: 600 10px/1.25 "IBM Plex Mono", monospace; white-space: nowrap; box-shadow: 0 0 10px rgba(226,184,92,.25); }
-  .rot b { display: block; font-size: 9px; color: #cfd8e6; font-weight: 600; letter-spacing: .04em; }
-  .rot b i { display: inline-block; width: 6px; height: 6px; border-radius: 1px; margin-right: 4px; background: var(--gold); vertical-align: 1px; }
-  .rot.swing { border-color: #5aa0e6; box-shadow: 0 0 10px rgba(90,160,230,.25); } .rot.swing b i { background: #5aa0e6; }
-  .rot .pos { color: var(--verde); } .rot .neg { color: var(--verm); }
-  .balao { position: absolute; transform: translate(-50%, -100%); padding: 6px 10px; border-radius: 8px; font: 700 13px "IBM Plex Mono", monospace; color: #0b2a18; background: #dfffe9;
-           box-shadow: 0 0 22px rgba(79,209,143,.7); white-space: nowrap; }
-  .balao.neg { color: #3a0d09; background: #ffe2de; box-shadow: 0 0 22px rgba(255,111,97,.6); }
+  .rot { position: absolute; transform: translate(-50%, -100%); padding: 2px 8px 3px; border-radius: 6px; background: rgba(6, 18, 10, .9); border: 2px solid #2fbf73;
+         font: 700 13px/1.15 "IBM Plex Mono", monospace; color: #6dffa8; white-space: nowrap; text-align: center; box-shadow: 0 0 12px rgba(47,191,115,.35); }
+  .rot.neg { background: rgba(24, 6, 6, .9); border-color: #e0544a; color: #ff8a7e; box-shadow: 0 0 12px rgba(224,84,74,.35); }
+  .rot small { display: block; font: 600 8px "Jost", sans-serif; letter-spacing: .06em; color: #cfd8e6; opacity: .85; }
+  .rot small i { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 3px; background: var(--gold); }
+  .rot.swing small i { background: #5aa0e6; }
+  .balao { position: absolute; transform: translate(-50%, -100%); display: grid; place-items: center; width: 46px; height: 46px; border-radius: 50%; border: 3px solid #2fbf73;
+           background: rgba(6,18,10,.92); color: #6dffa8; font: 700 13px "IBM Plex Mono"; box-shadow: 0 0 20px rgba(47,191,115,.6); }
+  .balao.neg { border-color: #e0544a; color: #ff8a7e; box-shadow: 0 0 20px rgba(224,84,74,.5); }
+  .balao span { position: absolute; top: -26px; white-space: nowrap; padding: 2px 8px; border-radius: 6px; background: rgba(6,18,10,.92); border: 2px solid currentColor; font-size: 14px; }
+  .fala { position: absolute; transform: translate(-50%, -100%); padding: 3px 8px; border-radius: 9px; background: rgba(255,255,255,.94); color: #1a1f2b; font: 600 11px "Jost", sans-serif; white-space: nowrap; }
   .hud { position: fixed; left: 16px; top: 14px; right: 16px; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; pointer-events: none; flex-wrap: wrap; }
   .hud > * { pointer-events: auto; }
   .marca { display: flex; align-items: center; gap: 10px; }
@@ -42,9 +44,12 @@
   .dot.velho { background: #f0a43a; box-shadow: none; }
   a.btn { padding: 7px 13px; border-radius: 8px; border: 1px solid #22314a; color: var(--fg); text-decoration: none; font-size: 13px; font-weight: 600; background: rgba(8,12,20,.7); }
   a.btn.ouro { background: var(--gold); color: #120d03; border-color: var(--gold); }
-  .rodape { position: fixed; left: 16px; right: 16px; bottom: 10px; font-size: 11px; color: var(--muted); pointer-events: none; text-align: center; }
-  body.estreito .rot { padding: 2px 4px 3px; font-size: 8px; border-radius: 4px; } body.estreito .rot b { font-size: 7px; } body.estreito .rot b i { width: 4px; height: 4px; margin-right: 2px; }
-  body.estreito .balao { font-size: 11px; padding: 4px 7px; }
+  .ticker { position: fixed; left: 0; right: 0; bottom: 0; height: 26px; overflow: hidden; background: rgba(4,8,6,.92); border-top: 1px solid #1d3a26; pointer-events: none; }
+  .ticker div { position: absolute; white-space: nowrap; top: 5px; font: 600 12px "IBM Plex Mono", monospace; color: #9fb4a6; animation: corre 60s linear infinite; }
+  .ticker b.pos { color: #4fd18f; } .ticker b.neg { color: #ff6f61; } .ticker b.ouro { color: var(--gold); }
+  @keyframes corre { from { transform: translateX(100vw); } to { transform: translateX(-100%); } }
+  body.estreito .rot { font-size: 10px; padding: 1px 5px 2px; border-width: 1.5px; } body.estreito .rot small { font-size: 7px; }
+  body.estreito .balao { width: 34px; height: 34px; font-size: 10px; } body.estreito .balao span { font-size: 11px; top: -22px; } body.estreito .fala { font-size: 9px; }
   @media (max-width: 640px) { .total .v { font-size: 28px; } .acoes { width: 100%; justify-content: flex-start; } }
 </style>
 </head>
@@ -55,7 +60,7 @@
   <div>
     <div class="marca">
       <svg viewBox="440 295 390 475" aria-hidden="true"><path fill="#e2b85c" d="M447 548 L502 505 L502 763 L447 763 Z"/><path fill="#e2b85c" d="M532 437 L584 394 L584 711 L612 711 L612 348 L665 303 L665 711 L773 711 L773 624 L712 585 L712 531 L823 599 L823 763 L532 763 Z"/></svg>
-      <div><h1>LEGATUS <span>GROUP</span></h1><p>Escritório dos robôs · ao vivo</p></div>
+      <div><h1>LEGATUS <span>GROUP</span></h1><p>Trading floor · ao vivo</p></div>
     </div>
     <div class="total">
       <div class="r">Resultado do dia</div>
@@ -69,155 +74,250 @@
     <a class="btn ouro" target="_blank" rel="noopener" href="https://roboforex.com/copy-trading/rating/aaao/46163199/">Copiar a estratégia ↗</a>
   </div>
 </div>
-<div class="rodape">Cada operador sentado é uma operação aberta agora (dourado = robô do ouro · azul = swing trade). Dados reais do MetaTrader, a cada minuto. Resultado passado não garante resultado futuro.</div>
+<div class="ticker"><div id="ticker"></div></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (() => {
   const nf = (v, c = 2) => Math.abs(v).toLocaleString("pt-BR", { minimumFractionDigits: c, maximumFractionDigits: c });
-  const usd = (v) => (v >= 0 ? "+" : "−") + "US$ " + nf(v);
+  const usd = (v) => (v >= 0 ? "+" : "−") + "$" + nf(v);
   const pct = (v) => (v >= 0 ? "+" : "−") + nf(v) + "%";
   const $ = (id) => document.getElementById(id);
+  const rnd = (a, b) => a + Math.random() * (b - a);
+  const escolhe = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
-  // ---------- cena ----------
-  const caixa = $("cena");
+  // ================= cena =================
   const R = new THREE.WebGLRenderer({ antialias: true });
   R.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
   R.shadowMap.enabled = true; R.shadowMap.type = THREE.PCFSoftShadowMap;
   R.outputEncoding = THREE.sRGBEncoding;
-  caixa.appendChild(R.domElement);
-  const S = new THREE.Scene();
-  S.background = new THREE.Color(0x05080f);
-  S.fog = new THREE.Fog(0x05080f, 60, 120);
+  $("cena").appendChild(R.domElement);
+  const S = new THREE.Scene(); S.background = new THREE.Color(0x07090d);
   const cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 400);
-  const ALVO = new THREE.Vector3(-1, 0, 4);
+  const ALVO = new THREE.Vector3(-1, 0, 3);
+  S.add(new THREE.HemisphereLight(0xdfe8ff, 0x3a2a18, 0.62));
+  const sol = new THREE.DirectionalLight(0xfff3e0, 0.75); sol.position.set(-16, 30, 18); sol.castShadow = true;
+  sol.shadow.mapSize.set(2048, 2048); sol.shadow.bias = -0.0005; Object.assign(sol.shadow.camera, { left: -26, right: 26, top: 22, bottom: -22, near: 1, far: 90 }); S.add(sol);
 
-  S.add(new THREE.HemisphereLight(0x9fb4d8, 0x1a1408, 0.4));
-  const sol = new THREE.DirectionalLight(0xfff2dc, 0.6); sol.position.set(-14, 28, 18); sol.castShadow = true;
-  sol.shadow.mapSize.set(2048, 2048); Object.assign(sol.shadow.camera, { left: -26, right: 26, top: 22, bottom: -22, near: 1, far: 80 }); S.add(sol);
-
-  const mat = (c, o = {}) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.75, metalness: 0.08, ...o });
+  const cacheMat = {};
+  const mat = (c, o = {}) => { const k = c + JSON.stringify(o); return cacheMat[k] || (cacheMat[k] = new THREE.MeshStandardMaterial({ color: c, roughness: 0.7, metalness: 0.05, ...o })); };
   const brilho = (c, i = 1.4) => new THREE.MeshStandardMaterial({ color: c, emissive: c, emissiveIntensity: i, roughness: 0.4 });
-  function bloco(w, h, d, m, x, y, z, pai = S) {
-    const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); b.position.set(x, y, z); b.castShadow = true; b.receiveShadow = true; pai.add(b); return b;
+  const geo = {};
+  function bloco(w, h, d, m, x, y, z, pai = S, sombra = true) {
+    const k = "b" + w + "," + h + "," + d; const g = geo[k] || (geo[k] = new THREE.BoxGeometry(w, h, d));
+    const b = new THREE.Mesh(g, m); b.position.set(x, y, z); b.castShadow = sombra; b.receiveShadow = true; pai.add(b); return b;
   }
+  function cil(rt, rb, h, m, x, y, z, pai = S, seg = 14) {
+    const k = "c" + rt + "," + rb + "," + h + "," + seg; const g = geo[k] || (geo[k] = new THREE.CylinderGeometry(rt, rb, h, seg));
+    const c = new THREE.Mesh(g, m); c.position.set(x, y, z); c.castShadow = true; c.receiveShadow = true; pai.add(c); return c;
+  }
+  function esfera(r, m, x, y, z, pai = S) { const k = "s" + r; const g = geo[k] || (geo[k] = new THREE.SphereGeometry(r, 18, 14)); const s = new THREE.Mesh(g, m); s.position.set(x, y, z); s.castShadow = true; pai.add(s); return s; }
   const OURO = 0xe2b85c, AZUL = 0x5aa0e6;
 
-  // piso, paredes e moldura dourada (escritório 30 x 20)
+  // ================= prédio =================
   const LX = 15, LZ = 10;
-  bloco(LX * 2 + 1, 0.6, LZ * 2 + 1, mat(0x24272d), 0, -0.3, 0);
-  bloco(LX * 2 + 1.6, 0.25, LZ * 2 + 1.6, brilho(OURO, 0.9), 0, -0.55, 0);
-  bloco(LX * 2 - 1, 0.02, LZ * 2 - 1, mat(0x2e3138), 0, 0.01, 0);
-  const parede = mat(0x16181d);
-  bloco(LX * 2 + 1, 5, 0.5, parede, 0, 2.5, -LZ - 0.25);
-  bloco(0.5, 5, LZ * 2 + 1, parede, -LX - 0.25, 2.5, 0);
-  bloco(LX * 2 + 1, 0.15, 0.6, brilho(OURO, 1.1), 0, 5.05, -LZ - 0.25);
-  bloco(0.6, 0.15, LZ * 2 + 1, brilho(OURO, 1.1), -LX - 0.25, 5.05, 0);
-  bloco(0.08, 0.12, LZ * 2, brilho(OURO, 0.9), LX + 0.4, 0.45, 0);          // grade baixa na frente
-  bloco(LX * 2, 0.12, 0.08, brilho(OURO, 0.9), 0, 0.45, LZ + 0.4);
-  for (let x = -LX; x <= LX; x += 3) bloco(0.08, 0.5, 0.08, mat(0x777777), x, 0.25, LZ + 0.4);
-  // racks de servidor na parede do fundo
-  for (let i = 0; i < 4; i++) {
-    bloco(1.2, 3.6, 1, mat(0x1c1f25), -LX + 1.2 + i * 1.4, 1.8, -LZ + 0.7);
-    for (let k = 0; k < 6; k++) bloco(0.8, 0.06, 0.02, brilho(k % 2 ? 0x4fd18f : 0x5aa0e6, 1.6), -LX + 1.2 + i * 1.4, 0.8 + k * 0.45, -LZ + 1.21);
-  }
-  // logo dourado na parede
-  const logo = new THREE.Shape(); const P1 = [[447,548],[502,505],[502,763],[447,763]], P2 = [[532,437],[584,394],[584,711],[612,711],[612,348],[665,303],[665,711],[773,711],[773,624],[712,585],[712,531],[823,599],[823,763],[532,763]];
-  const forma = (pts) => { const s = new THREE.Shape(); pts.forEach(([x, y], i) => (i ? s.lineTo : s.moveTo).call(s, (x - 635) / 120, -(y - 530) / 120)); return s; };
-  const logoM = new THREE.Mesh(new THREE.ExtrudeGeometry([forma(P1), forma(P2)], { depth: 0.15, bevelEnabled: false }), brilho(OURO, 0.7));
-  logoM.position.set(-4, 2.6, -LZ + 0.05); S.add(logoM);
+  bloco(LX * 2 + 1, 0.6, LZ * 2 + 1, mat(0x1b1d22), 0, -0.3, 0);
+  bloco(LX * 2 + 1.6, 0.25, LZ * 2 + 1.6, brilho(OURO, 0.7), 0, -0.55, 0);
+  // piso: madeira na área de descanso, carpete escuro na área de operação
+  const madeira = document.createElement("canvas"); madeira.width = 256; madeira.height = 256; const mx = madeira.getContext("2d");
+  for (let y = 0; y < 256; y += 16) { const tom = 90 + Math.random() * 25; mx.fillStyle = `rgb(${tom + 30},${tom},${tom - 35})`; mx.fillRect(0, y, 256, 16); mx.fillStyle = "rgba(0,0,0,.25)"; mx.fillRect(0, y, 256, 1); const cut = Math.random() * 256; mx.fillRect(cut, y, 1, 16); for (let i = 0; i < 6; i++) { mx.fillStyle = "rgba(60,30,10,.12)"; mx.fillRect(Math.random() * 256, y + Math.random() * 16, 30, 1); } }
+  const madTex = new THREE.CanvasTexture(madeira); madTex.wrapS = madTex.wrapT = THREE.RepeatWrapping; madTex.repeat.set(3, 4); madTex.encoding = THREE.sRGBEncoding;
+  const pisoMad = new THREE.Mesh(new THREE.PlaneGeometry(13, 19), new THREE.MeshStandardMaterial({ map: madTex, roughness: 0.8 })); pisoMad.rotation.x = -Math.PI / 2; pisoMad.position.set(8.5, 0.02, 0.5); pisoMad.receiveShadow = true; S.add(pisoMad);
+  const carp = new THREE.Mesh(new THREE.PlaneGeometry(17, 19), mat(0x2b2e34)); carp.rotation.x = -Math.PI / 2; carp.position.set(-6.5, 0.02, 0.5); carp.receiveShadow = true; S.add(carp);
+  // paredes com painéis (como nas referências)
+  const parede = mat(0x1a1c21);
+  bloco(LX * 2 + 1, 5.4, 0.5, parede, 0, 2.7, -LZ - 0.25); bloco(0.5, 5.4, LZ * 2 + 1, parede, -LX - 0.25, 2.7, 0);
+  for (let x = -LX + 0.5; x < LX; x += 1) bloco(0.9, 5, 0.06, mat(0xcdb894), x, 2.6, -LZ + 0.03, S, false);
+  for (let z = -LZ + 0.5; z < LZ; z += 1) bloco(0.06, 5, 0.9, mat(0xcdb894), -LX + 0.03, 2.6, z, S, false);
+  bloco(LX * 2 + 1, 0.15, 0.6, brilho(OURO, 1), 0, 5.45, -LZ - 0.25); bloco(0.6, 0.15, LZ * 2 + 1, brilho(OURO, 1), -LX - 0.25, 5.45, 0);
+  // logo dourado
+  const P1 = [[447,548],[502,505],[502,763],[447,763]], P2 = [[532,437],[584,394],[584,711],[612,711],[612,348],[665,303],[665,711],[773,711],[773,624],[712,585],[712,531],[823,599],[823,763],[532,763]];
+  const forma = (pts) => { const s = new THREE.Shape(); pts.forEach(([x, y], i) => (i ? s.lineTo : s.moveTo).call(s, (x - 635) / 140, -(y - 530) / 140)); return s; };
+  const logoM = new THREE.Mesh(new THREE.ExtrudeGeometry([forma(P1), forma(P2)], { depth: 0.15, bevelEnabled: false }), brilho(OURO, 0.8));
+  logoM.rotation.y = Math.PI / 2; logoM.position.set(-LX + 0.1, 3, 6.5); S.add(logoM);
 
-  // telão na parede (textura desenhada em canvas)
-  const tc = document.createElement("canvas"); tc.width = 1024; tc.height = 384; const tx = tc.getContext("2d");
-  const telaoTex = new THREE.CanvasTexture(tc); telaoTex.encoding = THREE.sRGBEncoding;
-  bloco(10.4, 4.2, 0.2, mat(0x101317), 6, 2.7, -LZ + 0.1);
-  const telao = new THREE.Mesh(new THREE.PlaneGeometry(10, 3.75), new THREE.MeshBasicMaterial({ map: telaoTex, toneMapped: false }));
-  telao.position.set(6, 2.7, -LZ + 0.22); S.add(telao);
+  // ================= telão verde gigante (parede do fundo) =================
+  const tc = document.createElement("canvas"); tc.width = 2048; tc.height = 512; const tx = tc.getContext("2d");
+  const telaoTex = new THREE.CanvasTexture(tc); telaoTex.encoding = THREE.sRGBEncoding; telaoTex.anisotropy = 4;
+  bloco(22.4, 4.4, 0.25, mat(0x0b0d10), -2, 2.85, -LZ + 0.15);
+  const telao = new THREE.Mesh(new THREE.PlaneGeometry(22, 4.05), new THREE.MeshBasicMaterial({ map: telaoTex, toneMapped: false })); telao.position.set(-2, 2.85, -LZ + 0.29); S.add(telao);
   function desenhaTelao() {
     const M = (D && D.mt4) || {}, cal = M.calendario || [], hoje = (M.agora_srv || "").slice(0, 10), dia = cal.find((x) => x.dia === hoje);
-    tx.fillStyle = "#060a12"; tx.fillRect(0, 0, 1024, 384);
-    tx.fillStyle = "rgba(226,184,92,.9)"; tx.fillRect(0, 0, 1024, 6);
-    tx.font = "600 34px Jost, sans-serif"; tx.fillStyle = "#8ea1bd"; tx.fillText("RESULTADO DO DIA", 40, 70);
-    const p = dia && dia.pct != null ? dia.pct : 0;
-    tx.font = "600 120px 'IBM Plex Mono', monospace"; tx.fillStyle = p >= 0 ? "#4fd18f" : "#ff6f61"; tx.fillText(dia ? pct(p) : "—", 34, 200);
-    tx.font = "500 34px Jost, sans-serif"; tx.fillStyle = "#e9eef6";
-    tx.fillText(dia ? `${dia.ops} operações · ${dia.venc} no verde` : "", 40, 262);
-    if (M.flutuante != null) { tx.fillStyle = M.flutuante >= 0 ? "#4fd18f" : "#ff6f61"; tx.fillText("Em aberto agora: " + usd(M.flutuante), 40, 318); }
-    tx.fillStyle = "#ff6f61"; tx.beginPath(); tx.arc(900, 60, 12, 0, 7); tx.fill(); tx.fillStyle = "#e9eef6"; tx.font = "600 30px Jost"; tx.fillText("LIVE", 922, 71);
-    telaoTex.needsUpdate = true;
+    const g = tx.createLinearGradient(0, 0, 0, 512); g.addColorStop(0, "#0b3b22"); g.addColorStop(1, "#04170d"); tx.fillStyle = g; tx.fillRect(0, 0, 2048, 512);
+    tx.strokeStyle = "rgba(120,255,170,.08)"; tx.lineWidth = 2; for (let x = 0; x < 2048; x += 64) { tx.beginPath(); tx.moveTo(x, 90); tx.lineTo(x, 470); tx.stroke(); } for (let y = 90; y < 470; y += 48) { tx.beginPath(); tx.moveTo(0, y); tx.lineTo(2048, y); tx.stroke(); }
+    const rend = D ? D.rendimento_pct : null;
+    tx.font = "700 46px 'IBM Plex Mono', monospace"; tx.fillStyle = "#7dffb0";
+    tx.fillText(`LEGATUS GOLD  ${rend != null ? pct(rend) : ""}  ·  ${(M.abertas || []).length} EM OPERAÇÃO  ·  CONTA REAL  ·  RENTABILIDADE AO VIVO`, 40, 62);
+    // curva de rendimento (dados reais)
+    const cur = (D && D.rendimento_curva) || [];
+    if (cur.length > 1) {
+      const v = cur.map((x) => x[1]), lo = Math.min(0, ...v), hi = Math.max(...v), X = (i) => 60 + i / (v.length - 1) * 1700, Y = (y) => 440 - (y - lo) / (hi - lo || 1) * 320;
+      tx.fillStyle = "rgba(79,209,143,.28)"; tx.beginPath(); tx.moveTo(X(0), 440); v.forEach((y, i) => tx.lineTo(X(i), Y(y))); tx.lineTo(X(v.length - 1), 440); tx.fill();
+      tx.strokeStyle = "#8affbe"; tx.lineWidth = 6; tx.beginPath(); v.forEach((y, i) => (i ? tx.lineTo(X(i), Y(y)) : tx.moveTo(X(i), Y(y)))); tx.stroke();
+      tx.fillStyle = "#8affbe"; tx.beginPath(); tx.arc(X(v.length - 1), Y(v[v.length - 1]), 10, 0, 7); tx.fill();
+      tx.font = "500 26px 'IBM Plex Mono'"; tx.fillStyle = "rgba(160,255,200,.6)"; cur.forEach((c, i) => { if (i % Math.ceil(cur.length / 8) === 0) tx.fillText(c[0].slice(8, 10) + "/" + c[0].slice(5, 7), X(i) - 30, 498); });
+    }
+    tx.textAlign = "right"; tx.font = "700 64px 'IBM Plex Mono'"; const p = dia && dia.pct != null ? dia.pct : 0;
+    tx.fillStyle = p >= 0 ? "#8affbe" : "#ff8a7e"; tx.fillText(dia ? pct(p) : "", 2010, 200); tx.font = "500 30px Jost"; tx.fillStyle = "#cfe9d8"; tx.fillText("HOJE", 2010, 240);
+    if (M.flutuante != null) { tx.font = "700 40px 'IBM Plex Mono'"; tx.fillStyle = M.flutuante >= 0 ? "#8affbe" : "#ff8a7e"; tx.fillText(usd(M.flutuante), 2010, 330); tx.font = "500 30px Jost"; tx.fillStyle = "#cfe9d8"; tx.fillText("EM ABERTO", 2010, 368); }
+    tx.textAlign = "left"; telaoTex.needsUpdate = true;
   }
 
-  // ---------- mesas (até 12 operações ao mesmo tempo) ----------
+  // ================= bancadas de operação (12 lugares, 2 monitores cada) =================
   const mesas = [];
-  const corMonitor = new THREE.Color();
-  for (let r = 0; r < 3; r++) for (let c = 0; c < 4; c++) {
-    const x = -12 + c * 5, z = -4.2 + r * 4.6, g = new THREE.Group(); g.position.set(x, 0, z); S.add(g);
-    bloco(3.2, 0.12, 1.5, mat(0x5c6168), 0, 1.0, 0, g);
-    bloco(0.1, 1, 1.3, mat(0x55595f), -1.5, 0.5, 0, g); bloco(0.1, 1, 1.3, mat(0x55595f), 1.5, 0.5, 0, g);
-    const tela = bloco(1.5, 0.9, 0.08, brilho(0x1a2a44, 0.6), 0, 1.65, -0.45, g);
-    bloco(0.1, 0.5, 0.1, mat(0x333333), 0, 1.25, -0.45, g);
-    bloco(1.1, 0.04, 0.4, mat(0x222222), 0, 1.08, 0.1, g);       // teclado
-    const faixa = bloco(3.4, 0.04, 1.7, brilho(0x222830, 0.2), 0, 0.03, 0, g);   // luz no chão da mesa (cor do tipo)
-    bloco(0.8, 0.1, 0.8, mat(0x1d2027), 0, 0.6, 1.1, g);          // cadeira
-    bloco(0.8, 0.8, 0.1, mat(0x1d2027), 0, 1.0, 1.5, g);
-    mesas.push({ g, tela, faixa, x, z, livre: true });
+  function telaCanvas(w, h) { const c = document.createElement("canvas"); c.width = w; c.height = h; const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; return { c, t }; }
+  for (let r = 0; r < 4; r++) for (let c = 0; c < 3; c++) {
+    const x = -11.6 + c * 4.6, z = -4.8 + r * 3.7, g = new THREE.Group(); g.position.set(x, 0, z); S.add(g);
+    bloco(3.9, 0.1, 1.4, mat(0xe8e8ea), 0, 1.0, 0, g); bloco(3.9, 0.06, 0.12, mat(0x9a9ca2), 0, 0.93, 0.66, g);
+    bloco(0.08, 0.95, 1.2, mat(0x6d7078), -1.85, 0.48, 0, g); bloco(0.08, 0.95, 1.2, mat(0x6d7078), 1.85, 0.48, 0, g);
+    const a = telaCanvas(256, 160), b = telaCanvas(256, 160);
+    const mon = (dx, ry, tt) => { const m = new THREE.Group(); m.position.set(dx, 1.68, -0.42); m.rotation.y = ry; g.add(m); bloco(1.45, 0.92, 0.07, mat(0x15161a), 0, 0, 0, m); const s = new THREE.Mesh(new THREE.PlaneGeometry(1.36, 0.84), new THREE.MeshBasicMaterial({ map: tt, toneMapped: false })); s.position.z = 0.04; m.add(s); };
+    mon(-0.72, 0.18, a.t); mon(0.72, -0.18, b.t);
+    bloco(0.1, 0.5, 0.1, mat(0x2a2a2e), 0, 1.27, -0.45, g); bloco(0.6, 0.04, 0.3, mat(0x2a2a2e), 0, 1.07, -0.45, g);
+    bloco(1.05, 0.04, 0.32, mat(0xdcdcdc), 0, 1.07, 0.15, g); bloco(0.15, 0.04, 0.22, mat(0xdcdcdc), 0.75, 1.07, 0.18, g);
+    bloco(0.42, 0.9, 0.85, mat(0x202227), 1.45, 0.47, -0.1, g); const led = bloco(0.02, 0.6, 0.04, brilho(0x5fe8ff, 2), 1.67, 0.5, 0.2, g, false);
+    cil(0.08, 0.07, 0.16, mat(c % 2 ? 0x5cbf8a : 0xffffff), -1.4, 1.13, 0.15, g);   // caneca
+    const faixa = bloco(4.1, 0.03, 1.9, brilho(0x222830, 0.2), 0, 0.035, 0.25, g, false);
+    // cadeira de escritório
+    cil(0.42, 0.42, 0.1, mat(0x24262c), 0, 0.62, 1.05, g); bloco(0.78, 0.75, 0.1, mat(0x24262c), 0, 1.05, 1.42, g); cil(0.05, 0.05, 0.5, mat(0x777777), 0, 0.33, 1.05, g); cil(0.35, 0.35, 0.05, mat(0x333333), 0, 0.06, 1.05, g);
+    mesas.push({ g, a, b, faixa, led, x, z, livre: true, op: null, serie: [], linhas: [], semente: Math.random() * 100 });
+  }
+  function desenhaMonitores(m, t) {
+    const c = m.a.c.getContext("2d"), d = m.b.c.getContext("2d"), op = m.op;
+    c.fillStyle = "#070b10"; c.fillRect(0, 0, 256, 160); d.fillStyle = "#070b10"; d.fillRect(0, 0, 256, 160);
+    if (!op) { c.fillStyle = "#e2b85c"; c.font = "600 20px Jost"; c.textAlign = "center"; c.fillText("LEGATUS", 128, 85 + Math.sin(t + m.semente) * 6); c.textAlign = "left"; d.fillStyle = "#1b2433"; d.fillRect(20, 60, 216, 40); m.a.t.needsUpdate = m.b.t.needsUpdate = true; return; }
+    // monitor 1: gráfico de velas
+    if (!m.serie.length) { let p = 100; for (let i = 0; i < 40; i++) { const o = p; p += rnd(-1, 1) + ((op.lucro || 0) >= 0 ? 0.08 : -0.08) * (op.lado === "buy" ? 1 : -1); m.serie.push([o, p, Math.max(o, p) + rnd(0, .6), Math.min(o, p) - rnd(0, .6)]); } }
+    const ult = m.serie[m.serie.length - 1]; ult[1] += rnd(-0.25, 0.25); ult[2] = Math.max(ult[2], ult[1]); ult[3] = Math.min(ult[3], ult[1]);
+    if (Math.random() < 0.08) { const p = ult[1]; m.serie.push([p, p, p, p]); if (m.serie.length > 40) m.serie.shift(); }
+    const hi = Math.max(...m.serie.map((v) => v[2])), lo = Math.min(...m.serie.map((v) => v[3])), Y = (v) => 28 + (hi - v) / (hi - lo || 1) * 96;
+    c.strokeStyle = "rgba(255,255,255,.06)"; for (let y = 28; y <= 124; y += 24) { c.beginPath(); c.moveTo(0, y); c.lineTo(256, y); c.stroke(); }
+    m.serie.forEach((v, i) => { const x = 6 + i * 6, up = v[1] >= v[0]; c.fillStyle = up ? "#2fbf73" : "#e0544a"; c.fillRect(x + 2, Y(v[2]), 1, Y(v[3]) - Y(v[2]) + 1); c.fillRect(x, Y(Math.max(v[0], v[1])), 5, Math.max(1, Math.abs(Y(v[0]) - Y(v[1])))); });
+    c.strokeStyle = "#e2b85c"; c.setLineDash([4, 3]); c.beginPath(); c.moveTo(0, Y(ult[1])); c.lineTo(256, Y(ult[1])); c.stroke(); c.setLineDash([]);
+    c.fillStyle = "#0d1424"; c.fillRect(0, 0, 256, 22); c.fillStyle = "#cfd8e6"; c.font = "600 13px 'IBM Plex Mono'"; c.fillText(`${op.par} M1`, 6, 16);
+    const ok = (op.lucro || 0) >= 0; c.fillStyle = ok ? "#4fd18f" : "#ff6f61"; c.font = "700 18px 'IBM Plex Mono'"; c.fillText(op.lucro == null ? "" : usd(op.lucro), 6, 150);
+    // monitor 2: boleta e "registro" correndo
+    d.fillStyle = "#0d1424"; d.fillRect(0, 0, 256, 22); d.fillStyle = "#cfd8e6"; d.font = "600 12px 'IBM Plex Mono'"; d.fillText("ORDEM #" + String(op.abre).replace(".", "").slice(-6), 6, 15);
+    d.font = "600 13px 'IBM Plex Mono'"; d.fillStyle = op.lado === "buy" ? "#5fe8ff" : "#ffae4d"; d.fillText(op.lado === "buy" ? "COMPRA" : "VENDA", 6, 42); d.fillStyle = "#cfd8e6"; d.fillText(String(op.lote).replace(".", ",") + " lote", 100, 42);
+    d.fillText("entrada " + op.abre, 6, 60); if (op.agora) d.fillText("agora   " + op.agora, 6, 76);
+    if (Math.random() < 0.3) { m.linhas.push([Math.random() < 0.5 ? "#4fd18f" : "#5a6b85", rnd(60, 230)]); if (m.linhas.length > 7) m.linhas.shift(); }
+    m.linhas.forEach(([cor, w], i) => { d.fillStyle = cor; d.fillRect(6, 90 + i * 9, w, 4); });
+    m.a.t.needsUpdate = m.b.t.needsUpdate = true;
   }
   function pintaMesa(m, op) {
-    if (!op) { m.tela.material.color.set(0x1a2a44); m.tela.material.emissive.set(0x1a2a44); m.tela.material.emissiveIntensity = 0.4; m.faixa.material.emissive.set(0x222830); m.faixa.material.emissiveIntensity = 0.2; return; }
-    const ok = (op.lucro || 0) >= 0; corMonitor.set(ok ? 0x2fbf73 : 0xe0544a);
-    m.tela.material.color.copy(corMonitor); m.tela.material.emissive.copy(corMonitor); m.tela.material.emissiveIntensity = 1.1;
-    m.faixa.material.emissive.set(op.tipo === "swing" ? AZUL : OURO); m.faixa.material.emissiveIntensity = 0.9;
+    if (!op || !m.op || m.op.k !== op.k) m.serie = [];
+    m.op = op || null;
+    m.faixa.material.emissive.set(op ? (op.tipo === "swing" ? AZUL : OURO) : 0x222830); m.faixa.material.emissiveIntensity = op ? 0.7 : 0.2;
   }
 
-  // ---------- área de descanso: café e bilhar ----------
-  bloco(6, 1.1, 1.2, mat(0x5a3d26), 11, 0.55, -8.5); bloco(0.9, 1.3, 0.8, mat(0x2d3038), 9, 1.75, -8.6); bloco(0.5, 0.2, 0.1, brilho(0x5fe8ff, 2), 9, 1.9, -8.18);
-  bloco(4, 0.7, 1.4, mat(0x6b2a44), 11.5, 0.35, -2.2); bloco(4, 0.9, 0.4, mat(0x7d3352), 11.5, 0.9, -2.8);   // sofá
-  bloco(4.4, 0.9, 2.6, mat(0x4a2e1c), 10.5, 0.45, 5); bloco(4, 0.08, 2.2, mat(0x1f7a4a), 10.5, 0.93, 5);     // bilhar
-  const bolas = [0xffffff, OURO, 0xe0544a, 0x5aa0e6, 0x2b2b2b].map((c, i) => { const b = new THREE.Mesh(new THREE.SphereGeometry(0.12, 12, 8), mat(c, { roughness: 0.2 })); b.position.set(9.6 + i * 0.4, 1.06, 4.6 + (i % 2) * 0.5); S.add(b); return b; });
-  [[-13.8, 8.8], [13.8, 8.8], [13.8, -1], [-13.8, -8.5]].forEach(([x, z]) => {           // plantas
-    bloco(0.7, 0.6, 0.7, mat(0x3a3d44), x, 0.3, z);
-    const f = new THREE.Mesh(new THREE.ConeGeometry(0.6, 1.6, 6), mat(0x55d6c2, { emissive: 0x1a6b5f, emissiveIntensity: 0.4 })); f.position.set(x, 1.4, z); f.castShadow = true; S.add(f);
-  });
-  const LAZER = [[9.6, -7.3], [11.4, -7.3], [13, -7.3], [10.5, -1.2], [12.5, -1.2], [8.2, 5], [12.8, 5.4], [10.5, 7.2], [9, 3], [12.2, 2.6]];
+  // ================= sala de reunião (vidro) =================
+  const RX = 9.3, RZ = -6.5;
+  const vidro = new THREE.MeshStandardMaterial({ color: 0xbfe6ff, transparent: true, opacity: 0.16, roughness: 0.05, metalness: 0.3 });
+  bloco(11.4, 2.8, 0.06, vidro, RX + 0.3, 1.4, -2.9, S, false); bloco(0.06, 2.8, 7.1, vidro, 3.6, 1.4, -6.45, S, false);
+  bloco(11.4, 0.08, 0.1, mat(0x9aa0aa), RX + 0.3, 2.8, -2.9, S, false); bloco(0.1, 0.08, 7.1, mat(0x9aa0aa), 3.6, 2.8, -6.45, S, false);
+  bloco(5.4, 0.12, 2.2, mat(0x3b2c22), RX, 1.0, RZ); cil(0.15, 0.25, 1, mat(0x555555), RX - 1.8, 0.5, RZ); cil(0.15, 0.25, 1, mat(0x555555), RX + 1.8, 0.5, RZ);
+  bloco(0.5, 0.04, 0.35, mat(0xffffff), RX - 1, 1.08, RZ - 0.3); bloco(0.35, 0.03, 0.25, mat(0xd9d9d9), RX + 1.2, 1.08, RZ + 0.4);   // papéis, notebook
+  const cadeirasReuniao = [];
+  [-1.8, 0, 1.8].forEach((dx) => { [[-1.6, 0], [1.6, Math.PI]].forEach(([dz, rot]) => { cil(0.38, 0.38, 0.1, mat(0x2c3a52), RX + dx, 0.62, RZ + dz); bloco(0.72, 0.7, 0.08, mat(0x2c3a52), RX + dx, 1.02, RZ + dz + (dz < 0 ? -0.36 : 0.36)); cadeirasReuniao.push({ x: RX + dx, z: RZ + dz + (dz < 0 ? -0.05 : 0.05), rot }); }); });
 
-  // ---------- operadores ----------
-  const CAMISAS = [0x2d6cdf, 0xd9524a, 0x2fa36b, 0x8b5bd6, 0xe2a23a, 0x3fb6c9, 0xd06aa0, 0x6f7a8a];
-  const PELE = [0xf1c9a0, 0xd9a77c, 0xa8724a, 0x7a4e2e];
-  const ops = [];   // operadores
-  let nId = 0;
-  function novoOperador() {
-    const g = new THREE.Group(), id = nId++;
-    const camisa = mat(CAMISAS[id % CAMISAS.length]), calca = mat(0x23262d), pele = mat(PELE[id % PELE.length]);
-    const pernaE = new THREE.Group(), pernaD = new THREE.Group();
-    bloco(0.22, 0.7, 0.24, calca, 0, -0.35, 0, pernaE); bloco(0.22, 0.7, 0.24, calca, 0, -0.35, 0, pernaD);
-    pernaE.position.set(-0.14, 0.75, 0); pernaD.position.set(0.14, 0.75, 0); g.add(pernaE, pernaD);
-    const tronco = bloco(0.6, 0.75, 0.34, camisa, 0, 1.12, 0, g);
-    const bE = new THREE.Group(), bD = new THREE.Group();
-    bloco(0.16, 0.6, 0.18, camisa, 0, -0.28, 0, bE); bloco(0.16, 0.6, 0.18, camisa, 0, -0.28, 0, bD);
-    bE.position.set(-0.4, 1.45, 0); bD.position.set(0.4, 1.45, 0); g.add(bE, bD);
-    const cab = new THREE.Mesh(new THREE.SphereGeometry(0.25, 14, 10), pele); cab.position.set(0, 1.78, 0); cab.castShadow = true; g.add(cab);
-    const cabelo = new THREE.Mesh(new THREE.SphereGeometry(0.26, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2.2), mat(id % 3 ? 0x2a1d14 : 0x111111)); cabelo.position.set(0, 1.82, 0); g.add(cabelo);
-    const fone = bloco(0.56, 0.06, 0.08, brilho(0xe2b85c, 0.6), 0, 2.02, 0, g);   // headset dourado
-    g.scale.setScalar(0.95);
+  // ================= área de descanso =================
+  // mesa alta com banquetas (como na referência)
+  cil(0.75, 0.75, 0.08, mat(0xf2f2f2), 6.5, 1.35, 1.6); cil(0.06, 0.06, 1.3, mat(0x777777), 6.5, 0.67, 1.6); cil(0.4, 0.4, 0.05, mat(0x777777), 6.5, 0.03, 1.6);
+  cil(0.07, 0.07, 0.14, mat(0xffffff), 6.3, 1.46, 1.5); cil(0.07, 0.07, 0.14, mat(0x5cbf8a), 6.8, 1.46, 1.8);
+  [[5.5, 1.6], [7.5, 1.6]].forEach(([x, z]) => { cil(0.3, 0.3, 0.08, mat(0x222428), x, 1.0, z); cil(0.04, 0.04, 1, mat(0x777777), x, 0.5, z); });
+  // copa
+  bloco(4.4, 1.1, 1, mat(0xdedede), 11, 0.55, -1.8); bloco(4.4, 0.08, 1.05, mat(0x8a8f99), 11, 1.14, -1.8);
+  bloco(0.7, 1, 0.6, mat(0x2d3038), 9.3, 1.68, -1.9); bloco(0.35, 0.18, 0.04, brilho(0x5fe8ff, 2), 9.3, 1.85, -1.58, S, false);
+  bloco(0.5, 1.4, 0.5, mat(0xeaeaea), 14, 0.7, -1.8); bloco(0.42, 0.5, 0.42, mat(0x7fc8ff, { transparent: true, opacity: 0.7 }), 14, 1.65, -1.8);
+  // sofá em L com mesinha
+  bloco(4.2, 0.55, 1.2, mat(0x8c8f96), 11.5, 0.28, 3.6); bloco(4.2, 0.75, 0.32, mat(0x9a9da4), 11.5, 0.75, 4.2); bloco(1.2, 0.55, 2.6, mat(0x8c8f96), 13.9, 0.28, 2.3); bloco(0.32, 0.75, 2.6, mat(0x9a9da4), 14.4, 0.75, 2.3);
+  bloco(0.6, 0.5, 0.15, mat(0x7fd1a0), 10.5, 0.75, 3.9); bloco(0.6, 0.5, 0.15, mat(0xffffff), 12.4, 0.75, 3.9);   // almofadas
+  bloco(1.8, 0.42, 1, mat(0xf2f2f2), 11.5, 0.21, 2.2);
+  // bilhar (mesa clara, pano verde-água)
+  const BX = 10.2, BZ = 7.6;
+  bloco(4.6, 0.25, 2.6, mat(0xd8c7a8), BX, 0.95, BZ); bloco(4.1, 0.04, 2.1, mat(0xa8e8c8), BX, 1.08, BZ);
+  [[-2.1, -1.1], [2.1, -1.1], [-2.1, 1.1], [2.1, 1.1]].forEach(([a, b]) => bloco(0.35, 0.85, 0.35, mat(0xd8c7a8), BX + a, 0.43, BZ + b));
+  const bolas = [0xffffff, OURO, 0xe0544a, 0x5aa0e6, 0x2b2b2b, 0x8b5bd6, 0xff9f43].map((c, i) => { const b = esfera(0.1, mat(c, { roughness: 0.2 }), BX + 0.6 + (i % 3) * 0.22, 1.2, BZ - 0.3 + Math.floor(i / 3) * 0.25); return { m: b, vx: 0, vz: 0 }; });
+  bolas[0].m.position.set(BX - 1.3, 1.2, BZ);
+  // pingue-pongue
+  const PX = 3.3, PZ = 7.6;
+  bloco(3.8, 0.08, 2.1, mat(0x3b7bd6), PX, 1.0, PZ); bloco(3.8, 0.02, 0.04, mat(0xffffff), PX, 1.05, PZ); bloco(0.04, 0.3, 2.2, mat(0x222222, { transparent: true, opacity: 0.7 }), PX, 1.18, PZ);
+  [[-1.7, -0.9], [1.7, -0.9], [-1.7, 0.9], [1.7, 0.9]].forEach(([a, b]) => cil(0.04, 0.04, 1, mat(0x9a9ca2), PX + a, 0.5, PZ + b));
+  const bolinha = esfera(0.06, mat(0xffffff), PX, 1.3, PZ);
+  // plantas e cachorro
+  const vaso = (x, z) => { cil(0.32, 0.25, 0.5, mat(0xc79a72), x, 0.25, z); [0, 1, 2, 3, 4].forEach((i) => esfera(0.32, mat(0x8fd1a8), x + Math.cos(i * 1.3) * 0.22, 0.85 + (i % 2) * 0.25, z + Math.sin(i * 1.3) * 0.22)); };
+  [[-13.9, 9], [14, 9], [14, -3.4], [5.6, -2.3], [-13.9, -8.6]].forEach(([x, z]) => vaso(x, z));
+  const cama = cil(0.75, 0.75, 0.18, mat(0x8fe0a8), 13.2, 0.09, 6.2);
+  const dog = new THREE.Group(); S.add(dog);
+  bloco(0.9, 0.3, 0.3, mat(0x1b1b1b), 0, 0.42, 0, dog); bloco(0.32, 0.28, 0.28, mat(0x1b1b1b), 0.55, 0.55, 0, dog); bloco(0.16, 0.12, 0.18, mat(0xc98a4a), 0.75, 0.5, 0, dog);
+  bloco(0.06, 0.2, 0.12, mat(0x2a1d14), 0.5, 0.7, 0.14, dog); bloco(0.06, 0.2, 0.12, mat(0x2a1d14), 0.5, 0.7, -0.14, dog);
+  const patas = [[-0.35, 0.1], [-0.35, -0.1], [0.3, 0.1], [0.3, -0.1]].map(([a, b]) => bloco(0.08, 0.3, 0.08, mat(0xc98a4a), a, 0.15, b, dog));
+  const rabo = bloco(0.28, 0.06, 0.06, mat(0x1b1b1b), -0.55, 0.55, 0, dog);
+  const dg = { x: 13.2, z: 6.2, tx: 13.2, tz: 6.2, ate: 4 };
+
+  // pontos onde quem está livre circula
+  const PONTOS = [
+    { x: 9.3, z: -1.0, rot: Math.PI, acao: "cafe" }, { x: 10.6, z: -1.0, rot: Math.PI, acao: "cafe" }, { x: 14, z: -1.0, rot: Math.PI, acao: "agua" },
+    { x: 5.5, z: 1.6, rot: Math.PI / 2, acao: "banqueta" }, { x: 7.5, z: 1.6, rot: -Math.PI / 2, acao: "banqueta" }, { x: 6.5, z: 2.7, rot: Math.PI, acao: "conversa" },
+    { x: 10.8, z: 3.5, rot: Math.PI, acao: "sofa" }, { x: 12.2, z: 3.5, rot: Math.PI, acao: "sofa" }, { x: 13.8, z: 1.8, rot: -Math.PI / 2, acao: "sofa" },
+    { x: 0.4, z: 8.6, rot: 0.6, acao: "conversa" }, { x: 1.3, z: 9.0, rot: -2.4, acao: "conversa" }, { x: -4, z: -8.6, rot: Math.PI, acao: "telao" }, { x: -1.5, z: -8.6, rot: Math.PI, acao: "telao" },
+  ];
+
+  // ================= pessoas (estilo arredondado das referências) =================
+  const CAMISAS = [0x2d6cdf, 0xd9524a, 0x6cd26c, 0xffffff, 0x8b5bd6, 0xe2a23a, 0x3fb6c9, 0xd06aa0, 0xffffff, 0x1f2a44];
+  const PELES = [0xf3cfa6, 0xe0b088, 0xb9805a, 0x8a5a3a, 0x5e3b24];
+  const CABELOS = [0x2a1d14, 0x111111, 0x6b4423, 0xe8d9a8, 0x8c2f1b, 0xb05a2a];
+  const gente = []; let nId = 0;
+  function novaPessoa(papel) {
+    const id = nId++, g = new THREE.Group();
+    const social = id % 3 === 0;
+    const camisa = mat(CAMISAS[(id * 3) % CAMISAS.length]), calca = mat(social ? 0x15171c : [0xe8dcc0, 0x23262d, 0x2b3550, 0x15171c][id % 4]), pele = mat(PELES[id % PELES.length]);
+    const perna = (lx) => { const p = new THREE.Group(); cil(0.12, 0.1, 0.72, calca, 0, -0.36, 0, p); bloco(0.2, 0.1, 0.32, mat(0x111111), 0, -0.74, 0.05, p); p.position.set(lx, 0.78, 0); g.add(p); return p; };
+    const braco = (lx) => { const b = new THREE.Group(); cil(0.09, 0.08, 0.58, camisa, 0, -0.28, 0, b); esfera(0.085, pele, 0, -0.6, 0, b); b.position.set(lx, 1.42, 0); g.add(b); return b; };
+    const pE = perna(-0.13), pD = perna(0.13);
+    const tronco = cil(0.25, 0.22, 0.72, camisa, 0, 1.12, 0, g);
+    if (social) { bloco(0.4, 0.5, 0.06, mat(0x15171c), 0, 1.12, 0.21, g, false); bloco(0.07, 0.35, 0.03, mat(0xe2b85c), 0, 1.2, 0.25, g, false); }   // colete e gravata
+    const bE = braco(-0.33), bD = braco(0.33);
+    const cab = new THREE.Group(); cab.position.set(0, 1.72, 0); g.add(cab);
+    cil(0.08, 0.08, 0.12, pele, 0, -0.18, 0, cab);
+    esfera(0.25, pele, 0, 0.04, 0, cab);
+    const cabelo = new THREE.Mesh(new THREE.SphereGeometry(0.265, 18, 12, 0, Math.PI * 2, 0, Math.PI * (id % 5 === 1 ? 0.62 : 0.5)), mat(CABELOS[(id * 5) % CABELOS.length])); cabelo.position.y = 0.05; cabelo.rotation.x = -0.25; cabelo.castShadow = true; cab.add(cabelo);
+    if (id % 6 === 2) { const bone = new THREE.Mesh(new THREE.SphereGeometry(0.27, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2), mat(CAMISAS[(id * 7) % CAMISAS.length])); bone.position.y = 0.07; cab.add(bone); bloco(0.3, 0.03, 0.22, mat(CAMISAS[(id * 7) % CAMISAS.length]), 0, 0.08, 0.28, cab); }
+    // olhos discretos
+    esfera(0.03, mat(0x1a1a1a), -0.09, 0.07, 0.22, cab); esfera(0.03, mat(0x1a1a1a), 0.09, 0.07, 0.22, cab);
     S.add(g);
-    const lazer = LAZER[id % LAZER.length];
-    const o = { id, g, pernaE, pernaD, bE, bD, tronco, op: null, mesa: null, x: lazer[0], z: lazer[1], tx: lazer[0], tz: lazer[1], anda: false, fase: Math.random() * 6, espera: 0, lazerIdx: id % LAZER.length };
-    g.position.set(o.x, 0, o.z);
-    ops.push(o); return o;
+    const p = { id, g, pE, pD, bE, bD, cab, papel: papel || "livre", op: null, mesa: null, x: 0, z: 0, tx: 0, tz: 0, rot: 0, alvoRot: null, fase: Math.random() * 6, espera: 0, ponto: null, ate: 0 };
+    p.item = new THREE.Group(); bD.add(p.item); p.item.position.set(0, -0.62, 0.08);
+    gente.push(p); return p;
   }
-  function vaiLazer(o) { const l = LAZER[o.lazerIdx]; o.tx = l[0] + (Math.random() - 0.5) * 0.6; o.tz = l[1] + (Math.random() - 0.5) * 0.6; }
-  function vaiMesa(o, m) { o.tx = m.x; o.tz = m.z + 1.15; }
+  function segura(p, oque) {
+    p.item.clear();
+    if (oque === "caneca") cil(0.07, 0.07, 0.14, mat(0xffffff), 0, 0, 0.06, p.item);
+    if (oque === "taco") { const t = cil(0.025, 0.035, 2.1, mat(0xc9a06a), 0, 0.05, 0.85, p.item); t.rotation.x = Math.PI / 2 + 0.12; }
+    if (oque === "raquete") { cil(0.18, 0.18, 0.03, mat(0xd94a3a), 0, 0, 0.22, p.item).rotation.x = Math.PI / 2; cil(0.03, 0.03, 0.18, mat(0x8a6a3a), 0, 0, 0.05, p.item).rotation.x = Math.PI / 2; }
+  }
+  const ocupados = new Set();
+  function proximoPonto(p) {
+    if (p.ponto) ocupados.delete(p.ponto);
+    const livres = PONTOS.filter((q) => !ocupados.has(q)); const q = escolhe(livres.length ? livres : PONTOS);
+    ocupados.add(q); p.ponto = q; p.tx = q.x; p.tz = q.z; p.alvoRot = q.rot; segura(p, null);
+  }
+  const coloca = (p, x, z, r) => { p.x = p.tx = x; p.z = p.tz = z; p.alvoRot = p.rot = r; };
+  const jogBilhar = [novaPessoa("bilhar"), novaPessoa("bilhar")]; coloca(jogBilhar[0], BX - 2.9, BZ, Math.PI / 2); coloca(jogBilhar[1], BX + 1.2, BZ - 1.9, 0.3); jogBilhar.forEach((j) => segura(j, "taco"));
+  const jogPing = [novaPessoa("ping"), novaPessoa("ping")]; coloca(jogPing[0], PX - 2.5, PZ, Math.PI / 2); coloca(jogPing[1], PX + 2.5, PZ, -Math.PI / 2); jogPing.forEach((j) => segura(j, "raquete"));
+  [0, 2, 3].forEach((i) => { const p = novaPessoa("reuniao"); const c = cadeirasReuniao[i]; coloca(p, c.x, c.z, c.rot); });
+  const apres = novaPessoa("apresenta"); coloca(apres, RX - 3.6, RZ, Math.PI / 2);
+  let vezB = 0, tacada = 0;
 
-  // ---------- rótulos HTML sobre a cena ----------
+  // ================= rótulos e balões =================
   const camada = $("rotulos"), v3 = new THREE.Vector3();
   function tela(x, y, z) { v3.set(x, y, z).project(cam); return [(v3.x + 1) / 2 * innerWidth, (1 - v3.y) / 2 * innerHeight]; }
   const baloes = [];
-  function balao(o, v) {
-    const d = document.createElement("div"); d.className = "balao" + (v < 0 ? " neg" : ""); d.textContent = (v >= 0 ? "✓ " : "") + usd(v || 0);
-    camada.appendChild(d); baloes.push({ d, x: o.g.position.x, z: o.g.position.z, t: 0 });
-  }
+  function balao(x, z, v) { const d = document.createElement("div"); d.className = "balao" + (v < 0 ? " neg" : ""); d.innerHTML = `${v >= 0 ? "+$" : "−$"}<span>${usd(v || 0)}</span>`; camada.appendChild(d); baloes.push({ d, x, z, t: 0, dur: 6 }); }
+  const FALAS = ["Bora!", "Ouro subindo 📈", "Café? ☕", "Fechou no verde ✅", "Paciência…", "Gestão de risco!", "Longo prazo 💪", "Boa jogada!", "Quem pensa a curto prazo…"];
+  function fala(p) { const d = document.createElement("div"); d.className = "fala"; d.textContent = escolhe(FALAS); camada.appendChild(d); baloes.push({ d, p, t: 0, dur: 3 }); }
 
-  // ---------- dados ----------
+  // ================= dados =================
   let D = null, primeira = true;
   const chave = (o) => [o.par, o.lado, o.lote, o.abre].join("|");
   async function busca() {
@@ -234,94 +334,125 @@
     const abertas = (M.abertas || []).map((o) => ({ ...o, k: chave(o) }));
     const fechadas = [...((M.por_tipo && M.por_tipo.robo && M.por_tipo.robo.ultimas) || []), ...((M.por_tipo && M.por_tipo.swing && M.por_tipo.swing.ultimas) || [])];
     const ks = new Set(abertas.map((o) => o.k));
-    ops.forEach((o) => {
-      if (o.op && !ks.has(o.op.k)) {
-        const f = fechadas.find((x) => chave(x) === o.op.k);
-        if (!primeira) balao(o, f ? f.usd : o.op.lucro);
-        pintaMesa(mesas[o.mesa], null); mesas[o.mesa].livre = true;
-        o.op = null; o.mesa = null; o.espera = 2.5; vaiLazer(o);
+    gente.forEach((p) => {
+      if (p.op && !ks.has(p.op.k)) {
+        const f = fechadas.find((x) => chave(x) === p.op.k);
+        if (!primeira) balao(p.x, p.z, f ? f.usd : p.op.lucro);
+        pintaMesa(mesas[p.mesa], null); mesas[p.mesa].livre = true;
+        p.op = null; p.mesa = null; p.espera = 3; p.papel = "livre"; p.comemora = 2.5; proximoPonto(p);
       }
     });
     abertas.forEach((a) => {
-      const o = ops.find((x) => x.op && x.op.k === a.k);
-      if (o) { o.op = a; pintaMesa(mesas[o.mesa], a); return; }
+      const p = gente.find((x) => x.op && x.op.k === a.k);
+      if (p) { p.op = a; mesas[p.mesa].op = a; return; }
       const mi = mesas.findIndex((m) => m.livre); if (mi < 0) return;
-      const livre = ops.find((x) => !x.op && x.espera <= 0) || novoOperador();
-      livre.op = a; livre.mesa = mi; mesas[mi].livre = false; vaiMesa(livre, mesas[mi]); pintaMesa(mesas[mi], a);
-      if (primeira) { livre.x = livre.tx; livre.z = livre.tz; }
+      const q = gente.find((x) => x.papel === "livre" && x.espera <= 0) || novaPessoa("livre");
+      if (q.ponto) { ocupados.delete(q.ponto); q.ponto = null; }
+      q.papel = "trabalha"; q.op = a; q.mesa = mi; mesas[mi].livre = false; pintaMesa(mesas[mi], a); segura(q, null);
+      q.tx = mesas[mi].x; q.tz = mesas[mi].z + 1.0; q.alvoRot = Math.PI;
+      if (primeira) { q.x = q.tx; q.z = q.tz; q.rot = Math.PI; }
     });
-    while (ops.filter((o) => !o.op).length < 5) novoOperador();
-    extra = Math.max(0, abertas.length - mesas.length);
+    while (gente.filter((p) => p.papel === "livre").length < 6) { const p = novaPessoa("livre"); proximoPonto(p); p.x = p.tx; p.z = p.tz; }
     primeira = false;
-    // HUD
     const cal = M.calendario || [], hoje = (M.agora_srv || "").slice(0, 10), dia = cal.find((x) => x.dia === hoje);
-    $("t-dia").textContent = dia && dia.pct != null ? pct(dia.pct) : "—";
-    $("t-dia").style.color = dia && dia.pct < 0 ? "var(--verm)" : "var(--verde)";
-    const trab = abertas.length, desc = ops.filter((o) => !o.op).length;
-    $("t-sub").innerHTML = `${trab} em operação · ${desc} em descanso` + (M.flutuante != null ? ` · em aberto <b style="color:${M.flutuante >= 0 ? "var(--verde)" : "var(--verm)"}">${usd(M.flutuante)}</b>` : "");
+    $("t-dia").textContent = dia && dia.pct != null ? pct(dia.pct) : "—"; $("t-dia").style.color = dia && dia.pct < 0 ? "var(--verm)" : "var(--verde)";
+    $("t-sub").innerHTML = `${abertas.length} em operação · ${gente.length - abertas.length} no escritório` + (M.flutuante != null ? ` · em aberto <b style="color:${M.flutuante >= 0 ? "var(--verde)" : "var(--verm)"}">${usd(M.flutuante)}</b>` : "");
+    // faixa de notícias embaixo
+    const ult = fechadas.slice().sort((a, b) => (a.t < b.t ? 1 : -1)).slice(0, 8);
+    $("ticker").innerHTML = `<b class="ouro">LEGATUS GOLD</b> · RESULTADOS AO VIVO DA CONTA REAL · ` + (dia ? `HOJE <b class="${dia.pct >= 0 ? "pos" : "neg"}">${pct(dia.pct)}</b> · ` : "") + `${abertas.length} OPERAÇÕES ABERTAS · ` +
+      ult.map((f) => `${f.par.replace("XAUUSD", "OURO")} ${f.lado === "buy" ? "C" : "V"} <b class="${f.usd >= 0 ? "pos" : "neg"}">${usd(f.usd)}</b>`).join(" · ") + " · ATUALIZADO A CADA MINUTO · RESULTADO PASSADO NÃO GARANTE RESULTADO FUTURO";
     desenhaTelao();
   }
-  let extra = 0;
 
-  // ---------- câmera isométrica ----------
+  // ================= câmera (arrastar gira, rolar/pinça aproxima) =================
+  let estreito = false, giro = Math.PI / 4, zoom = 1, arrasta = null, ultimoToque = -1e9;
   function ajusta() {
     const w = innerWidth, h = innerHeight; R.setSize(w, h);
     const asp = w / h; estreito = asp < 0.8;
-    const alvoLarg = estreito ? 27 : 46;   // largura do mundo visível (no celular a câmera chega mais perto)
-    const meiaL = alvoLarg / 2, meiaA = meiaL / asp, desl = estreito ? 0.22 : 0;   // no celular a cena desce, abaixo do placar
+    const larg = (estreito ? 27 : 44) / zoom, meiaL = larg / 2, meiaA = meiaL / asp, desl = estreito ? 0.22 : 0.05;
     Object.assign(cam, { left: -meiaL, right: meiaL, top: meiaA * (1 + desl), bottom: -meiaA * (1 - desl) }); cam.updateProjectionMatrix();
     document.body.classList.toggle("estreito", estreito);
   }
+  R.domElement.addEventListener("pointerdown", (e) => { arrasta = { x: e.clientX, g: giro }; ultimoToque = performance.now(); });
+  addEventListener("pointermove", (e) => { if (arrasta) { giro = arrasta.g - (e.clientX - arrasta.x) * 0.006; ultimoToque = performance.now(); } });
+  addEventListener("pointerup", () => (arrasta = null));
+  R.domElement.addEventListener("wheel", (e) => { e.preventDefault(); zoom = Math.min(2.2, Math.max(0.8, zoom * (e.deltaY < 0 ? 1.1 : 0.9))); ajusta(); ultimoToque = performance.now(); }, { passive: false });
 
-  // ---------- laço ----------
-  let tAnt = performance.now(), T = 0, estreito = false;
+  // ================= animação =================
+  let tAnt = performance.now(), T = 0, tMon = 0, proxFala = 4;
+  function anima(p, dt) {
+    p.espera = Math.max(0, p.espera - dt); p.comemora = Math.max(0, (p.comemora || 0) - dt);
+    const dx = p.tx - p.x, dz = p.tz - p.z, d = Math.hypot(dx, dz);
+    const anda = p.espera <= 0 && d > 0.05;
+    if (anda) { const k = Math.min(1, 2.4 * dt / d); p.x += dx * k; p.z += dz * k; let a = Math.atan2(dx, dz) - p.rot; a = Math.atan2(Math.sin(a), Math.cos(a)); p.rot += a * Math.min(1, dt * 10); }
+    else if (p.alvoRot != null) { let a = p.alvoRot - p.rot; a = Math.atan2(Math.sin(a), Math.cos(a)); p.rot += a * Math.min(1, dt * 6); }
+    p.g.position.set(p.x, 0, p.z); p.g.rotation.y = p.rot;
+    const s = anda ? Math.sin(T * 9 + p.fase) * 0.6 : 0;
+    let senta = false, pernas = [s, -s], bracos = [-s * 0.7, s * 0.7], ab = [0, 0], cx = 0, cy = 0, y = anda ? Math.abs(Math.sin(T * 9 + p.fase)) * 0.04 : 0, incl = 0;
+    if (!anda) {
+      const ac = p.ponto && p.ponto.acao;
+      if (p.papel === "trabalha" || p.papel === "reuniao" || ac === "sofa" || ac === "banqueta") senta = true;
+      if (p.papel === "trabalha") { bracos = [-1.15 + Math.sin(T * 16 + p.fase) * 0.06, -1.15 + Math.cos(T * 15 + p.fase) * 0.06]; ab = [0.25, -0.25]; cy = Math.sin(T * 0.5 + p.fase) * 0.25; }
+      if (p.papel === "reuniao") { cy = Math.sin(T * 0.6 + p.fase) * 0.5; bracos = [-0.7, -0.7 + Math.max(0, Math.sin(T * 1.3 + p.fase)) * 0.5]; }
+      if (p.papel === "apresenta") { bracos = [0, -1.5 + Math.sin(T * 2) * 0.5]; cy = Math.sin(T * 0.7) * 0.6; }
+      if (ac === "cafe" || ac === "conversa" || ac === "banqueta") { if (!p.item.children.length && ac !== "conversa") segura(p, "caneca"); bracos = [0, -1.0 - Math.max(0, Math.sin(T * 0.8 + p.fase)) * 0.6]; cy = Math.sin(T * 0.9 + p.fase) * 0.35; }
+      if (ac === "telao") cx = -0.3;
+      if (p.papel === "bilhar") {
+        const minha = jogBilhar.indexOf(p) === vezB;
+        if (minha) { const puxa = Math.max(0, Math.sin(tacada * 2.4)); incl = 0.75; cx = -0.5; bracos = [-1.2, -1.25 + puxa * 0.3]; y = -0.08; }
+        else { bracos = [0.1, -0.2]; cy = Math.sin(T * 0.5) * 0.4; }
+      }
+      if (p.papel === "ping") { const lado = jogPing.indexOf(p) ? 1 : -1, golpe = Math.sin(T * 3.2 + (lado > 0 ? Math.PI : 0)); bracos = [-0.3, -0.9 + golpe * 0.5]; ab = [0, -0.5 * golpe]; incl = 0.15; y = Math.abs(golpe) * 0.03; p.g.position.z = p.z + golpe * 0.3; }
+    }
+    if (p.comemora > 0 && anda) { bracos = [-2.9, -2.9]; }
+    if (senta) { pernas = [-1.5, -1.5]; y = p.ponto && p.ponto.acao === "sofa" ? -0.35 : -0.15; incl = 0; }
+    p.pE.rotation.x = pernas[0]; p.pD.rotation.x = pernas[1]; p.bE.rotation.x = bracos[0]; p.bD.rotation.x = bracos[1]; p.bE.rotation.z = ab[0]; p.bD.rotation.z = ab[1];
+    p.cab.rotation.set(cx, cy, 0); p.g.position.y = y; p.g.rotation.x = incl;
+    if (p.papel === "livre" && !anda && p.espera <= 0) { if (!p.ate) p.ate = T + rnd(8, 18); if (T > p.ate) { p.ate = 0; proximoPonto(p); } }
+  }
   function quadro(agora) {
     const dt = Math.min(0.05, (agora - tAnt) / 1000); tAnt = agora; T += dt;
-    const ang = Math.PI / 4 + Math.sin(T * 0.08) * 0.12;   // câmera balança devagar
-    cam.position.set(ALVO.x + Math.sin(ang) * 40, 32, ALVO.z + Math.cos(ang) * 40); cam.lookAt(ALVO);
-    bolas[0].position.x = 10.5 + Math.sin(T * 0.9) * 1.5; bolas[0].position.z = 5 + Math.cos(T * 1.3) * 0.8;
-
-    ops.forEach((o) => {
-      o.espera = Math.max(0, o.espera - dt);
-      if (o.espera <= 0 && !o.op && Math.random() < dt * 0.03) vaiLazer(o);
-      const dx = o.tx - o.x, dz = o.tz - o.z, d = Math.hypot(dx, dz), v = 3.2 * dt;
-      o.anda = o.espera <= 0 && d > 0.05;
-      if (o.anda) { const k = Math.min(1, v / d); o.x += dx * k; o.z += dz * k; o.g.rotation.y = Math.atan2(dx, dz); }
-      o.g.position.set(o.x, 0, o.z);
-      const sentado = o.op && !o.anda && d < 0.1;
-      const passo = o.anda ? Math.sin(T * 10 + o.fase) * 0.6 : 0;
-      o.pernaE.rotation.x = sentado ? -1.4 : passo; o.pernaD.rotation.x = sentado ? -1.4 : -passo;
-      o.bE.rotation.x = sentado ? -0.9 + Math.sin(T * 14 + o.fase) * 0.08 : -passo * 0.8; o.bD.rotation.x = sentado ? -0.9 + Math.cos(T * 13 + o.fase) * 0.08 : passo * 0.8;
-      o.g.position.y = sentado ? -0.18 : (o.anda ? Math.abs(Math.sin(T * 10 + o.fase)) * 0.06 : 0);
-      if (sentado) o.g.rotation.y = Math.PI;
-    });
-
-    // rótulos das operações
+    if (!arrasta && performance.now() - ultimoToque > 8000) giro += (Math.PI / 4 + Math.sin(T * 0.07) * 0.14 - giro) * dt * 0.4;
+    cam.position.set(ALVO.x + Math.sin(giro) * 40, 32, ALVO.z + Math.cos(giro) * 40); cam.lookAt(ALVO);
+    // bilhar
+    tacada += dt; if (tacada > 6) { tacada = 0; vezB = 1 - vezB; const b = bolas[0]; b.vx = rnd(-1.8, 1.8); b.vz = rnd(-0.9, 0.9); bolas.slice(1).forEach((x) => { if (Math.random() < 0.4) { x.vx = rnd(-0.8, 0.8); x.vz = rnd(-0.5, 0.5); } }); }
+    bolas.forEach((b) => { b.m.position.x += b.vx * dt; b.m.position.z += b.vz * dt; b.vx *= 0.985; b.vz *= 0.985;
+      if (Math.abs(b.m.position.x - BX) > 1.95) { b.vx *= -1; b.m.position.x = BX + Math.sign(b.m.position.x - BX) * 1.95; }
+      if (Math.abs(b.m.position.z - BZ) > 0.95) { b.vz *= -1; b.m.position.z = BZ + Math.sign(b.m.position.z - BZ) * 0.95; } });
+    // pingue-pongue: a bolinha vai e volta em arco
+    const fp = (Math.sin(T * 3.2) + 1) / 2; bolinha.position.set(PX - 1.8 + fp * 3.6, 1.1 + Math.abs(Math.sin(T * 6.4)) * 0.5, PZ + Math.sin(T * 1.7) * 0.5);
+    // cachorro passeia pela área de descanso e volta para a caminha
+    if (T > dg.ate) { const casa = Math.random() < 0.35; dg.tx = casa ? 13.2 : rnd(5, 13.5); dg.tz = casa ? 6.2 : rnd(0, 9); dg.ate = T + rnd(6, 12); }
+    const ddx = dg.tx - dg.x, ddz = dg.tz - dg.z, dd = Math.hypot(ddx, ddz), dAnda = dd > 0.05;
+    if (dAnda) { const k = Math.min(1, 1.8 * dt / dd); dg.x += ddx * k; dg.z += ddz * k; dog.rotation.y = Math.atan2(-ddz, ddx); }
+    dog.position.set(dg.x, dAnda ? Math.abs(Math.sin(T * 14)) * 0.04 : 0, dg.z);
+    patas.forEach((pt, i) => (pt.rotation.z = dAnda ? Math.sin(T * 14 + i * Math.PI) * 0.5 : 0)); rabo.rotation.y = Math.sin(T * 12) * 0.6;
+    gente.forEach((p) => anima(p, dt));
+    tMon += dt; if (tMon > 0.25) { tMon = 0; mesas.forEach((m) => desenhaMonitores(m, T)); mesas.forEach((m) => { m.led.material.emissiveIntensity = 1.2 + Math.sin(T * 3 + m.semente) * 0.8; }); }
+    if (T > proxFala) { proxFala = T + rnd(5, 9); const p = escolhe(gente.filter((x) => x.papel !== "trabalha")); if (p) fala(p); }
+    // rótulos verdes/vermelhos sobre quem está operando
     const usados = new Set();
-    ops.forEach((o) => {
-      if (!o.op) return;
-      let el = o.el;
-      if (!el) { el = o.el = document.createElement("div"); camada.appendChild(el); }
+    gente.forEach((p) => {
+      if (!p.op) return;
+      let el = p.el; if (!el) { el = p.el = document.createElement("div"); camada.appendChild(el); }
       usados.add(el);
-      const a = o.op, ok = (a.lucro || 0) >= 0, nome = a.par.replace("XAUUSD", "OURO");
-      el.className = "rot" + (a.tipo === "swing" ? " swing" : "");
-      const html = estreito
-        ? `<b><i></i>${nome.replace("USD", "")} ${a.lado === "buy" ? "C" : "V"}</b><span class="${ok ? "pos" : "neg"}">${a.lucro == null ? "" : (a.lucro >= 0 ? "+" : "−") + nf(a.lucro)}</span>`
-        : `<b><i></i>${nome} · ${a.lado === "buy" ? "COMPRA" : "VENDA"} ${String(a.lote).replace(".", ",")}</b><span class="${ok ? "pos" : "neg"}">${a.lucro == null ? "" : usd(a.lucro)}</span>`;
+      const a = p.op, ok = (a.lucro || 0) >= 0, nome = a.par.replace("XAUUSD", "OURO");
+      el.className = "rot" + (ok ? "" : " neg") + (a.tipo === "swing" ? " swing" : "");
+      const html = `${a.lucro == null ? "—" : usd(a.lucro)}<small><i></i>${estreito ? nome.replace("USD", "") : nome} ${a.lado === "buy" ? "C" : "V"} ${String(a.lote).replace(".", ",")}</small>`;
       if (el.__h !== html) { el.innerHTML = html; el.__h = html; }
-      const [sx, sy] = tela(o.x, 3.1, o.z - 0.6); el.style.left = sx + "px"; el.style.top = sy + "px";
+      const [sx, sy] = tela(p.x, 3.0, p.z - 0.2); el.style.left = sx + "px"; el.style.top = sy + "px";
     });
-    [...camada.querySelectorAll(".rot")].forEach((el) => { if (!usados.has(el)) { el.remove(); ops.forEach((o) => { if (o.el === el) o.el = null; }); } });
+    [...camada.querySelectorAll(".rot")].forEach((el) => { if (!usados.has(el)) { el.remove(); gente.forEach((p) => { if (p.el === el) p.el = null; }); } });
     for (let i = baloes.length - 1; i >= 0; i--) {
       const b = baloes[i]; b.t += dt;
-      if (b.t > 5) { b.d.remove(); baloes.splice(i, 1); continue; }
-      const [sx, sy] = tela(b.x, 3.6 + b.t * 0.6, b.z); b.d.style.left = sx + "px"; b.d.style.top = sy + "px"; b.d.style.opacity = Math.min(1, (5 - b.t) / 1.2);
+      if (b.t > b.dur) { b.d.remove(); baloes.splice(i, 1); continue; }
+      const [sx, sy] = b.p ? tela(b.p.x, 2.5, b.p.z) : tela(b.x, 3.4 + b.t * 0.5, b.z);
+      b.d.style.left = sx + "px"; b.d.style.top = sy + "px"; b.d.style.opacity = Math.min(1, (b.dur - b.t) / 1);
     }
     R.render(S, cam);
     requestAnimationFrame(quadro);
   }
 
-  // ---------- "atualizado há" ----------
   setInterval(() => {
     if (!D) return;
     const s = Math.max(0, Math.round((Date.now() - new Date(D.atualizado).getTime()) / 1000));
@@ -330,12 +461,11 @@
   }, 1000);
 
   addEventListener("resize", ajusta); ajusta();
-  for (let i = 0; i < 5; i++) novoOperador();
-  desenhaTelao();
-  document.fonts.ready.then(() => { desenhaTelao(); });
+  for (let i = 0; i < 6; i++) { const p = novaPessoa("livre"); proximoPonto(p); p.x = p.tx; p.z = p.tz; }
+  desenhaTelao(); document.fonts.ready.then(desenhaTelao);
   requestAnimationFrame(quadro);
   busca(); setInterval(busca, 60000);
-  window.__escritorio = { aplica, ops };   // para testes
+  window.__escritorio = { aplica, gente };
 })();
 </script>
 </body>
