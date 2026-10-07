@@ -30,6 +30,8 @@
   .rot .barra { width: 74px; height: 5px; margin: 3px auto 1px; border-radius: 3px; background: rgba(255,255,255,.15); overflow: hidden; }
   .rot .barra i { display: block; height: 100%; background: linear-gradient(90deg, #f0a43a, #ffd27a); }
   .rot.fechou small { color: #a8f5c6; }
+  .rot.lab { border-color: #7fc8ff; color: #bfe6ff; background: rgba(4,14,26,.92); box-shadow: 0 0 14px rgba(90,160,230,.45); font-size: 11px; }
+  .rot.lab small { color: #9fd0ff; } .rot.lab .barra i { background: linear-gradient(90deg, #5aa0e6, #8affbe); }
   .balao { position: absolute; transform: translate(-50%, -100%); display: grid; place-items: center; width: 46px; height: 46px; border-radius: 50%; border: 3px solid #2fbf73;
            background: rgba(6,18,10,.92); color: #6dffa8; font: 700 13px "IBM Plex Mono"; box-shadow: 0 0 20px rgba(47,191,115,.6); }
   .balao.neg { border-color: #e0544a; color: #ff8a7e; box-shadow: 0 0 20px rgba(224,84,74,.5); }
@@ -318,6 +320,7 @@
       x.font = "600 34px Jost"; x.fillStyle = "#cfd8e6"; x.fillText(`${b.pts != null ? (b.pts > 0 ? "+" : "") + b.pts + " pts" : ""}${b.min != null ? " em " + b.min + " min" : ""} · ${b.t.slice(11, 16)}`, W2 / 2, 380);
     } else { x.font = "500 28px Jost"; x.fillStyle = "#8ea1bd"; x.fillText("ainda sem operação", W2 / 2, 180); x.fillText("fechada no lucro hoje", W2 / 2, 216); }
     qOp.t.needsUpdate = true;
+    desenhaLab();
   }
 
   // ================= telão verde gigante (parede do fundo) =================
@@ -428,6 +431,65 @@
   bloco(0.5, 0.04, 0.35, mat(0xffffff), RX - 1, 1.08, RZ - 0.3); bloco(0.35, 0.03, 0.25, mat(0xd9d9d9), RX + 1.2, 1.08, RZ + 0.4);   // papéis, notebook
   const cadeirasReuniao = [];
   [-1.8, 0, 1.8].forEach((dx) => { [[-1.6, 0], [1.6, Math.PI]].forEach(([dz, rot]) => { cil(0.38, 0.38, 0.1, mat(0x2c3a52), RX + dx, 0.62, RZ + dz); bloco(0.72, 0.7, 0.08, mat(0x2c3a52), RX + dx, 1.02, RZ + dz + (dz < 0 ? -0.36 : 0.36)); cadeirasReuniao.push({ x: RX + dx, z: RZ + dz + (dz < 0 ? -0.05 : 0.05), rot }); }); });
+
+  // ================= laboratório do Analista (testa a estratégia inteira no histórico) =================
+  const LABX = 5.0, LABZ = -9.6;
+  const LAB = { leds: [], mon: [] };
+  { const piso = new THREE.Mesh(new THREE.PlaneGeometry(6.2, 6.4), mat(0x1b2a3f)); piso.rotation.x = -Math.PI / 2; piso.position.set(LABX, 0.012, -9.55); piso.receiveShadow = true; S.add(piso);
+    [[LABX, -6.35, 6.2, 0.06], [LABX - 3.1, -9.55, 0.06, 6.4]].forEach(([x, z, w, d]) => bloco(w, 0.02, d, brilho(0x5aa0e6, 1.2), x, 0.03, z, S, false));
+    // quadro grande em pé (de frente para a sala)
+    bloco(3.7, 2.3, 0.1, mat(0x8a6a2c), LABX, 2.45, -12.35); [-1.6, 1.6].forEach((dx) => bloco(0.1, 1.4, 0.1, mat(0x6d7078), LABX + dx, 0.7, -12.35));
+    const c = document.createElement("canvas"); c.width = 1120; c.height = 680; const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; t.anisotropy = 4;
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(3.5, 2.12), new THREE.MeshBasicMaterial({ map: t, toneMapped: false })); m.position.set(LABX, 2.45, -12.29); S.add(m);
+    LAB.q = { c, x: c.getContext("2d"), t, m }; QUADROS.push(LAB.q);
+    // mesa com 3 monitores
+    bloco(2.8, 0.08, 1.1, mat(0xe8e8ea), LABX, 0.98, LABZ); [-1.3, 1.3].forEach((dx) => bloco(0.08, 0.95, 1.0, mat(0x6d7078), LABX + dx, 0.48, LABZ));
+    [[-0.95, 0.35], [0, 0], [0.95, -0.35]].forEach(([dx, ry]) => { const g = new THREE.Group(); g.position.set(LABX + dx, 1.62, LABZ - 0.3); g.rotation.y = ry; S.add(g); bloco(0.95, 0.62, 0.06, mat(0x15161a), 0, 0, 0, g); const tc2 = telaCanvas(256, 168); const sc = new THREE.Mesh(new THREE.PlaneGeometry(0.88, 0.56), new THREE.MeshBasicMaterial({ map: tc2.t, toneMapped: false })); sc.position.z = 0.035; g.add(sc); LAB.mon.push(tc2); bloco(0.08, 0.3, 0.08, mat(0x2a2a2e), 0, -0.42, -0.05, g); });
+    bloco(0.9, 0.04, 0.3, mat(0xdcdcdc), LABX, 1.04, LABZ + 0.2);
+    cil(0.42, 0.42, 0.1, mat(0x24262c), LABX, 0.62, LABZ + 1.05); bloco(0.78, 0.75, 0.1, mat(0x24262c), LABX, 1.05, LABZ + 1.42); cil(0.05, 0.05, 0.5, mat(0x777777), LABX, 0.33, LABZ + 1.05); cil(0.35, 0.35, 0.05, mat(0x333333), LABX, 0.06, LABZ + 1.05);
+    // rack com 10 luzes: uma para cada terminal do laboratório
+    bloco(0.95, 2.3, 0.9, mat(0x15171c), 7.3, 1.15, -12.1);
+    for (let k = 0; k < 10; k++) { bloco(0.8, 0.14, 0.04, mat(0x2a2e36), 7.3, 0.35 + k * 0.2, -11.63, S, false); LAB.leds.push(bloco(0.08, 0.06, 0.03, new THREE.MeshStandardMaterial({ color: 0x113322, emissive: 0x8affbe, emissiveIntensity: 0.2 }), 7.6, 0.35 + k * 0.2, -11.6, S, false)); }
+    // placa no rack
+    const pc = document.createElement("canvas"); pc.width = 512; pc.height = 96; const px = pc.getContext("2d"); const pt = new THREE.CanvasTexture(pc); pt.encoding = THREE.sRGBEncoding;
+    LAB.placa = () => { px.fillStyle = "#0e1118"; px.fillRect(0, 0, 512, 96); px.fillStyle = "#7fc8ff"; px.font = "700 40px Jost, sans-serif"; px.textAlign = "center"; px.textBaseline = "middle"; px.fillText("10 TERMINAIS", 256, 50); pt.needsUpdate = true; };
+    const pm = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.17), new THREE.MeshBasicMaterial({ map: pt, toneMapped: false })); pm.position.set(7.3, 2.42, -11.64); S.add(pm); LAB.placa();
+  }
+  function desenhaLab() {
+    const A = (D && D.analista) || null, { c, x } = LAB.q, W = c.width, H = c.height;
+    x.fillStyle = "#0b1422"; x.fillRect(0, 0, W, H); x.fillStyle = "#5aa0e6"; x.fillRect(0, 0, W, 10);
+    x.textAlign = "center"; x.font = "700 54px Jost"; x.fillStyle = "#bfe6ff"; x.fillText("🧪 LABORATÓRIO DO ANALISTA", W / 2, 76);
+    x.font = "500 28px Jost"; x.fillStyle = "#8ea1bd"; x.fillText("testa a estratégia inteira no histórico real (dez/2025 → hoje)", W / 2, 118);
+    if (!A) { x.font = "600 34px Jost"; x.fillStyle = "#cfd8e6"; x.fillText("preparando a próxima rodada de testes", W / 2, 340); LAB.q.t.needsUpdate = true; return; }
+    const pr = A.total ? A.feitos / A.total : 0, testando = A.fase === "testando";
+    x.textAlign = "left"; x.font = "600 32px Jost"; x.fillStyle = "#a9b8cf"; x.fillText(testando ? "Testes concluídos" : "Última rodada", 50, 190);
+    x.font = "700 92px 'IBM Plex Mono'"; x.fillStyle = "#ffffff"; x.fillText(`${A.feitos}/${A.total}`, 50, 282);
+    x.fillStyle = "rgba(255,255,255,.12)"; x.fillRect(50, 304, W - 100, 22); const gr = x.createLinearGradient(50, 0, W - 50, 0); gr.addColorStop(0, "#5aa0e6"); gr.addColorStop(1, "#8affbe"); x.fillStyle = gr; x.fillRect(50, 304, (W - 100) * pr, 22);
+    x.textAlign = "right"; x.font = "600 30px Jost"; x.fillStyle = "#a9b8cf"; x.fillText("Ideias aprovadas", W - 50, 190); x.font = "700 92px 'IBM Plex Mono'"; x.fillStyle = "#6dffa8"; x.fillText(String(A.aprovadas || 0), W - 50, 282);
+    x.textAlign = "left"; x.font = "600 32px Jost"; x.fillStyle = "#cfd8e6";
+    x.fillText(testando ? `🔬 Agora testando: ${A.testando || "—"}` : A.fase === "concluida" ? "✅ Rodada concluída · parecer entregue ao gestor" : "⏳ Próxima rodada em breve", 50, 390);
+    x.font = "500 26px Jost"; x.fillStyle = "#8ea1bd"; x.fillText("Temas desta rodada:", 50, 446);
+    let tx0 = 50, ty = 492; x.font = "600 25px Jost";
+    (A.temas || []).forEach((tm) => { const ok = (A.temas_aprovados || []).includes(tm), w = x.measureText(tm).width + 34; if (tx0 + w > W - 50) { tx0 = 50; ty += 50; } x.fillStyle = ok ? "rgba(47,191,115,.25)" : "rgba(90,160,230,.16)"; x.fillRect(tx0, ty - 30, w, 40); x.fillStyle = ok ? "#8affbe" : "#bfe6ff"; x.fillText(tm, tx0 + 17, ty); tx0 += w + 12; });
+    x.textAlign = "center"; x.font = "500 23px Jost"; x.fillStyle = "#ffd27a"; x.fillText("Nada muda na conta real sem aprovação do gestor · resultado passado não garante resultado futuro", W / 2, H - 22);
+    LAB.q.t.needsUpdate = true;
+  }
+  function animaLab(dt) {
+    const A = (D && D.analista) || {}, testando = A.fase === "testando";
+    LAB.leds.forEach((l, k) => { l.material.emissive.setHex(testando ? 0x8affbe : 0x5aa0e6); l.material.emissiveIntensity = testando ? (Math.sin(T * (7 + k * 1.3) + k * 2) > 0.2 ? 2.2 : 0.25) : 0.5; });
+    LAB.tm = (LAB.tm || 0) + dt; if (LAB.tm < 0.25) return; LAB.tm = 0;
+    LAB.mon.forEach((m, i) => {
+      const x = m.c.getContext("2d"), w = 256, h = 168; x.fillStyle = "#0a111c"; x.fillRect(0, 0, w, h);
+      if (i === 0) {   // grade de testes: cada quadradinho é um teste
+        const tot = A.total || 25, feitos = A.feitos || 0; for (let k = 0; k < tot; k++) { const cx = 14 + (k % 7) * 33, cy = 14 + Math.floor(k / 7) * 36; x.fillStyle = k < feitos ? (k < (A.aprovadas || 0) ? "#2fbf73" : "#3b4a63") : (testando && k < feitos + 10 && Math.sin(T * 6 + k) > 0 ? "#5aa0e6" : "#1a2433"); x.fillRect(cx, cy, 27, 28); }
+      } else if (i === 1) {   // curvas de capital sendo comparadas
+        for (let c2 = 0; c2 < 3; c2++) { x.strokeStyle = ["#8affbe", "#5aa0e6", "#ffd27a"][c2]; x.lineWidth = 2.5; x.beginPath(); for (let k = 0; k <= 60; k++) { const yy = h - 20 - k * (1.6 + c2 * 0.35) - Math.sin(k * 0.4 + T * (testando ? 2 : 0.2) + c2 * 2) * 9; k ? x.lineTo(8 + k * 4, yy) : x.moveTo(8, yy); } x.stroke(); }
+      } else {   // log
+        x.font = "600 14px 'IBM Plex Mono'"; x.fillStyle = "#7fc8ff"; ["> rodada " + ((A.rodada || "").slice(9) || "—"), "> período 01/12/25→hoje", "> spread 23 · conta $100", "> testes " + (A.feitos || 0) + "/" + (A.total || 0), testando ? "> rodando" + ".".repeat(1 + Math.floor(T * 2) % 3) : "> parecer pronto"].forEach((l, k) => x.fillText(l, 10, 24 + k * 28));
+      }
+      m.t.needsUpdate = true;
+    });
+  }
 
   // ================= área de descanso =================
   // mesa alta com banquetas
@@ -646,6 +708,7 @@
   obst(SF[0] - 2.1, SF[1] + 0.2, SF[0] + 2.1, SF[1] + 0.8); obst(SF[0] + 2.75, SF[1] - 2.6, SF[0] + 3.1, SF[1]); obst(SF[0] - 0.9, SF[1] - 2.2, SF[0] + 0.9, SF[1] - 1.2, 0.15);   // encosto do sofá e mesinha
   obst(BX - 2.3, BZ - 1.3, BX + 2.3, BZ + 1.3);                                   // bilhar
   obst(PX - 1.9, PZ - 1.05, PX + 1.9, PZ + 1.05);                                 // pingue-pongue
+  obst(LABX - 1.45, LABZ - 0.6, LABX + 1.45, LABZ + 1.5); obst(LABX - 1.9, -12.5, LABX + 1.9, -12.2); obst(6.8, -12.6, 7.8, -11.6);   // laboratório do analista
   VASOS.forEach(([x, z]) => obst(x - 0.35, z - 0.35, x + 0.35, z + 0.35));
   mesas.forEach((m) => { obst(m.x - 2.0, m.z - 0.75, m.x + 2.0, m.z + 0.72); });
   obst(3.55, -2.95, 3.65, -10); obst(5.35, -2.95, 15.3, -2.85);                 // vidro da sala de treino (vão da porta livre)
@@ -760,6 +823,11 @@
     apres = novaPessoa("apresenta"); vem(apres, RX - 3.6, RZ, Math.PI / 2);   // instrutor
   }
   if (MERC.aberto) criaFixos(false);
+  const analista = novaPessoa("analista"); gente.splice(gente.indexOf(analista), 1);
+  coloca(analista, LABX, LABZ + 1.0, Math.PI);
+  cil(0.29, 0.31, 0.95, mat(0xf4f6f8), 0, 1.0, 0, analista.g); bloco(0.04, 0.6, 0.02, mat(0x5aa0e6), 0.1, 1.25, 0.29, analista.g, false);   // jaleco com caneta no bolso
+  [-0.09, 0.09].forEach((ox) => { const l = new THREE.Mesh(new THREE.TorusGeometry(0.062, 0.012, 6, 16), mat(0x111111)); l.position.set(ox, 0.07, 0.25); analista.cab.add(l); });
+  let rotAnalista = null;
   const TREINO_S = 75;   // segundos de treino até sair pela porta
   let vezB = 0, tacada = 0;
 
@@ -931,19 +999,20 @@
   R.domElement.addEventListener("click", (e) => {
     if (arrastou) return;
     ptr.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1); ray.setFromCamera(ptr, cam);
-    const qh = ray.intersectObjects([...QUADROS.map((q) => q.m), telao], false), ph = ray.intersectObjects(gente.map((p) => p.g), true);
+    const qh = ray.intersectObjects([...QUADROS.map((q) => q.m), telao], false), ph = ray.intersectObjects([...gente, analista].map((p) => p.g), true);
     if (qh.length && (!ph.length || qh[0].distance < ph[0].distance)) {
       const fonte = qh[0].object === telao ? tc : QUADROS.find((q) => q.m === qh[0].object).c;
       const z = $("zoomq"); z.querySelector("img").src = fonte.toDataURL(); z.hidden = false; $("cartao").hidden = true; return;
     }
     const hits = ph;
-    const p = hits.length ? gente.find((q) => { let o = hits[0].object; while (o) { if (o === q.g) return true; o = o.parent; } return false; }) : null;
+    const p = hits.length ? [...gente, analista].find((q) => { let o = hits[0].object; while (o) { if (o === q.g) return true; o = o.parent; } return false; }) : null;
     const c = $("cartao");
     if (!p) { c.hidden = true; return; }
     const hm = (iso) => (iso || "").slice(11, 16), a = p.op, r = p.resultado;
     let html = `<button aria-label="Fechar">×</button>`;
     if (a) html += `<h3>${a.par.replace("XAUUSD", "OURO (XAUUSD)")} · ${a.lado === "buy" ? "COMPRA" : "VENDA"}</h3><div class="v" style="color:${(a.lucro || 0) >= 0 ? "var(--verde)" : "var(--verm)"}">${a.lucro == null ? "—" : usd(a.lucro)}</div><dl><dt>Situação</dt><dd>aberta</dd><dt>Lote</dt><dd>${String(a.lote).replace(".", ",")}</dd><dt>Entrada</dt><dd>${a.abre}</dd>${a.agora ? `<dt>Preço agora</dt><dd>${a.agora}</dd>` : ""}<dt>Abriu às</dt><dd>${hm(a.t)} (servidor)</dd><dt>Tipo</dt><dd>${a.tipo === "swing" ? "swing trade" : "robô do ouro"}</dd></dl>`;
     else if (r) html += `<h3>${r.par.replace("XAUUSD", "OURO (XAUUSD)")} · ${r.lado === "buy" ? "COMPRA" : "VENDA"}</h3><div class="v" style="color:${(r.usd || 0) >= 0 ? "var(--verde)" : "var(--verm)"}">${usd(r.usd || 0)}</div><dl><dt>Situação</dt><dd>${(r.usd || 0) >= 0 ? "meta batida" : "em treinamento"}</dd><dt>Lote</dt><dd>${String(r.lote).replace(".", ",")}</dd><dt>Entrada</dt><dd>${r.abre}</dd>${r.fecha ? `<dt>Saída</dt><dd>${r.fecha}</dd>` : ""}${r.pts != null ? `<dt>Pontos</dt><dd>${r.pts}</dd>` : ""}${r.t && r.t.length > 10 ? `<dt>Fechou às</dt><dd>${hm(r.t)} (servidor)</dd>` : ""}${r.min != null ? `<dt>Duração</dt><dd>${r.min} min</dd>` : ""}</dl>`;
+    else if (p === analista) { const A = (D && D.analista) || {}; html += `<h3>🧪 Analista da estratégia</h3><div style="color:#bfe6ff;margin-bottom:6px">Testa mudanças na estratégia inteira em 10 terminais, no histórico real de dez/2025 até hoje, e entrega um parecer ao gestor.</div><dl><dt>Situação</dt><dd>${A.fase === "testando" ? "testando" : A.fase === "concluida" ? "rodada concluída" : "preparando"}</dd><dt>Testes</dt><dd>${A.feitos || 0} de ${A.total || 0}</dd><dt>Ideias aprovadas</dt><dd>${A.aprovadas || 0}</dd>${A.testando ? `<dt>Agora</dt><dd>${A.testando}</dd>` : ""}</dl><div style="color:#ffd27a;font-size:11px;margin-top:6px">Nada muda na conta real sem aprovação.</div>`; }
     else html += `<h3>${{ analisa: "Analisando o gráfico", bilhar: "No bilhar", ping: "No pingue-pongue", apresenta: "Instrutor do treinamento", livre: "No intervalo", saindo: "Indo embora" }[p.papel] || "Na equipe"}</h3><div style="color:#8ea1bd">${p.papel === "analisa" ? "Procurando a próxima oportunidade nos 5 tempos gráficos." : "Sem operação aberta agora."}</div>`;
     c.innerHTML = html; c.hidden = false;
     c.style.left = Math.min(innerWidth - 240, e.clientX + 12) + "px"; c.style.top = Math.min(innerHeight - 220, e.clientY + 12) + "px";
@@ -1027,10 +1096,11 @@
       if (p.papel === "esteira") { const s2 = Math.sin(T * 11 + p.fase) * 0.7; pernas = [s2, -s2]; bracos = [-s2 * 0.8, s2 * 0.8]; y = Math.abs(Math.sin(T * 11 + p.fase)) * 0.06 + 0.3; }
       if (p.papel === "anexoEmPe") { bracos = [0, -1.1 - Math.max(0, Math.sin(T * 0.8 + p.fase)) * 0.5]; cy = Math.sin(T * 0.6 + p.fase) * 0.4; if (!p.item.children.length) segura(p, "caneca"); }
       if (p.papel === "analisa") { bracos = [-1.0 + Math.sin(T * 3 + p.fase) * 0.05, -1.1 + Math.max(0, Math.sin(T * 1.3 + p.fase)) * 0.15]; cy = Math.sin(T * 0.4 + p.fase) * 0.35; cx = -0.1; }
-      if (p.papel === "trabalha" || p.papel === "analisa" || p.papel === "reuniao" || p.papel === "diretor" || p.papel === "treino" || ac === "sofa" || ac === "banqueta") senta = true;
+      if (p.papel === "trabalha" || p.papel === "analista" || p.papel === "analisa" || p.papel === "reuniao" || p.papel === "diretor" || p.papel === "treino" || ac === "sofa" || ac === "banqueta") senta = true;
       if (p.papel === "trabalha") { bracos = [-1.15 + Math.sin(T * 16 + p.fase) * 0.06, -1.15 + Math.cos(T * 15 + p.fase) * 0.06]; ab = [0.25, -0.25]; cy = Math.sin(T * 0.5 + p.fase) * 0.25; }
       if (p.papel === "treino") { if (p.inicioTreino == null) p.inicioTreino = T; cy = Math.sin(T * 0.5 + p.fase) * 0.3; bracos = [-0.9, -0.9 + Math.sin(T * 9 + p.fase) * 0.08]; if (T - p.inicioTreino > TREINO_S) vaiAnalisar(p); }
       if (p.papel === "reuniao") { cy = Math.sin(T * 0.6 + p.fase) * 0.5; bracos = [-0.7, -0.7 + Math.max(0, Math.sin(T * 1.3 + p.fase)) * 0.5]; }
+      if (p.papel === "analista") { const pensa = Math.sin(T * 0.23) > 0.75; bracos = pensa ? [-1.1, -2.3] : [-1.15 + Math.sin(T * 14) * 0.06, -1.15 + Math.cos(T * 13) * 0.06]; ab = [0.25, -0.25]; cy = pensa ? 0 : Math.sin(T * 0.5) * 0.3; cx = pensa ? -0.25 : 0; }
       if (p.papel === "apresenta") { bracos = [0, -1.5 + Math.sin(T * 2) * 0.5]; cy = Math.sin(T * 0.7) * 0.6; }
       if (ac === "cafe" || ac === "conversa" || ac === "banqueta") { if (!p.item.children.length && ac !== "conversa") segura(p, "caneca"); bracos = [0, -1.0 - Math.max(0, Math.sin(T * 0.8 + p.fase)) * 0.6]; cy = Math.sin(T * 0.9 + p.fase) * 0.35; }
       if (ac === "telao") cx = -0.3;
@@ -1119,6 +1189,12 @@
     patas.forEach((pt, i) => (pt.rotation.z = dAnda ? Math.sin(T * 14 + i * Math.PI) * 0.5 : 0)); rabo.rotation.y = Math.sin(T * 12) * 0.6;
     anda_carros(dt);
     gente.forEach((p) => anima(p, dt));
+    anima(analista, dt); animaLab(dt);
+    if (!rotAnalista) { rotAnalista = document.createElement("div"); rotAnalista.className = "rot lab"; camada.appendChild(rotAnalista); }
+    { const A = (D && D.analista) || null, [sx, sy] = tela(analista.x, 2.75, analista.z);
+      rotAnalista.style.left = sx + "px"; rotAnalista.style.top = sy + "px";
+      const html = !A ? "🧪 ANALISTA<small>preparando testes</small>" : A.fase === "testando" ? `🧪 ANALISTA<small>testando ${A.feitos}/${A.total}</small><div class="barra"><i style="width:${A.total ? A.feitos / A.total * 100 : 0}%"></i></div>` : `🧪 ANALISTA<small>${A.aprovadas ? A.aprovadas + " ideia" + (A.aprovadas > 1 ? "s" : "") + " aprovada" + (A.aprovadas > 1 ? "s" : "") : "rodada concluída"}</small>`;
+      if (rotAnalista._h !== html) { rotAnalista.innerHTML = html; rotAnalista._h = html; } }
     if (MERC.aberto) genteAnexo.forEach((p) => { p.g.visible = true; anima(p, dt); }); else genteAnexo.forEach((p) => (p.g.visible = false));
     { const z = zonas.terraco; if (z && z.pronta.visible) {   // balada: luzes no ritmo (128 bpm)
       const bt = T * 128 / 60, batida = Math.pow(1 - (bt % 1), 3), cores = [0xff2fd0, 0x2ff3ff, 0xffe02f, 0x8affbe, 0xb44dff, 0xff6f3c];
