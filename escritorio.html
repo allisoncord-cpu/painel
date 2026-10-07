@@ -760,7 +760,12 @@
   // ================= clima lá fora: o mesmo da janela (chuva, nuvens, relâmpago) =================
   const CHUVA_N = 2600, chuvaPos = new Float32Array(CHUVA_N * 6), chuvaV = new Float32Array(CHUVA_N);
   const dentro = (x, z) => x > -LX - 0.3 && x < LX + 0.3 && z > -LZ - 0.3 && z < AZ1 + 0.3;   // prédio sem teto: não chove dentro
-  function gota(i, topo) { let x, z; do { x = rnd(-62, 34); z = rnd(-34, 40); } while (dentro(x, z)); const y = topo ? rnd(18, 24) : rnd(0, 24); chuvaPos.set([x, y, z, x + 0.06, y - 0.7, z + 0.04], i * 6); chuvaV[i] = rnd(16, 22); }
+  const chuvaTeto = new Float32Array(CHUVA_N);
+  function gota(i, topo) {   // do lado da câmera a gota cai de mais baixo perto do prédio, para não "chover" por cima do salão na vista de cima
+    let x, z; do { x = rnd(-62, 34); z = rnd(-34, 40); } while (dentro(x, z));
+    const d = Math.hypot(Math.max(0, x - LX), Math.max(0, z - AZ1)), teto = d > 0 ? Math.max(0.9, Math.min(22, d * 0.7)) : 22;
+    chuvaTeto[i] = teto; const y = topo ? teto * rnd(0.85, 1) : rnd(0.7, teto); chuvaPos.set([x, y, z, x + 0.06, y - 0.7, z + 0.04], i * 6); chuvaV[i] = rnd(16, 22);
+  }
   for (let i = 0; i < CHUVA_N; i++) gota(i, false);
   const chuvaGeo = new THREE.BufferGeometry(); chuvaGeo.setAttribute("position", new THREE.BufferAttribute(chuvaPos, 3));
   const chuva = new THREE.LineSegments(chuvaGeo, new THREE.LineBasicMaterial({ color: 0xbfd4ee, transparent: true, opacity: 0.55 })); chuva.frustumCulled = false; chuva.visible = false; S.add(chuva);
