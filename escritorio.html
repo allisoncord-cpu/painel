@@ -938,7 +938,8 @@
     $("vfim-s").textContent = VDIA ? `${VDIA.ops} operações · ${VDIA.venc} no verde` : "";
     let ultT = 0;
     window.render = (t) => {
-      VT = t; passo(Math.max(0, t - ultT)); ultT = t; legendasVideo(t);
+      while (ultT < t - 1e-6) { const d = Math.min(1 / 30, t - ultT); ultT += d; VT = ultT; passo(d); }   // passos curtos, mesmo se pular tempo
+      legendasVideo(t);
       if (!festaFeita && t >= 25.2 && VDIA && VDIA.pct > 0) { festaFeita = true; comemora(0, 0, "FECHAMENTO DO DIA", pct(VDIA.pct), `${VDIA.venc} de ${VDIA.ops} operações no verde`); }
     };
     window.DURACAO = 33;
