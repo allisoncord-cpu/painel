@@ -143,13 +143,13 @@
   const P1 = [[447,548],[502,505],[502,763],[447,763]], P2 = [[532,437],[584,394],[584,711],[612,711],[612,348],[665,303],[665,711],[773,711],[773,624],[712,585],[712,531],[823,599],[823,763],[532,763]];
   const forma = (pts) => { const s = new THREE.Shape(); pts.forEach(([x, y], i) => (i ? s.lineTo : s.moveTo).call(s, (x - 635) / 140, -(y - 530) / 140)); return s; };
   const logoM = new THREE.Mesh(new THREE.ExtrudeGeometry([forma(P1), forma(P2)], { depth: 0.15, bevelEnabled: false }), brilho(OURO, 0.8));
-  logoM.rotation.y = Math.PI / 2; logoM.position.set(-LX + 0.1, 3, 3.2); S.add(logoM);
+  logoM.rotation.y = Math.PI / 2; logoM.position.set(-LX + 0.1, 3, 5.2); S.add(logoM);
   // "LEGATUS GROUP" ao lado do logo
   const nm = document.createElement("canvas"); nm.width = 1024; nm.height = 160; const nmx = nm.getContext("2d");
   const escreveNome = () => { nmx.clearRect(0, 0, 1024, 160); nmx.font = "600 104px Jost, sans-serif"; nmx.textBaseline = "middle"; nmx.fillStyle = "#f2d690"; nmx.fillText("LEGATUS", 10, 84); const w = nmx.measureText("LEGATUS ").width; nmx.fillStyle = "#e2b85c"; nmx.font = "400 104px Jost, sans-serif"; nmx.fillText("GROUP", 10 + w + 20, 84); nmTex.needsUpdate = true; };
   const nmTex = new THREE.CanvasTexture(nm); nmTex.encoding = THREE.sRGBEncoding;
-  const nome3d = new THREE.Mesh(new THREE.PlaneGeometry(6.4, 1), new THREE.MeshBasicMaterial({ map: nmTex, transparent: true, toneMapped: false }));
-  nome3d.rotation.y = Math.PI / 2; nome3d.position.set(-LX + 0.12, 3.1, -1.4); S.add(nome3d);
+  const nome3d = new THREE.Mesh(new THREE.PlaneGeometry(7.2, 1.12), new THREE.MeshBasicMaterial({ map: nmTex, transparent: true, toneMapped: false }));
+  nome3d.rotation.y = Math.PI / 2; nome3d.position.set(-LX + 0.12, 3.15, 0.6); S.add(nome3d);
   escreveNome(); document.fonts.ready.then(escreveNome);
 
   // porta de saída (parede esquerda, perto da frente)
