@@ -1441,8 +1441,8 @@ dialog.resgate::backdrop { background: rgba(3, 8, 18, .75); }
   setas(document.querySelector(".tabela"), "topo");
 
   // dados novos a cada 2 min, sem recarregar a página (no GitHub Pages o PC envia de minuto em minuto)
-  async function puxaDados() {
-    if (document.hidden) return;
+  async function puxaDados(forca) {
+    if (document.hidden && !forca) return;
     try {
       let txt = null;
       if (/github\.io$/.test(location.hostname)) {
@@ -1455,7 +1455,7 @@ dialog.resgate::backdrop { background: rgba(3, 8, 18, .75); }
     } catch (e) {}
   }
   setInterval(puxaDados, 90000);   // 40 pedidos/hora: dentro do limite gratuito do GitHub (60/hora por pessoa)
-  setTimeout(puxaDados, 1500);   // logo ao abrir, pega o dado mais novo
+  setTimeout(() => puxaDados(true), 1500);   // logo ao abrir, pega o dado mais novo
   document.addEventListener("visibilitychange", () => { if (!document.hidden) puxaDados(); });
 
   // "atualizado há X": recalcula a cada 10 s; laranja quando passa de 10 min sem dado novo (PC ou internet parados)
