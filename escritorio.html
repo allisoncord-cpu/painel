@@ -142,6 +142,7 @@
 <button class="btn sairtv" id="b-sairtv">✕ Sair do modo TV</button>
 
 <script src="data.js"></script>
+<script src="portfolio.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (() => {
@@ -926,7 +927,7 @@
   }
   let estavaFechado = !MERC.aberto;
   function aplica(novo) {
-    D = novo;
+    D = window.legatusPortfolio ? window.legatusPortfolio(novo) : novo;
     if (!MERC.aberto) {
       const Mf = D.mt4 || {}, ab = (Mf.abertas || []).map((o) => ({ ...o, k: chave(o) }));
       gente.slice().forEach((p) => { if (p.papel === "saindo") return; p.op = null; p.mesa = null; p.resultado = null; p.cadeira = null; if (p.ponto) ocupados.delete(p.ponto); p.ponto = null; p.papel = "saindo"; p.tx = PORTA.x; p.tz = PORTA.z; p.alvoRot = null; p.espera = rnd(0, 4); });

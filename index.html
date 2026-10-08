@@ -669,9 +669,10 @@ dialog.resgate::backdrop { background: rgba(3, 8, 18, .75); }
 
 <script src="config.js"></script>
 <script src="data.js"></script>
+<script src="portfolio.js"></script>
 <script>
 (function () {
-  const D = window.LEGATUS_DADOS, C = window.LEGATUS_CONFIG || {};
+  const D = (window.legatusPortfolio || ((d) => d))(window.LEGATUS_DADOS), C = window.LEGATUS_CONFIG || {};
   const $ = (id) => document.getElementById(id);
   if (!D) { $("atualizado").textContent = "—"; return; }
 
@@ -1452,7 +1453,7 @@ dialog.resgate::backdrop { background: rgba(3, 8, 18, .75); }
       if (!txt) txt = await (await fetch("data.js?" + Date.now(), { cache: "no-store" })).text();
       const novo = JSON.parse(txt.slice(txt.indexOf("{"), txt.lastIndexOf("}") + 1));
       if (novo.atualizado === D.atualizado && JSON.stringify(novo.mt4 && novo.mt4.abertas) === JSON.stringify(D.mt4 && D.mt4.abertas)) return;
-      Object.keys(D).forEach((k) => delete D[k]); Object.assign(D, novo); render();
+      Object.keys(D).forEach((k) => delete D[k]); Object.assign(D, window.legatusPortfolio ? window.legatusPortfolio(novo) : novo); render();
     } catch (e) {}
   }
   setInterval(puxaDados, 90000);   // 40 pedidos/hora: dentro do limite gratuito do GitHub (60/hora por pessoa)
