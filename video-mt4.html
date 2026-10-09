@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Legatus · vídeo MT4</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
+<style>
+  html, body { margin: 0; height: 100%; background: #05080d; overflow: hidden; }
+  #palco { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; transform-origin: 0 0; overflow: hidden;
+    background: radial-gradient(900px 700px at 50% 0, #142238, transparent 70%), #05080d; font-family: "Jost", sans-serif; color: #fff; }
+  .marca { position: absolute; top: 64px; left: 0; right: 0; display: flex; justify-content: center; align-items: center; gap: 14px; }
+  .marca svg { width: 44px; height: 54px; } .marca div { font-weight: 500; font-size: 30px; letter-spacing: .34em; } .marca i { font-style: normal; color: #e2b85c; }
+  .card { position: absolute; left: 40px; right: 40px; top: 165px; height: 330px; text-align: center; opacity: 0; }
+  .card b { display: block; font-weight: 600; font-size: 28px; letter-spacing: .32em; color: #e2b85c; }
+  .card span { display: block; margin-top: 10px; font-weight: 700; font-size: 100px; line-height: 1.02; text-wrap: balance; white-space: pre-line; }
+  .card small { display: inline-block; margin-top: 18px; font-size: 32px; color: #cfd8e6; }
+  /* placar grande */
+  .placar { position: absolute; left: 40px; right: 40px; top: 510px; height: 150px; display: grid; grid-template-columns: 1fr 1.25fr 1fr; align-items: center; border-radius: 22px;
+    background: linear-gradient(180deg, rgba(226,184,92,.16), rgba(226,184,92,.05)); border: 2px solid rgba(226,184,92,.45); }
+  .placar > div { text-align: center; } .placar small { display: block; font: 600 20px "Jost"; letter-spacing: .2em; color: #a9b8cf; }
+  .placar b { display: block; margin-top: 6px; font: 700 40px "IBM Plex Mono"; } .placar .meio b { font-size: 62px; color: #ffd76e; }
+  .placar .pos { color: #4fd18f; } .placar .neg { color: #ff6f61; }
+  /* janela do MetaTrader 4 */
+  .mt4 { position: absolute; left: 40px; right: 40px; top: 690px; height: 900px; background: #f0f0f0; border: 1px solid #8a8a8a; box-shadow: 0 30px 80px rgba(0,0,0,.6);
+    font-family: Tahoma, "Segoe UI", "DejaVu Sans", Arial, sans-serif; color: #000; display: flex; flex-direction: column; }
+  .titulo { height: 40px; background: #fff; display: flex; align-items: center; padding: 0 0 0 12px; font-size: 19px; gap: 10px; border-bottom: 1px solid #ddd; }
+  .titulo .ic { width: 22px; height: 22px; border-radius: 4px; background: linear-gradient(135deg, #39a0ff, #0b5fbf); }
+  .titulo .bt { margin-left: auto; display: flex; } .titulo .bt span { width: 56px; height: 40px; display: grid; place-items: center; font-size: 18px; color: #333; }
+  .menu { height: 32px; display: flex; gap: 22px; align-items: center; padding: 0 14px; font-size: 18px; background: #f0f0f0; }
+  .ferr { height: 38px; display: flex; gap: 6px; align-items: center; padding: 0 10px; border-top: 1px solid #fff; border-bottom: 1px solid #cfcfcf; }
+  .ferr i { width: 26px; height: 24px; border-radius: 3px; background: linear-gradient(#fdfdfd, #dcdcdc); border: 1px solid #b9b9b9; }
+  .ferr i.az { background: linear-gradient(#7cc0ff, #2a7fd4); } .ferr i.vd { background: linear-gradient(#8ee68e, #2f9a2f); } .ferr i.sep { width: 1px; background: #bbb; border: 0; margin: 0 6px; }
+  .ferr .auto { margin-left: 8px; display: flex; align-items: center; gap: 8px; padding: 2px 10px; border: 1px solid #9bbf9b; background: #e7f7e7; font-size: 16px; border-radius: 3px; }
+  .ferr .auto em { width: 14px; height: 14px; border-radius: 50%; background: #1fae3f; }
+  .grafico { position: relative; flex: 0 0 470px; background: #000; border: 1px solid #7a7a7a; margin: 4px 4px 0; }
+  .grafico canvas { position: absolute; inset: 0; }
+  .abas-g { height: 28px; display: flex; align-items: flex-end; gap: 2px; padding: 0 6px; font-size: 16px; }
+  .abas-g span { padding: 3px 14px; background: #e3e3e3; border: 1px solid #a8a8a8; border-bottom: 0; color: #444; } .abas-g span.on { background: #fff; color: #000; font-weight: bold; }
+  .terminal { flex: 1; display: flex; margin: 4px; border: 1px solid #9a9a9a; background: #fff; min-height: 0; }
+  .terminal .lado { width: 30px; background: #f0f0f0; border-right: 1px solid #c6c6c6; display: flex; flex-direction: column; align-items: center; padding-top: 8px; gap: 10px; font-size: 15px; }
+  .terminal .lado span { writing-mode: vertical-rl; transform: rotate(180deg); color: #222; }
+  .terminal .corpo { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  table { width: 100%; border-collapse: collapse; font-size: 17px; table-layout: fixed; }
+  th { background: linear-gradient(#fff, #ececec); border-right: 1px solid #d0d0d0; border-bottom: 1px solid #c0c0c0; font-weight: normal; text-align: left; padding: 5px 8px; white-space: nowrap; overflow: hidden; }
+  td { padding: 4px 8px; white-space: nowrap; overflow: hidden; border-bottom: 1px solid #f2f2f2; font-variant-numeric: tabular-nums; }
+  td.n, th.n { text-align: right; }
+  tr.nova td { background: #dcebff; }
+  tr.tot td { font-weight: bold; background: #fff; border-top: 1px solid #c0c0c0; }
+  .linhas { flex: 1; overflow: hidden; position: relative; }
+  .abas-t { height: 30px; display: flex; align-items: flex-end; gap: 1px; padding: 0 4px; font-size: 15px; border-top: 1px solid #c0c0c0; background: #f0f0f0; }
+  .abas-t span { padding: 3px 9px; color: #333; } .abas-t span.on { background: #fff; border: 1px solid #a8a8a8; border-top: 0; color: #000; }
+  .rodape { position: absolute; left: 50px; right: 50px; top: 1612px; text-align: center; font-size: 21px; color: #8ea1bd; line-height: 1.35; }
+  .fim { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; text-align: center; background: rgba(4,8,12,.9); opacity: 0; }
+  .fim svg { width: 120px; height: 146px; } .fim .nome { margin-top: 26px; font-weight: 500; font-size: 46px; letter-spacing: .34em; } .fim .nome i { font-style: normal; color: #e2b85c; }
+  .fim .cta { margin-top: 90px; padding: 30px 70px; border-radius: 999px; font-weight: 700; font-size: 64px; letter-spacing: .06em; color: #120d03; background: linear-gradient(180deg,#fff0b8,#e2b85c); box-shadow: 0 0 60px rgba(226,184,92,.45); }
+  .fim p { margin: 34px 0 0; font-size: 36px; color: #cfd8e6; }
+  .fim .aviso { margin-top: 120px; font-size: 22px; color: #8ea1bd; max-width: 900px; }
+</style>
+</head>
+<body>
+<div id="palco">
+  <div class="marca"><svg viewBox="440 295 390 475"><path fill="#e2b85c" d="M447 548 L502 505 L502 763 L447 763 Z"/><path fill="#e2b85c" d="M532 437 L584 394 L584 711 L612 711 L612 348 L665 303 L665 711 L773 711 L773 624 L712 585 L712 531 L823 599 L823 763 L532 763 Z"/></svg><div>LEGATUS <i>GROUP</i></div></div>
+  <div class="card" id="card"><b id="c-a"></b><span id="c-b"></span><small id="c-c"></small></div>
+  <div class="placar">
+    <div><small>INÍCIO</small><b id="p-ini">US$ 100</b></div>
+    <div class="meio"><small id="p-data">PATRIMÔNIO</small><b id="p-saldo">US$ 100,00</b></div>
+    <div><small>RESULTADO</small><b id="p-pct" class="pos">+0,00%</b></div>
+  </div>
+  <div class="mt4">
+    <div class="titulo"><span class="ic"></span><span id="t-tit">Conta real · cópia proporcional US$ 100 - [Saldo,D1]</span><span class="bt"><span>–</span><span>☐</span><span>✕</span></span></div>
+    <div class="menu"><span>Arquivo</span><span>Exibir</span><span>Inserir</span><span>Gráficos</span><span>Ferramentas</span><span>Janela</span><span>Ajuda</span></div>
+    <div class="ferr"><i></i><i></i><i class="sep"></i><i class="az"></i><i></i><i></i><i class="sep"></i><i class="vd"></i><i></i><i></i><i></i><span class="auto"><em></em>AutoTrading</span></div>
+    <div class="grafico"><canvas id="cv" width="996" height="468"></canvas></div>
+    <div class="abas-g"><span>XAUUSD,M1</span><span class="on">Saldo,D1</span><span>XAUUSD,H1</span></div>
+    <div class="terminal">
+      <div class="lado"><span>✕</span><span>Terminal</span></div>
+      <div class="corpo">
+        <table><colgroup><col style="width:17%"><col style="width:21%"><col style="width:9%"><col style="width:11%"><col style="width:12%"><col style="width:16%"><col style="width:14%"></colgroup>
+          <thead><tr><th>Ordem</th><th>Horário</th><th>Tipo</th><th class="n">Volume</th><th>Ativo</th><th>Duração</th><th class="n">Lucro</th></tr></thead></table>
+        <div class="linhas"><table><colgroup><col style="width:17%"><col style="width:21%"><col style="width:9%"><col style="width:11%"><col style="width:12%"><col style="width:16%"><col style="width:14%"></colgroup><tbody id="linhas"></tbody></table></div>
+        <table><tbody><tr class="tot"><td id="tot" colspan="7"></td></tr></tbody></table>
+        <div class="abas-t"><span>Negociação</span><span>Exposição</span><span class="on">Histórico da conta</span><span>Notícias</span><span>Alertas</span><span>Experts</span><span>Diário</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="rodape">Simulação proporcional aos resultados reais da conta, com início de US$ 100, antes da taxa de performance. Resultado passado não garante resultado futuro.</div>
+  <div class="fim" id="fim"><svg viewBox="440 295 390 475"><path fill="#e2b85c" d="M447 548 L502 505 L502 763 L447 763 Z"/><path fill="#e2b85c" d="M532 437 L584 394 L584 711 L612 711 L612 348 L665 303 L665 711 L773 711 L773 624 L712 585 L712 531 L823 599 L823 763 L532 763 Z"/></svg><div class="nome">LEGATUS <i>GROUP</i></div><div class="cta">LINK NA BIO</div><p>a conta ao vivo e como copiar</p><div class="aviso">Investimentos envolvem risco. Resultado passado não garante resultado futuro.</div></div>
+</div>
+<script src="data.js"></script>
+<script src="historico.js" onerror="void 0"></script>
+<script>
+(() => {
+  // Vídeo de 24 s (1080x1920) no estilo do MetaTrader 4: uma cópia proporcional começando com US$ 100,
+  // com a curva e as operações reais da conta. window.render(t) desenha o instante t (para gravar quadro a quadro).
+  const CARTOES = [
+    { de: 0.4, ate: 4.6, a: "LEGATUS GOLD · CONTA REAL", b: "A MELHOR IA DE FOREX", c: "operando ouro (XAUUSD) ao vivo" },
+    { de: 5.0, ate: 9.1, a: "EXECUÇÃO", b: "100% AUTOMÁTICA", c: "5 tempos gráficos · abre, protege e fecha sozinha" },
+    { de: 9.5, ate: 13.6, a: "CAPITAL", b: "COMECE COM\nUS$ 100", c: "cópia proporcional ao seu capital" },
+    { de: 14.0, ate: 18.6, a: "CUSTO", b: "ENTRADA SEM CUSTO", c: "sem taxa de adesão · performance só sobre lucro novo" },
+  ];
+  const INICIO = 100, T0 = 0.6, T1 = 19.0, DUR = 24;
+  const $ = (id) => document.getElementById(id);
+  const D = window.LEGATUS_DADOS || {}, M = D.mt4 || {};
+  const br = (v, c = 2) => v.toLocaleString("pt-BR", { minimumFractionDigits: c, maximumFractionDigits: c });
+  const en = (v, c = 2) => v.toFixed(c);   // o MetaTrader mostra números com ponto
+  const dia = (s) => new Date(s.slice(0, 10) + "T12:00:00").getTime();
+
+  // curva oficial (desconta depósitos e saques) + o valor de agora
+  const curva = (D.rendimento_curva || []).map(([d, r]) => [dia(d), r]);
+  const hoje = (M.agora_srv || "").slice(0, 10);
+  if (hoje && D.rendimento_pct != null && (!curva.length || dia(hoje) > curva[curva.length - 1][0])) curva.push([dia(hoje), D.rendimento_pct]);
+  else if (curva.length && D.rendimento_pct != null) curva[curva.length - 1][1] = D.rendimento_pct;
+  const sp = D.saldo_patrimonio || { balance: [], equity: [] };
+  const razao = new Map(sp.balance.map(([d, b], i) => [dia(d), (sp.equity[i] ? sp.equity[i][1] : b) / b]));
+  const patReal = new Map(sp.equity.map(([d, e]) => [dia(d), e]));
+  if (hoje && M.saldo_vivo) { razao.set(dia(hoje), (M.patrimonio_vivo ?? M.saldo_vivo) / M.saldo_vivo); patReal.set(dia(hoje), M.patrimonio_vivo ?? M.saldo_vivo); }
+  const perto = (mapa, ts) => {   // valor interpolado entre os dias conhecidos
+    const e = [...mapa].sort((a, b) => a[0] - b[0]); if (!e.length) return 1; if (ts <= e[0][0]) return e[0][1];
+    for (let i = 1; i < e.length; i++) if (ts <= e[i][0]) return e[i - 1][1] + (e[i][1] - e[i - 1][1]) * (ts - e[i - 1][0]) / (e[i][0] - e[i - 1][0]);
+    return e[e.length - 1][1];
+  };
+  const ini = curva.length ? curva[0][0] : 0, fim = curva.length ? curva[curva.length - 1][0] : 1;
+  const rEm = (ts) => {   // rendimento interpolado
+    if (!curva.length) return 0; if (ts <= curva[0][0]) return curva[0][1];
+    for (let i = 1; i < curva.length; i++) if (ts <= curva[i][0]) { const a = curva[i - 1], b = curva[i]; return a[1] + (b[1] - a[1]) * (ts - a[0]) / (b[0] - a[0]); }
+    return curva[curva.length - 1][1];
+  };
+  const pat = (ts) => INICIO * (1 + rEm(ts) / 100);
+  const saldo = (ts) => pat(ts) / (perto(razao, ts) || 1);
+  const tsDe = (t) => ini + (fim - ini) * Math.min(1, Math.max(0, (t - T0) / (T1 - T0)));
+
+  // operações: histórico completo se existir (historico.js), senão as últimas do data.js
+  const brutas = (window.LEGATUS_HIST || ((M.por_tipo && M.por_tipo.robo && M.por_tipo.robo.ultimas) || []).map((o) => ({ par: o.par, lado: o.lado, lote: o.lote, fechou: o.t, min: o.min, usd: o.usd })))
+    .filter((o) => o.usd != null).map((o) => ({ ...o, ts: new Date((o.fechou || o.t).slice(0, 16) + ":00").getTime() })).sort((a, b) => a.ts - b.ts);
+  let ordem = 23817400;
+  const ops = brutas.map((o) => {
+    const f = pat(o.ts) / (perto(patReal, o.ts) || 1);   // tamanho da cópia de US$ 100 em relação à conta real
+    return { ...o, ordem: o.ticket || ordem++, vol: Math.max(0.01, Math.round(o.lote * f * 100) / 100), lucro: o.usd * f };
+  });
+  const quando = (ts) => { const d = new Date(ts); return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`; };
+  const dur = (m) => (m == null ? "" : m >= 60 ? `${Math.floor(m / 60)}h${String(m % 60).padStart(2, "0")}` : `${m} min`);
+
+  // gráfico no estilo MT4 (fundo preto, grade pontilhada, eixo à direita)
+  const cv = $("cv"), x = cv.getContext("2d"), W = cv.width, H = cv.height, mR = 110, mB = 34, mT = 40;
+  const amostras = Array.from({ length: 240 }, (_, i) => { const ts = ini + (fim - ini) * i / 239; return [ts, saldo(ts), pat(ts)]; });
+  const vals = amostras.flatMap((a) => [a[1], a[2]]), lo = Math.floor(Math.min(...vals) / 10) * 10 - 5, hi = Math.ceil(Math.max(...vals) / 10) * 10 + 5;
+  const X = (ts) => 8 + (W - mR - 16) * (ts - ini) / ((fim - ini) || 1), Y = (v) => mT + (H - mT - mB) * (hi - v) / (hi - lo || 1);
+  function grafico(ts) {
+    x.fillStyle = "#000"; x.fillRect(0, 0, W, H);
+    x.strokeStyle = "#2f2f2f"; x.setLineDash([2, 4]); x.lineWidth = 1; x.font = "15px Tahoma, 'DejaVu Sans', sans-serif"; x.fillStyle = "#fff";
+    const passo = (hi - lo) > 60 ? 20 : 10;
+    for (let v = Math.ceil(lo / passo) * passo; v <= hi; v += passo) { x.beginPath(); x.moveTo(0, Y(v)); x.lineTo(W - mR, Y(v)); x.stroke(); x.fillText(en(v), W - mR + 8, Y(v) + 5); }
+    const nd = Math.round((fim - ini) / 864e5);
+    for (let k = 0; k <= nd; k += Math.max(1, Math.ceil(nd / 5))) { const t = ini + k * 864e5, d = new Date(t); x.beginPath(); x.moveTo(X(t), mT); x.lineTo(X(t), H - mB); x.stroke(); x.fillText(`${d.getDate()} ${["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"][d.getMonth()]}`, X(t) + 4, H - 10); }
+    x.setLineDash([]); x.strokeStyle = "#777"; x.beginPath(); x.moveTo(W - mR, 0); x.lineTo(W - mR, H); x.moveTo(0, H - mB); x.lineTo(W, H - mB); x.stroke();
+    const vis = amostras.filter((a) => a[0] <= ts).concat([[ts, saldo(ts), pat(ts)]]);
+    [[2, "#32cd32"], [1, "#1e90ff"]].forEach(([k, cor]) => { x.strokeStyle = cor; x.lineWidth = k === 1 ? 3 : 2; x.beginPath(); vis.forEach((a, i) => (i ? x.lineTo(X(a[0]), Y(a[k])) : x.moveTo(X(a[0]), Y(a[k])))); x.stroke(); });
+    const s = saldo(ts);   // etiqueta do preço atual, como no MT4
+    x.fillStyle = "#1e90ff"; x.fillRect(W - mR, Y(s) - 12, mR, 24); x.fillStyle = "#fff"; x.font = "bold 15px Tahoma, 'DejaVu Sans', sans-serif"; x.fillText(en(s), W - mR + 8, Y(s) + 5);
+    x.strokeStyle = "rgba(30,144,255,.5)"; x.setLineDash([6, 4]); x.beginPath(); x.moveTo(0, Y(s)); x.lineTo(W - mR, Y(s)); x.stroke(); x.setLineDash([]);
+    x.font = "16px Tahoma, 'DejaVu Sans', sans-serif"; x.fillStyle = "#fff"; x.fillText(`Saldo,D1  ${en(s)}`, 8, 22);
+    x.fillStyle = "#1e90ff"; x.fillText("— Saldo", 230, 22); x.fillStyle = "#32cd32"; x.fillText("— Capital líquido", 330, 22);
+    x.fillStyle = "#e2b85c"; x.textAlign = "right"; x.fillText("LegatusGold  ☺", W - mR - 10, 22); x.textAlign = "left";
+  }
+
+  function render(t) {
+    const ts = tsDe(t), s = saldo(ts), pa = pat(ts), r = (pa / INICIO - 1) * 100;   // placar pelo patrimônio: bate com o rendimento oficial
+    grafico(ts);
+    const d = new Date(ts);
+    $("p-data").textContent = `PATRIMÔNIO · ${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}`;
+    $("p-saldo").textContent = "US$ " + br(pa); $("p-pct").textContent = (r >= 0 ? "+" : "−") + br(Math.abs(r)) + "%"; $("p-pct").className = r >= 0 ? "pos" : "neg";
+    const feitas = ops.filter((o) => o.ts <= ts), ult = feitas.slice(-14);
+    $("linhas").innerHTML = ult.map((o, i) => `<tr class="${i === ult.length - 1 && t < T1 ? "nova" : ""}"><td>${o.ordem}</td><td>${quando(o.ts)}</td><td>${o.lado}</td><td class="n">${en(o.vol)}</td><td>${o.par.toLowerCase()}</td><td>${dur(o.min)}</td><td class="n" style="color:${o.lucro < 0 ? "#c00" : "#000"}">${en(o.lucro)}</td></tr>`).reverse().join("");
+    const lucro = s - INICIO;
+    $("tot").innerHTML = `Lucro/Prejuízo: ${en(lucro)} &nbsp; Crédito: 0.00 &nbsp; Depósito: ${en(INICIO)} &nbsp; Retirada: 0.00 &nbsp;&nbsp; Saldo: ${en(s)} USD`;
+    const c = CARTOES.find((k) => t >= k.de && t < k.ate), card = $("card");
+    if (c) { const k = Math.min(1, (t - c.de) / 0.35, (c.ate - t) / 0.35); card.style.opacity = k; card.style.transform = `translateY(${(1 - Math.min(1, (t - c.de) / 0.35)) * 30}px)`; $("c-a").textContent = c.a; $("c-b").textContent = c.b; $("c-c").textContent = c.c; }
+    else card.style.opacity = 0;
+    $("fim").style.opacity = t > 19.6 ? Math.min(1, (t - 19.6) / 0.6) : 0;
+  }
+  window.render = render; window.DURACAO = DUR;
+
+  // fora da gravação: cabe na tela e roda sozinho em loop
+  const cabe = () => { const k = Math.min(innerWidth / 1080, innerHeight / 1920); $("palco").style.transform = `scale(${k})`; $("palco").style.left = (innerWidth - 1080 * k) / 2 + "px"; };
+  if (!/[?&]captura=1/.test(location.search)) { addEventListener("resize", cabe); cabe(); const t0 = performance.now(); const loop = (a) => { render(((a - t0) / 1000) % DUR); requestAnimationFrame(loop); }; requestAnimationFrame(loop); }
+  else render(0);
+})();
+</script>
+</body>
+</html>
