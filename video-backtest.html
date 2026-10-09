@@ -84,6 +84,7 @@
   <div class="fim" id="fim"><svg viewBox="440 295 390 475"><path fill="#e2b85c" d="M447 548 L502 505 L502 763 L447 763 Z"/><path fill="#e2b85c" d="M532 437 L584 394 L584 711 L612 711 L612 348 L665 303 L665 711 L773 711 L773 624 L712 585 L712 531 L823 599 L823 763 L532 763 Z"/></svg><div class="nome">LEGATUS <i>GROUP</i></div><div class="res" id="f-res"></div><div class="cta">LINK NA BIO</div><p>a conta ao vivo e como copiar</p><div class="aviso" id="f-aviso"></div></div>
 </div>
 <script src="backtest.js" onerror="void 0"></script>
+<script src="velas.js" onerror="void 0"></script>
 <script>
 (() => {
   // Vídeo de 24 s (1080x1920): time-lapse de um backtest do MT4 a partir do relatório convertido (ferramentas/relatorio_mt4.py → backtest.js).
@@ -152,21 +153,39 @@
   PR.forEach((p, i) => { const b = Math.floor(p[0] / H4) * H4, v = velas[velas.length - 1]; if (!v || v.t !== b) velas.push({ t: b, i0: i, o: p[1], h: p[1], l: p[1], c: p[1] }); else { v.h = Math.max(v.h, p[1]); v.l = Math.min(v.l, p[1]); v.c = p[1]; } });
   const FA = F.filter((f) => f.ta && f.pa).slice().sort((a, b) => a.ta - b.ta);
   const VIS = 54, DIR = 5;
-  const JAN = 36 * 3600e3;   // janela de 36 h na tela
+  const VL = (window.LEGATUS_VELAS || []).filter((v) => v[0] >= B.inicio - 2 * 864e5 && v[0] <= B.fim + 864e5);
+  const TF = VL.length > 1 ? Math.min(...VL.slice(0, 50).map((v, k, a) => (k ? v[0] - a[k - 1][0] : Infinity))) : 900e3;
+  const JAN = VL.length ? 60 * TF : 36 * 3600e3;   // com velas: 60 velas na tela; sem velas: 36 h de linha
+  if (VL.length) document.getElementById("aba-preco").textContent = "XAUUSD," + ({ 60e3: "M1", 300e3: "M5", 900e3: "M15", 1800e3: "M30", 3600e3: "H1", 14400e3: "H4" }[TF] || "M15");
   function graficoPreco(ts) {
     const j = ate(PR, ts, (p) => p[0]); if (j < 0) return;
-    const t0 = ts - JAN, i0 = Math.max(0, ate(PR, t0, (p) => p[0])), pts = PR.slice(i0, j + 1), atual = PR[j][1];
-    const lo = Math.min(...pts.map((p) => p[1])), hi = Math.max(...pts.map((p) => p[1])), pad = (hi - lo) * 0.15 + 2;
+    const ci = VL.length ? ate(VL, ts, (v) => v[0]) : -1, cI = Math.max(0, ci - 59);   // com velas o eixo é por vela (pula fim de semana, como no MT4)
+    const t0 = ci >= 0 ? VL[cI][0] : ts - JAN, i0 = Math.max(0, ate(PR, t0, (p) => p[0])), pts = PR.slice(i0, j + 1);
+    const vv = ci >= 0 ? VL.slice(cI, ci + 1) : [];
+    const atual = vv.length ? vv[vv.length - 1][4] : PR[j][1];
+    const vals = vv.length ? vv.flatMap((v) => [v[2], v[3]]) : pts.map((p) => p[1]);
+    const lo = Math.min(...vals), hi = Math.max(...vals), pad = (hi - lo) * 0.12 + 2;
     const top = hi + pad, bot = lo - pad, dir = 0.06 * JAN;
-    const X = (t) => 6 + (W - mR - 12) * (t - t0) / (JAN + dir), Y = (v) => mT + (H - mT - mB) * (top - v) / (top - bot);
+    const pos = (t) => { const k = ate(VL, t, (v) => v[0]); return k < 0 ? 0 : k + Math.min(1, (t - VL[k][0]) / TF); };
+    const X = ci >= 0 ? (t) => 6 + (W - mR - 12) * (pos(t) - cI) / 64 : (t) => 6 + (W - mR - 12) * (t - t0) / (JAN + dir);
+    const Y = (v) => mT + (H - mT - mB) * (top - v) / (top - bot);
     x.fillStyle = "#000"; x.fillRect(0, 0, W, H);
     x.strokeStyle = "#2f2f2f"; x.setLineDash([2, 4]); x.lineWidth = 1; x.font = fonte(15); x.fillStyle = "#fff";
     const passo = passoBonito((top - bot) / 6);
     for (let v = Math.ceil(bot / passo) * passo; v <= top; v += passo) { x.beginPath(); x.moveTo(0, Y(v)); x.lineTo(W - mR, Y(v)); x.stroke(); x.fillText(en(v), W - mR + 8, Y(v) + 5); }
-    for (let h = Math.ceil(t0 / (6 * 3600e3)) * 6 * 3600e3; h <= ts; h += 6 * 3600e3) { const d = new Date(h); x.beginPath(); x.moveTo(X(h), mT); x.lineTo(X(h), H - mB); x.stroke(); x.fillText(`${d.getDate()} ${MES[d.getMonth()]} ${String(d.getHours()).padStart(2, "0")}:00`, X(h) - 40, H - 10); }
+    const GR = JAN > 24 * 3600e3 ? 6 * 3600e3 : 3 * 3600e3; for (let h = Math.ceil(t0 / GR) * GR; h <= ts; h += GR) { if (ci >= 0 && !VL.some((v) => v[0] === h)) continue; const d = new Date(h); x.beginPath(); x.moveTo(X(h), mT); x.lineTo(X(h), H - mB); x.stroke(); x.fillText(`${d.getDate()} ${MES[d.getMonth()]} ${String(d.getHours()).padStart(2, "0")}:00`, X(h) - 40, H - 10); }
     x.setLineDash([]); x.strokeStyle = "#777"; x.beginPath(); x.moveTo(W - mR, 0); x.lineTo(W - mR, H); x.moveTo(0, H - mB); x.lineTo(W, H - mB); x.stroke();
     x.save(); x.beginPath(); x.rect(0, mT - 10, W - mR, H - mB - mT + 10); x.clip();
-    x.strokeStyle = "#00ff00"; x.lineWidth = 2; x.beginPath(); pts.forEach((p, k) => (k ? x.lineTo(X(p[0]), Y(p[1])) : x.moveTo(X(Math.max(t0, p[0])), Y(p[1])))); x.lineTo(X(ts), Y(atual)); x.stroke();
+    if (VL.length) {   // velas reais (Central de Histórico do MT4): contorno verde, alta preta, baixa branca
+      const larg = (W - mR - 12) * TF / (JAN + dir), bw = Math.max(2, larg * 0.62);
+      for (let k = Math.max(0, ate(VL, t0, (v) => v[0])); k < VL.length && VL[k][0] <= ts; k++) {
+        let [t, o, h, l, c] = VL[k];
+        if (t + TF > ts) { const fr = (ts - t) / TF; c = o + (c - o) * fr; h = Math.max(o, c, o + (h - o) * Math.min(1, fr * 1.5)); l = Math.min(o, c, o - (o - l) * Math.min(1, fr * 1.5)); }
+        const cx = X(t) + (W - mR - 12) / 128, y1 = Y(Math.max(o, c)), y2 = Y(Math.min(o, c));
+        x.strokeStyle = "#00ff00"; x.lineWidth = 1.2; x.beginPath(); x.moveTo(cx, Y(h)); x.lineTo(cx, Y(l)); x.stroke();
+        x.fillStyle = c >= o ? "#000" : "#fff"; x.fillRect(cx - bw / 2, y1, bw, Math.max(1.5, y2 - y1)); x.strokeRect(cx - bw / 2, y1, bw, Math.max(1.5, y2 - y1));
+      }
+    } else { x.strokeStyle = "#00ff00"; x.lineWidth = 2; x.beginPath(); pts.forEach((p, k) => (k ? x.lineTo(X(p[0]), Y(p[1])) : x.moveTo(X(Math.max(t0, p[0])), Y(p[1])))); x.lineTo(X(ts), Y(atual)); x.stroke(); }
     const a0 = ate(FA, t0, (f) => f.ta) + 1, a1 = ate(FA, ts, (f) => f.ta);
     for (let k = a0; k <= a1; k++) {
       const f = FA[k], buy = f.lado !== "sell", cor = buy ? "#1e90ff" : "#ff3b3b", xa = X(f.ta), ya = Y(f.pa);
