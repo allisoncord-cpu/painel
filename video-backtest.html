@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Legatus · vídeo backtest</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap">
+<style>
+  html, body { margin: 0; height: 100%; background: #05080d; overflow: hidden; }
+  #palco { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; transform-origin: 0 0; overflow: hidden;
+    background: radial-gradient(900px 700px at 50% 0, #142238, transparent 70%), #05080d; font-family: "Jost", sans-serif; color: #fff; }
+  .marca { position: absolute; top: 56px; left: 0; right: 0; display: flex; justify-content: center; align-items: center; gap: 14px; }
+  .marca svg { width: 44px; height: 54px; } .marca div { font-weight: 500; font-size: 30px; letter-spacing: .34em; } .marca i { font-style: normal; color: #e2b85c; }
+  .selo { position: absolute; top: 132px; left: 50%; transform: translateX(-50%); padding: 8px 22px; border: 2px solid #e2b85c; border-radius: 999px; font: 700 22px "Jost"; letter-spacing: .22em; color: #e2b85c; white-space: nowrap; background: rgba(226,184,92,.08); }
+  .card { position: absolute; left: 40px; right: 40px; top: 200px; height: 300px; text-align: center; opacity: 0; }
+  .card b { display: block; font-weight: 600; font-size: 26px; letter-spacing: .32em; color: #e2b85c; }
+  .card span { display: block; margin-top: 10px; font-weight: 700; font-size: 96px; line-height: 1.02; text-wrap: balance; white-space: pre-line; }
+  .card small { display: inline-block; margin-top: 16px; font-size: 32px; color: #cfd8e6; }
+  .placar { position: absolute; left: 40px; right: 40px; top: 515px; height: 150px; display: grid; grid-template-columns: .8fr 1.5fr 1fr; align-items: center; border-radius: 22px;
+    background: linear-gradient(180deg, rgba(226,184,92,.16), rgba(226,184,92,.05)); border: 2px solid rgba(226,184,92,.45); }
+  .placar > div { text-align: center; } .placar small { display: block; font: 600 20px "Jost"; letter-spacing: .2em; color: #a9b8cf; }
+  .placar b { display: block; margin-top: 6px; font: 700 40px "IBM Plex Mono"; white-space: nowrap; } .placar .meio b { font-size: 58px; color: #ffd76e; }
+  .placar .pos { color: #4fd18f; } .placar .neg { color: #ff6f61; }
+  .mt4 { position: absolute; left: 40px; right: 40px; top: 690px; height: 900px; background: #f0f0f0; border: 1px solid #8a8a8a; box-shadow: 0 30px 80px rgba(0,0,0,.6);
+    font-family: Tahoma, "Segoe UI", "DejaVu Sans", Arial, sans-serif; color: #000; display: flex; flex-direction: column; }
+  .titulo { height: 40px; background: #fff; display: flex; align-items: center; padding: 0 0 0 12px; font-size: 19px; gap: 10px; border-bottom: 1px solid #ddd; white-space: nowrap; overflow: hidden; }
+  .titulo .ic { flex: none; width: 22px; height: 22px; border-radius: 4px; background: linear-gradient(135deg, #39a0ff, #0b5fbf); }
+  .titulo .bt { margin-left: auto; display: flex; } .titulo .bt span { width: 52px; height: 40px; display: grid; place-items: center; font-size: 18px; color: #333; }
+  .menu { height: 32px; display: flex; gap: 22px; align-items: center; padding: 0 14px; font-size: 18px; }
+  .grafico { position: relative; flex: 0 0 450px; background: #000; border: 1px solid #7a7a7a; margin: 4px 4px 0; }
+  .grafico canvas { position: absolute; inset: 0; }
+  .abas-g { height: 28px; display: flex; align-items: flex-end; gap: 2px; padding: 0 6px; font-size: 16px; }
+  .abas-g span { padding: 3px 14px; background: #e3e3e3; border: 1px solid #a8a8a8; border-bottom: 0; color: #444; } .abas-g span.on { background: #fff; color: #000; font-weight: bold; }
+  .tester { flex: 1; display: flex; margin: 4px; border: 1px solid #9a9a9a; background: #fff; min-height: 0; }
+  .tester .lado { width: 30px; background: #f0f0f0; border-right: 1px solid #c6c6c6; display: flex; flex-direction: column; align-items: center; padding-top: 8px; gap: 10px; font-size: 15px; }
+  .tester .lado span { writing-mode: vertical-rl; transform: rotate(180deg); color: #222; white-space: nowrap; }
+  .tester .corpo { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  table { width: 100%; border-collapse: collapse; font-size: 17px; table-layout: fixed; }
+  th { background: linear-gradient(#fff, #ececec); border-right: 1px solid #d0d0d0; border-bottom: 1px solid #c0c0c0; font-weight: normal; text-align: left; padding: 5px 8px; white-space: nowrap; overflow: hidden; }
+  td { padding: 4px 8px; white-space: nowrap; overflow: hidden; border-bottom: 1px solid #f2f2f2; font-variant-numeric: tabular-nums; }
+  td.n, th.n { text-align: right; } tr.nova td { background: #dcebff; }
+  .linhas { flex: 1; overflow: hidden; }
+  .progresso { display: flex; align-items: center; gap: 10px; padding: 6px 8px; border-top: 1px solid #c0c0c0; font-size: 16px; background: #f0f0f0; }
+  .progresso .barra { flex: 1; height: 18px; border: 1px solid #8f8f8f; background: #fff; }
+  .progresso .barra i { display: block; height: 100%; background: repeating-linear-gradient(90deg, #06b025 0 12px, #fff 12px 14px); }
+  .abas-t { height: 30px; display: flex; align-items: flex-end; gap: 1px; padding: 0 4px; font-size: 15px; background: #f0f0f0; }
+  .abas-t span { padding: 3px 10px; color: #333; } .abas-t span.on { background: #fff; border: 1px solid #a8a8a8; border-top: 0; color: #000; }
+  .rodape { position: absolute; left: 50px; right: 50px; top: 1608px; text-align: center; font-size: 20px; color: #8ea1bd; line-height: 1.4; }
+  .fim { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; text-align: center; background: rgba(4,8,12,.97); opacity: 0; }
+  .fim svg { width: 120px; height: 146px; } .fim .nome { margin-top: 26px; font-weight: 500; font-size: 46px; letter-spacing: .34em; } .fim .nome i { font-style: normal; color: #e2b85c; }
+  .fim .res { margin-top: 70px; font: 700 64px "IBM Plex Mono"; color: #ffd76e; } .fim .res small { display: block; margin-top: 10px; font: 600 24px "Jost"; letter-spacing: .2em; color: #a9b8cf; }
+  .fim .cta { margin-top: 70px; padding: 30px 70px; border-radius: 999px; font-weight: 700; font-size: 64px; letter-spacing: .06em; color: #120d03; background: linear-gradient(180deg,#fff0b8,#e2b85c); box-shadow: 0 0 60px rgba(226,184,92,.45); }
+  .fim p { margin: 30px 0 0; font-size: 34px; color: #cfd8e6; }
+  .fim .aviso { margin-top: 100px; font-size: 22px; color: #8ea1bd; max-width: 920px; }
+</style>
+</head>
+<body>
+<div id="palco">
+  <div class="marca"><svg viewBox="440 295 390 475"><path fill="#e2b85c" d="M447 548 L502 505 L502 763 L447 763 Z"/><path fill="#e2b85c" d="M532 437 L584 394 L584 711 L612 711 L612 348 L665 303 L665 711 L773 711 L773 624 L712 585 L712 531 L823 599 L823 763 L532 763 Z"/></svg><div>LEGATUS <i>GROUP</i></div></div>
+  <div class="selo" id="selo">BACKTEST · TESTE NO HISTÓRICO</div>
+  <div class="card" id="card"><b id="c-a"></b><span id="c-b"></span><small id="c-c"></small></div>
+  <div class="placar">
+    <div><small>INÍCIO</small><b id="p-ini">US$ 100</b></div>
+    <div class="meio"><small id="p-data">SALDO</small><b id="p-saldo">US$ 100,00</b></div>
+    <div><small>RESULTADO</small><b id="p-pct" class="pos">+0%</b></div>
+  </div>
+  <div class="mt4">
+    <div class="titulo"><span class="ic"></span><span id="t-tit">Testador de Estratégias · LegatusGold · XAUUSD,M1</span><span class="bt"><span>–</span><span>☐</span><span>✕</span></span></div>
+    <div class="menu"><span>Arquivo</span><span>Exibir</span><span>Inserir</span><span>Gráficos</span><span>Ferramentas</span><span>Janela</span><span>Ajuda</span></div>
+    <div class="grafico"><canvas id="cv" width="996" height="448"></canvas></div>
+    <div class="abas-g"><span>XAUUSD,M1</span><span class="on">Saldo (backtest)</span></div>
+    <div class="tester">
+      <div class="lado"><span>✕</span><span>Testador</span></div>
+      <div class="corpo">
+        <table><colgroup><col style="width:9%"><col style="width:24%"><col style="width:10%"><col style="width:14%"><col style="width:11%"><col style="width:14%"><col style="width:18%"></colgroup>
+          <thead><tr><th>#</th><th>Horário</th><th>Tipo</th><th>Ordem</th><th class="n">Volume</th><th class="n">Lucro</th><th class="n">Saldo</th></tr></thead></table>
+        <div class="linhas"><table><colgroup><col style="width:9%"><col style="width:24%"><col style="width:10%"><col style="width:14%"><col style="width:11%"><col style="width:14%"><col style="width:18%"></colgroup><tbody id="linhas"></tbody></table></div>
+        <div class="progresso"><span id="pr-txt">Testando</span><span class="barra"><i id="pr"></i></span></div>
+        <div class="abas-t"><span>Configurações</span><span class="on">Resultados</span><span>Gráfico</span><span>Relatório</span><span>Diário</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="rodape" id="rodape"></div>
+  <div class="fim" id="fim"><svg viewBox="440 295 390 475"><path fill="#e2b85c" d="M447 548 L502 505 L502 763 L447 763 Z"/><path fill="#e2b85c" d="M532 437 L584 394 L584 711 L612 711 L612 348 L665 303 L665 711 L773 711 L773 624 L712 585 L712 531 L823 599 L823 763 L532 763 Z"/></svg><div class="nome">LEGATUS <i>GROUP</i></div><div class="res" id="f-res"></div><div class="cta">LINK NA BIO</div><p>a conta ao vivo e como copiar</p><div class="aviso" id="f-aviso"></div></div>
+</div>
+<script src="backtest.js" onerror="void 0"></script>
+<script>
+(() => {
+  // Vídeo de 24 s (1080x1920): time-lapse de um backtest do MT4 a partir do relatório convertido (ferramentas/relatorio_mt4.py → backtest.js).
+  // window.render(t) desenha o instante t; ?captura=1 desliga o loop automático.
+  const CARTOES = [
+    { de: 0.4, ate: 4.6, a: "LEGATUS GOLD", b: "A MELHOR IA DE FOREX", c: "operando ouro (XAUUSD)" },
+    { de: 5.0, ate: 9.1, a: "EXECUÇÃO", b: "100% AUTOMÁTICA", c: "5 tempos gráficos · abre, protege e fecha sozinha" },
+    { de: 9.5, ate: 13.6, a: "CAPITAL", b: "COMECE COM\nUS$ 100", c: "o teste começou com US$ 100" },
+    { de: 14.0, ate: 18.6, a: "CUSTO", b: "ENTRADA SEM CUSTO", c: "sem taxa de adesão · performance só sobre lucro novo" },
+  ];
+  const T0 = 0.6, T1 = 19.0, DUR = 24;
+  const $ = (id) => document.getElementById(id);
+  const B = window.LEGATUS_BACKTEST;
+  if (!B) { document.body.innerHTML = '<p style="color:#fff;font:24px sans-serif;padding:40px">Falta o backtest.js (gere com ferramentas/relatorio_mt4.py).</p>'; return; }
+  const br = (v, c = 2) => v.toLocaleString("pt-BR", { minimumFractionDigits: c, maximumFractionDigits: c });
+  const en = (v, c = 2) => v.toFixed(c);
+  const MES = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+  const dmy = (ts) => { const d = new Date(ts); return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`; };
+  const P = B.pontos, F = B.fechadas, dep = B.deposito;
+  const tsDe = (t) => B.inicio + (B.fim - B.inicio) * Math.min(1, Math.max(0, (t - T0) / (T1 - T0)));
+  const ate = (arr, ts, chave) => { let lo = 0, hi = arr.length - 1, r = -1; while (lo <= hi) { const m = (lo + hi) >> 1; if (chave(arr[m]) <= ts) { r = m; lo = m + 1; } else hi = m - 1; } return r; };
+  const saldoEm = (ts) => { const i = ate(P, ts, (p) => p[0]); return i < 0 ? dep : P[i][1]; };
+
+  // curva reduzida para desenhar (mínimo e máximo de cada faixa, para não esconder as quedas)
+  const N = 900, curva = [];
+  for (let k = 0; k < N; k++) {
+    const a = B.inicio + (B.fim - B.inicio) * k / N, b = B.inicio + (B.fim - B.inicio) * (k + 1) / N;
+    const i0 = ate(P, a, (p) => p[0]) + 1, i1 = ate(P, b, (p) => p[0]);
+    if (i1 < i0) { curva.push([b, saldoEm(b)]); continue; }
+    let mn = P[i0], mx = P[i0]; for (let i = i0; i <= i1; i++) { if (P[i][1] < mn[1]) mn = P[i]; if (P[i][1] > mx[1]) mx = P[i]; }
+    (mn[0] < mx[0] ? [mn, mx] : [mx, mn]).forEach((p) => curva.push(p)); curva.push(P[i1]);
+  }
+  const maxAte = []; let mx0 = dep; curva.forEach((c) => { mx0 = Math.max(mx0, c[1]); maxAte.push(mx0); });
+
+  const cv = $("cv"), x = cv.getContext("2d"), W = cv.width, H = cv.height, mR = 130, mB = 34, mT = 44;
+  const fonte = (p, b) => `${b ? "bold " : ""}${p}px Tahoma, 'DejaVu Sans', sans-serif`;
+  function passoBonito(v) { const p = Math.pow(10, Math.floor(Math.log10(v))); return [1, 2, 2.5, 5, 10].map((m) => m * p).find((s) => s >= v); }
+  function grafico(ts) {
+    const n = ate(curva, ts, (c) => c[0]), s = saldoEm(ts);
+    const topo = Math.max(dep * 1.2, (n >= 0 ? maxAte[n] : dep) * 1.12), lo = 0;   // o eixo cresce junto com a conta
+    const X = (t) => 8 + (W - mR - 16) * (t - B.inicio) / (B.fim - B.inicio), Y = (v) => mT + (H - mT - mB) * (topo - v) / (topo - lo);
+    x.fillStyle = "#000"; x.fillRect(0, 0, W, H);
+    x.strokeStyle = "#2f2f2f"; x.setLineDash([2, 4]); x.lineWidth = 1; x.font = fonte(15); x.fillStyle = "#fff";
+    const passo = passoBonito(topo / 5);
+    for (let v = 0; v <= topo; v += passo) { x.beginPath(); x.moveTo(0, Y(v)); x.lineTo(W - mR, Y(v)); x.stroke(); x.fillText(en(v), W - mR + 8, Y(v) + 5); }
+    for (let m = new Date(B.inicio); m.getTime() <= B.fim; m = new Date(m.getFullYear(), m.getMonth() + 1, 1)) {
+      const t = Math.max(B.inicio, new Date(m.getFullYear(), m.getMonth(), 1).getTime());
+      x.beginPath(); x.moveTo(X(t), mT); x.lineTo(X(t), H - mB); x.stroke(); x.fillText(MES[m.getMonth()], X(t) + 4, H - 10);
+    }
+    x.setLineDash([]); x.strokeStyle = "#777"; x.beginPath(); x.moveTo(W - mR, 0); x.lineTo(W - mR, H); x.moveTo(0, H - mB); x.lineTo(W, H - mB); x.stroke();
+    x.save(); x.beginPath(); x.rect(0, 0, W - mR, H - mB); x.clip();
+    const pts = curva.slice(0, n + 1).concat([[ts, s]]);
+    x.fillStyle = "rgba(30,144,255,.16)"; x.beginPath(); x.moveTo(X(pts[0][0]), Y(0)); pts.forEach((p) => x.lineTo(X(p[0]), Y(p[1]))); x.lineTo(X(ts), Y(0)); x.fill();
+    x.strokeStyle = "#1e90ff"; x.lineWidth = 3; x.beginPath(); pts.forEach((p, i) => (i ? x.lineTo(X(p[0]), Y(p[1])) : x.moveTo(X(p[0]), Y(p[1])))); x.stroke();
+    x.strokeStyle = "rgba(30,144,255,.5)"; x.setLineDash([6, 4]); x.beginPath(); x.moveTo(0, Y(s)); x.lineTo(W - mR, Y(s)); x.stroke(); x.setLineDash([]);
+    x.restore();
+    x.fillStyle = "#1e90ff"; x.fillRect(W - mR, Y(s) - 12, mR, 24); x.fillStyle = "#fff"; x.font = fonte(15, true); x.fillText(en(s), W - mR + 8, Y(s) + 5);
+    x.font = fonte(16); x.fillStyle = "#fff"; x.fillText(`Saldo (backtest)  ${en(s)}`, 8, 24);
+    x.fillStyle = "#e2b85c"; x.font = fonte(18, true); x.fillText("BACKTEST", 330, 24);
+    x.fillStyle = "#8ea1bd"; x.font = fonte(15); x.fillText(dmy(ts), 450, 24);
+  }
+
+  const dd = B.dd_rel != null ? br(B.dd_rel, 1) + "%" : "—", pf = B.pf != null ? br(B.pf, 2) : "—";
+  $("rodape").textContent = `Backtest no MetaTrader 4 · conta cent com US$ ${br(dep, 0)} · ${dmy(B.inicio)} a ${dmy(B.fim)} · rebaixamento máx. ${dd} · fator de lucro ${pf}. Teste no histórico não garante resultado futuro.`;
+  $("selo").textContent = `BACKTEST · ${MES[new Date(B.inicio).getMonth()].toUpperCase()}/${String(new Date(B.inicio).getFullYear()).slice(2)} → ${MES[new Date(B.fim).getMonth()].toUpperCase()}/${String(new Date(B.fim).getFullYear()).slice(2)}`;
+  $("f-res").innerHTML = `US$ ${br(dep, 0)} → US$ ${br(B.final, 0)}<small>BACKTEST · REBAIXAMENTO MÁX. ${dd}</small>`;
+  $("f-aviso").textContent = "Resultado de backtest (teste no histórico). Não é garantia de resultado futuro. Investimentos envolvem risco.";
+  const quando = (ts) => { const d = new Date(ts); return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`; };
+
+  function render(t) {
+    const ts = tsDe(t), s = saldoEm(ts), r = (s / dep - 1) * 100;
+    grafico(ts);
+    const d = new Date(ts);
+    $("p-data").textContent = `SALDO · ${MES[d.getMonth()].toUpperCase()}/${String(d.getFullYear()).slice(2)}`;
+    $("p-saldo").textContent = "US$ " + br(s); $("p-pct").textContent = (r >= 0 ? "+" : "−") + br(Math.abs(r), 0) + "%"; $("p-pct").className = r >= 0 ? "pos" : "neg";
+    const i = ate(F, ts, (f) => f.t), ult = i >= 0 ? F.slice(Math.max(0, i - 13), i + 1) : [];
+    $("linhas").innerHTML = ult.map((f, k) => `<tr class="${k === ult.length - 1 && t < T1 ? "nova" : ""}"><td>${i - ult.length + 2 + k}</td><td>${quando(f.t)}</td><td>close</td><td>${f.o}</td><td class="n">${en(f.vol)}</td><td class="n" style="color:${f.lucro < 0 ? "#c00" : "#000"}">${en(f.lucro)}</td><td class="n">${en(f.saldo)}</td></tr>`).reverse().join("");
+    const pr = Math.min(1, Math.max(0, (t - T0) / (T1 - T0)));
+    $("pr").style.width = pr * 100 + "%"; $("pr-txt").textContent = pr < 1 ? `Testando ${quando(ts).slice(0, 10)}` : "Teste concluído";
+    const c = CARTOES.find((k) => t >= k.de && t < k.ate), card = $("card");
+    if (c) { const k = Math.min(1, (t - c.de) / 0.35, (c.ate - t) / 0.35); card.style.opacity = k; card.style.transform = `translateY(${(1 - Math.min(1, (t - c.de) / 0.35)) * 30}px)`; $("c-a").textContent = c.a; $("c-b").textContent = c.b; $("c-c").textContent = c.c; }
+    else card.style.opacity = 0;
+    $("fim").style.opacity = t > 19.8 ? Math.min(1, (t - 19.8) / 0.6) : 0;
+  }
+  window.render = render; window.DURACAO = DUR;
+  const cabe = () => { const k = Math.min(innerWidth / 1080, innerHeight / 1920); $("palco").style.transform = `scale(${k})`; $("palco").style.left = (innerWidth - 1080 * k) / 2 + "px"; };
+  if (!/[?&]captura=1/.test(location.search)) { addEventListener("resize", cabe); cabe(); const t0 = performance.now(); const loop = (a) => { render(((a - t0) / 1000) % DUR); requestAnimationFrame(loop); }; requestAnimationFrame(loop); }
+  else render(0);
+})();
+</script>
+</body>
+</html>
