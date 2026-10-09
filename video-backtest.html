@@ -52,6 +52,17 @@
   .fim .cta { margin-top: 70px; padding: 30px 70px; border-radius: 999px; font-weight: 700; font-size: 64px; letter-spacing: .06em; color: #120d03; background: linear-gradient(180deg,#fff0b8,#e2b85c); box-shadow: 0 0 60px rgba(226,184,92,.45); }
   .fim p { margin: 30px 0 0; font-size: 34px; color: #cfd8e6; }
   .fim .aviso { margin-top: 100px; font-size: 22px; color: #8ea1bd; max-width: 920px; }
+  /* ?layout=cheio: gráfico ocupando a tela, textos por cima */
+  .cheio .mt4 { left: 0; right: 0; top: 0; height: 1920px; border: 0; box-shadow: none; }
+  .cheio .grafico { flex: 0 0 1500px; margin: 0; border: 0; } .cheio .tester { margin: 0 4px 4px; }
+  .cheio .marca { top: 104px; z-index: 3; } .cheio .selo { top: 178px; z-index: 3; }
+  .cheio .marca, .cheio .selo { text-shadow: 0 2px 12px #000; }
+  .cheio .card { top: 262px; left: 60px; right: 60px; height: auto; z-index: 3; padding: 26px 20px 30px; border-radius: 26px; background: rgba(5,8,13,.62); backdrop-filter: blur(2px); }
+  .cheio .card span { text-shadow: 0 4px 24px #000; }
+  .cheio .placar { top: 1300px; left: 60px; right: 60px; height: 128px; z-index: 3; background: rgba(5,8,13,.78); }
+  .cheio .placar .meio b { font-size: 50px; } .cheio .placar b { font-size: 34px; }
+  .cheio .rodape { top: 1440px; left: 60px; right: 150px; z-index: 3; font-size: 17px; text-align: left; color: #a9b8cf; text-shadow: 0 1px 6px #000; }
+  .cheio .fim { z-index: 5; }
 </style>
 </head>
 <body>
@@ -87,6 +98,7 @@
 <script src="velas.js" onerror="void 0"></script>
 <script>
 (() => {
+  if (/[?&]layout=cheio/.test(location.search)) { document.getElementById("palco").classList.add("cheio"); const c = document.getElementById("cv"); c.width = 1080; c.height = 1500; }
   // Vídeo de 24 s (1080x1920): time-lapse de um backtest do MT4 a partir do relatório convertido (ferramentas/relatorio_mt4.py → backtest.js).
   // window.render(t) desenha o instante t; ?captura=1 desliga o loop automático.
   const CARTOES = [
@@ -119,7 +131,8 @@
   }
   const maxAte = []; let mx0 = dep; curva.forEach((c) => { mx0 = Math.max(mx0, c[1]); maxAte.push(mx0); });
 
-  const cv = $("cv"), x = cv.getContext("2d"), W = cv.width, H = cv.height, mR = 130, mB = 34, mT = 44;
+  const CHEIO = $("palco").classList.contains("cheio");
+  const cv = $("cv"), x = cv.getContext("2d"), W = cv.width, H = cv.height, mR = 130, mB = 34, mT = CHEIO ? 270 : 44;
   const fonte = (p, b) => `${b ? "bold " : ""}${p}px Tahoma, 'DejaVu Sans', sans-serif`;
   function passoBonito(v) { const p = Math.pow(10, Math.floor(Math.log10(v))); return [1, 2, 2.5, 5, 10].map((m) => m * p).find((s) => s >= v); }
   function grafico(ts) {
@@ -200,8 +213,7 @@
     x.fillStyle = "#c0c0c0"; x.fillRect(W - mR, Y(atual) - 12, mR, 24); x.fillStyle = "#000"; x.font = fonte(15, true); x.fillText(en(atual), W - mR + 8, Y(atual) + 5);
     x.font = fonte(16); x.fillStyle = "#fff"; x.fillText(`XAUUSD  ${en(atual)}`, 8, 24);
     x.fillStyle = "#1e90ff"; x.fillText("▲ buy", 190, 24); x.fillStyle = "#ff3b3b"; x.fillText("▼ sell", 260, 24);
-    x.fillStyle = "#e2b85c"; x.font = fonte(18, true); x.fillText("BACKTEST", 360, 24);
-    x.fillStyle = "#8ea1bd"; x.font = fonte(15); x.fillText(dmy(ts), 480, 24);
+    if (!CHEIO) { x.fillStyle = "#e2b85c"; x.font = fonte(18, true); x.fillText("BACKTEST", 360, 24); x.fillStyle = "#8ea1bd"; x.font = fonte(15); x.fillText(dmy(ts), 480, 24); }
     x.fillStyle = "#e2b85c"; x.font = fonte(16); x.textAlign = "right"; x.fillText("LegatusGold ☺", W - mR - 10, 24); x.textAlign = "left";
   }
   if (!PRECO) { $("aba-preco").className = ""; $("aba-saldo").className = "on"; }
