@@ -68,7 +68,7 @@
     <div class="titulo"><span class="ic"></span><span id="t-tit">Testador de Estratégias · LegatusGold · XAUUSD,M1</span><span class="bt"><span>–</span><span>☐</span><span>✕</span></span></div>
     <div class="menu"><span>Arquivo</span><span>Exibir</span><span>Inserir</span><span>Gráficos</span><span>Ferramentas</span><span>Janela</span><span>Ajuda</span></div>
     <div class="grafico"><canvas id="cv" width="996" height="448"></canvas></div>
-    <div class="abas-g"><span>XAUUSD,M1</span><span class="on">Saldo (backtest)</span></div>
+    <div class="abas-g"><span class="on" id="aba-preco">XAUUSD,M1</span><span id="aba-saldo">Saldo (backtest)</span></div>
     <div class="tester">
       <div class="lado"><span>✕</span><span>Testador</span></div>
       <div class="corpo">
@@ -146,6 +146,47 @@
     x.fillStyle = "#8ea1bd"; x.font = fonte(15); x.fillText(dmy(ts), 450, 24);
   }
 
+  // ---------- gráfico de preço (velas de 4 h montadas com os preços reais de entrada e saída das ordens) ----------
+  const PRECO = !/[?&]grafico=saldo/.test(location.search) && (B.precos || []).length > 0;
+  const H4 = 4 * 3600e3, PR = (B.precos || []).slice().sort((a, b) => a[0] - b[0]), velas = [];
+  PR.forEach((p, i) => { const b = Math.floor(p[0] / H4) * H4, v = velas[velas.length - 1]; if (!v || v.t !== b) velas.push({ t: b, i0: i, o: p[1], h: p[1], l: p[1], c: p[1] }); else { v.h = Math.max(v.h, p[1]); v.l = Math.min(v.l, p[1]); v.c = p[1]; } });
+  const FA = F.filter((f) => f.ta && f.pa).slice().sort((a, b) => a.ta - b.ta);
+  const VIS = 54, DIR = 5;
+  const JAN = 36 * 3600e3;   // janela de 36 h na tela
+  function graficoPreco(ts) {
+    const j = ate(PR, ts, (p) => p[0]); if (j < 0) return;
+    const t0 = ts - JAN, i0 = Math.max(0, ate(PR, t0, (p) => p[0])), pts = PR.slice(i0, j + 1), atual = PR[j][1];
+    const lo = Math.min(...pts.map((p) => p[1])), hi = Math.max(...pts.map((p) => p[1])), pad = (hi - lo) * 0.15 + 2;
+    const top = hi + pad, bot = lo - pad, dir = 0.06 * JAN;
+    const X = (t) => 6 + (W - mR - 12) * (t - t0) / (JAN + dir), Y = (v) => mT + (H - mT - mB) * (top - v) / (top - bot);
+    x.fillStyle = "#000"; x.fillRect(0, 0, W, H);
+    x.strokeStyle = "#2f2f2f"; x.setLineDash([2, 4]); x.lineWidth = 1; x.font = fonte(15); x.fillStyle = "#fff";
+    const passo = passoBonito((top - bot) / 6);
+    for (let v = Math.ceil(bot / passo) * passo; v <= top; v += passo) { x.beginPath(); x.moveTo(0, Y(v)); x.lineTo(W - mR, Y(v)); x.stroke(); x.fillText(en(v), W - mR + 8, Y(v) + 5); }
+    for (let h = Math.ceil(t0 / (6 * 3600e3)) * 6 * 3600e3; h <= ts; h += 6 * 3600e3) { const d = new Date(h); x.beginPath(); x.moveTo(X(h), mT); x.lineTo(X(h), H - mB); x.stroke(); x.fillText(`${d.getDate()} ${MES[d.getMonth()]} ${String(d.getHours()).padStart(2, "0")}:00`, X(h) - 40, H - 10); }
+    x.setLineDash([]); x.strokeStyle = "#777"; x.beginPath(); x.moveTo(W - mR, 0); x.lineTo(W - mR, H); x.moveTo(0, H - mB); x.lineTo(W, H - mB); x.stroke();
+    x.save(); x.beginPath(); x.rect(0, mT - 10, W - mR, H - mB - mT + 10); x.clip();
+    x.strokeStyle = "#00ff00"; x.lineWidth = 2; x.beginPath(); pts.forEach((p, k) => (k ? x.lineTo(X(p[0]), Y(p[1])) : x.moveTo(X(Math.max(t0, p[0])), Y(p[1])))); x.lineTo(X(ts), Y(atual)); x.stroke();
+    const a0 = ate(FA, t0, (f) => f.ta) + 1, a1 = ate(FA, ts, (f) => f.ta);
+    for (let k = a0; k <= a1; k++) {
+      const f = FA[k], buy = f.lado !== "sell", cor = buy ? "#1e90ff" : "#ff3b3b", xa = X(f.ta), ya = Y(f.pa);
+      if (f.t <= ts) { x.strokeStyle = cor; x.setLineDash([3, 3]); x.lineWidth = 1.3; x.beginPath(); x.moveTo(xa, ya); x.lineTo(X(f.t), Y(f.pf)); x.stroke(); x.setLineDash([]);
+        x.fillStyle = f.lucro >= 0 ? "#ffd700" : "#ff8c00"; x.beginPath(); x.arc(X(f.t), Y(f.pf), 4, 0, 7); x.fill(); }
+      x.fillStyle = cor; x.beginPath();
+      if (buy) { x.moveTo(xa, ya + 3); x.lineTo(xa - 7, ya + 15); x.lineTo(xa + 7, ya + 15); } else { x.moveTo(xa, ya - 3); x.lineTo(xa - 7, ya - 15); x.lineTo(xa + 7, ya - 15); }
+      x.fill();
+    }
+    x.strokeStyle = "rgba(200,200,200,.6)"; x.setLineDash([6, 4]); x.beginPath(); x.moveTo(0, Y(atual)); x.lineTo(W - mR, Y(atual)); x.stroke(); x.setLineDash([]);
+    x.restore();
+    x.fillStyle = "#c0c0c0"; x.fillRect(W - mR, Y(atual) - 12, mR, 24); x.fillStyle = "#000"; x.font = fonte(15, true); x.fillText(en(atual), W - mR + 8, Y(atual) + 5);
+    x.font = fonte(16); x.fillStyle = "#fff"; x.fillText(`XAUUSD  ${en(atual)}`, 8, 24);
+    x.fillStyle = "#1e90ff"; x.fillText("▲ buy", 190, 24); x.fillStyle = "#ff3b3b"; x.fillText("▼ sell", 260, 24);
+    x.fillStyle = "#e2b85c"; x.font = fonte(18, true); x.fillText("BACKTEST", 360, 24);
+    x.fillStyle = "#8ea1bd"; x.font = fonte(15); x.fillText(dmy(ts), 480, 24);
+    x.fillStyle = "#e2b85c"; x.font = fonte(16); x.textAlign = "right"; x.fillText("LegatusGold ☺", W - mR - 10, 24); x.textAlign = "left";
+  }
+  if (!PRECO) { $("aba-preco").className = ""; $("aba-saldo").className = "on"; }
+
   const dd = B.dd_rel != null ? br(B.dd_rel, 1) + "%" : "—", pf = B.pf != null ? br(B.pf, 2) : "—";
   $("rodape").textContent = `Backtest no MetaTrader 4 · conta cent com US$ ${br(dep, 0)} · ${dmy(B.inicio)} a ${dmy(B.fim)} · rebaixamento máx. ${dd} · fator de lucro ${pf}. Teste no histórico não garante resultado futuro.`;
   $("selo").textContent = `BACKTEST · ${MES[new Date(B.inicio).getMonth()].toUpperCase()}/${String(new Date(B.inicio).getFullYear()).slice(2)} → ${MES[new Date(B.fim).getMonth()].toUpperCase()}/${String(new Date(B.fim).getFullYear()).slice(2)}`;
@@ -155,7 +196,7 @@
 
   function render(t) {
     const ts = tsDe(t), s = saldoEm(ts), r = (s / dep - 1) * 100;
-    grafico(ts);
+    if (PRECO) graficoPreco(ts); else grafico(ts);
     const d = new Date(ts);
     $("p-data").textContent = `SALDO · ${MES[d.getMonth()].toUpperCase()}/${String(d.getFullYear()).slice(2)}`;
     $("p-saldo").textContent = "US$ " + br(s); $("p-pct").textContent = (r >= 0 ? "+" : "−") + br(Math.abs(r), 0) + "%"; $("p-pct").className = r >= 0 ? "pos" : "neg";

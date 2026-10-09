@@ -34,14 +34,19 @@ def main(entrada, saida, cent):
     bruto = open(entrada, "rb").read()
     texto = bruto.decode("utf-8") if bruto[:3] == b"\xef\xbb\xbf" or b"charset=utf-8" in bruto[:2000].lower() else bruto.decode("cp1252", "replace")
     k = 0.01 if cent else 1.0
-    lados, pontos, fechadas = {}, [], []
+    lados, aberturas, pontos, fechadas, precos = {}, {}, [], [], []
     for linha in re.findall(r"<tr[^>]*>(.*?)</tr>", texto, re.S | re.I):
         c = celulas(linha)
         if len(c) < 9 or not re.match(r"\d{4}\.\d{2}\.\d{2} \d{2}:\d{2}", c[1]):
             continue
         tipo, ordem = c[2].lower(), c[3]
+        quando = int(datetime.strptime(c[1], "%Y.%m.%d %H:%M").timestamp() * 1000)
+        preco = numero(c[5]) if c[5] and NUM.match(c[5]) else None
+        if preco and tipo not in ("modify", "modificar"):
+            precos.append([quando, preco])
         if tipo in ("buy", "sell", "compra", "venda"):
             lados[ordem] = "buy" if tipo in ("buy", "compra") else "sell"
+            aberturas[ordem] = (quando, preco)
         if len(c) < 10:
             continue
         if c[9] and NUM.match(c[9].replace("\xa0", "")):
@@ -49,7 +54,8 @@ def main(entrada, saida, cent):
             saldo = numero(c[9]) * k
             pontos.append([ts, round(saldo, 2)])
             if c[8] and NUM.match(c[8].replace("\xa0", "")):
-                fechadas.append({"t": ts, "o": int(ordem) if ordem.isdigit() else ordem, "lado": lados.get(ordem, ""), "vol": numero(c[4]), "lucro": round(numero(c[8]) * k, 2), "saldo": round(saldo, 2)})
+                ab = aberturas.get(ordem, (None, None))
+                fechadas.append({"t": ts, "ta": ab[0], "pa": ab[1], "pf": preco, "o": int(ordem) if ordem.isdigit() else ordem, "lado": lados.get(ordem, ""), "vol": numero(c[4]), "lucro": round(numero(c[8]) * k, 2), "saldo": round(saldo, 2)})
     if not pontos:
         sys.exit("Não achei a lista de operações no relatório.")
     dep = resumo(texto, ["depósito inicial", "deposito inicial", "initial deposit"])
@@ -58,7 +64,7 @@ def main(entrada, saida, cent):
     deposito = numero(dep) * k if dep else round(pontos[0][1] - fechadas[0]["lucro"], 2)
     dd_rel = float(re.search(r"([\d.,]+)%", dd).group(1).replace(",", ".")) if dd and "%" in dd else None
     dados = {"deposito": round(deposito, 2), "final": pontos[-1][1], "dd_rel": dd_rel, "pf": numero(pf) if pf and NUM.match(pf) else None,
-             "ops": len(fechadas), "inicio": pontos[0][0], "fim": pontos[-1][0], "pontos": pontos, "fechadas": fechadas}
+             "ops": len(fechadas), "inicio": pontos[0][0], "fim": pontos[-1][0], "pontos": pontos, "fechadas": fechadas, "precos": precos}
     open(saida, "w", encoding="utf-8").write("window.LEGATUS_BACKTEST = " + json.dumps(dados, ensure_ascii=False, separators=(",", ":")) + ";\n")
     print(f"ok: {len(fechadas)} operações, US$ {deposito:,.2f} -> US$ {dados['final']:,.2f}, DD relativo {dd_rel}%, PF {dados['pf']}")
 
