@@ -37,11 +37,13 @@ def main(entrada, saida, cent):
     lados, pontos, fechadas = {}, [], []
     for linha in re.findall(r"<tr[^>]*>(.*?)</tr>", texto, re.S | re.I):
         c = celulas(linha)
-        if len(c) < 10 or not re.match(r"\d{4}\.\d{2}\.\d{2} \d{2}:\d{2}", c[1]):
+        if len(c) < 9 or not re.match(r"\d{4}\.\d{2}\.\d{2} \d{2}:\d{2}", c[1]):
             continue
         tipo, ordem = c[2].lower(), c[3]
         if tipo in ("buy", "sell", "compra", "venda"):
             lados[ordem] = "buy" if tipo in ("buy", "compra") else "sell"
+        if len(c) < 10:
+            continue
         if c[9] and NUM.match(c[9].replace("\xa0", "")):
             ts = int(datetime.strptime(c[1], "%Y.%m.%d %H:%M").timestamp() * 1000)
             saldo = numero(c[9]) * k

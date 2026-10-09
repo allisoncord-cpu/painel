@@ -35,7 +35,7 @@
   .tester .lado { width: 30px; background: #f0f0f0; border-right: 1px solid #c6c6c6; display: flex; flex-direction: column; align-items: center; padding-top: 8px; gap: 10px; font-size: 15px; }
   .tester .lado span { writing-mode: vertical-rl; transform: rotate(180deg); color: #222; white-space: nowrap; }
   .tester .corpo { flex: 1; display: flex; flex-direction: column; min-width: 0; }
-  table { width: 100%; border-collapse: collapse; font-size: 17px; table-layout: fixed; }
+  table { width: 100%; border-collapse: collapse; font-size: 22px; table-layout: fixed; }
   th { background: linear-gradient(#fff, #ececec); border-right: 1px solid #d0d0d0; border-bottom: 1px solid #c0c0c0; font-weight: normal; text-align: left; padding: 5px 8px; white-space: nowrap; overflow: hidden; }
   td { padding: 4px 8px; white-space: nowrap; overflow: hidden; border-bottom: 1px solid #f2f2f2; font-variant-numeric: tabular-nums; }
   td.n, th.n { text-align: right; } tr.nova td { background: #dcebff; }
@@ -72,9 +72,9 @@
     <div class="tester">
       <div class="lado"><span>✕</span><span>Testador</span></div>
       <div class="corpo">
-        <table><colgroup><col style="width:9%"><col style="width:24%"><col style="width:10%"><col style="width:14%"><col style="width:11%"><col style="width:14%"><col style="width:18%"></colgroup>
-          <thead><tr><th>#</th><th>Horário</th><th>Tipo</th><th>Ordem</th><th class="n">Volume</th><th class="n">Lucro</th><th class="n">Saldo</th></tr></thead></table>
-        <div class="linhas"><table><colgroup><col style="width:9%"><col style="width:24%"><col style="width:10%"><col style="width:14%"><col style="width:11%"><col style="width:14%"><col style="width:18%"></colgroup><tbody id="linhas"></tbody></table></div>
+        <table><colgroup><col style="width:28%"><col style="width:22%"><col style="width:20%"><col style="width:30%"></colgroup>
+          <thead><tr><th>Ativo</th><th>Tipo</th><th class="n">Lote</th><th class="n">Resultado</th></tr></thead></table>
+        <div class="linhas"><table><colgroup><col style="width:28%"><col style="width:22%"><col style="width:20%"><col style="width:30%"></colgroup><tbody id="linhas"></tbody></table></div>
         <div class="progresso"><span id="pr-txt">Testando</span><span class="barra"><i id="pr"></i></span></div>
         <div class="abas-t"><span>Configurações</span><span class="on">Resultados</span><span>Gráfico</span><span>Relatório</span><span>Diário</span></div>
       </div>
@@ -159,8 +159,8 @@
     const d = new Date(ts);
     $("p-data").textContent = `SALDO · ${MES[d.getMonth()].toUpperCase()}/${String(d.getFullYear()).slice(2)}`;
     $("p-saldo").textContent = "US$ " + br(s); $("p-pct").textContent = (r >= 0 ? "+" : "−") + br(Math.abs(r), 0) + "%"; $("p-pct").className = r >= 0 ? "pos" : "neg";
-    const i = ate(F, ts, (f) => f.t), ult = i >= 0 ? F.slice(Math.max(0, i - 13), i + 1) : [];
-    $("linhas").innerHTML = ult.map((f, k) => `<tr class="${k === ult.length - 1 && t < T1 ? "nova" : ""}"><td>${i - ult.length + 2 + k}</td><td>${quando(f.t)}</td><td>close</td><td>${f.o}</td><td class="n">${en(f.vol)}</td><td class="n" style="color:${f.lucro < 0 ? "#c00" : "#000"}">${en(f.lucro)}</td><td class="n">${en(f.saldo)}</td></tr>`).reverse().join("");
+    const i = ate(F, ts, (f) => f.t), ult = i >= 0 ? F.slice(Math.max(0, i - 5), i + 1) : [];
+    $("linhas").innerHTML = ult.map((f, k) => `<tr class="${k === ult.length - 1 && t < T1 ? "nova" : ""}"><td>XAUUSD</td><td style="color:${f.lado === "sell" ? "#d4500a" : "#0a6ad4"};font-weight:bold">${f.lado === "sell" ? "SELL" : "BUY"}</td><td class="n">${en(f.vol)}</td><td class="n" style="color:${f.lucro < 0 ? "#c00" : "#08872b"};font-weight:bold">${f.lucro < 0 ? "−" : "+"}US$ ${br(Math.abs(f.lucro))}</td></tr>`).reverse().join("");
     const pr = Math.min(1, Math.max(0, (t - T0) / (T1 - T0)));
     $("pr").style.width = pr * 100 + "%"; $("pr-txt").textContent = pr < 1 ? `Testando ${quando(ts).slice(0, 10)}` : "Teste concluído";
     const c = CARTOES.find((k) => t >= k.de && t < k.ate), card = $("card");
