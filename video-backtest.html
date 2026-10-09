@@ -98,6 +98,7 @@
 <script src="velas.js" onerror="void 0"></script>
 <script>
 (() => {
+  if (/[?&]limpo=1/.test(location.search)) { const st = document.createElement("style"); st.textContent = ".card,.placar,.rodape,.fim,.marca,.selo{display:none!important}"; document.head.appendChild(st); }   // só o gráfico, para usar de fundo
   if (/[?&]layout=cheio/.test(location.search)) { document.getElementById("palco").classList.add("cheio"); const c = document.getElementById("cv"); c.width = 1080; c.height = 1500; }
   // Vídeo de 24 s (1080x1920): time-lapse de um backtest do MT4 a partir do relatório convertido (ferramentas/relatorio_mt4.py → backtest.js).
   // window.render(t) desenha o instante t; ?captura=1 desliga o loop automático.
